@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 ISP_ISI = 1
 ISP_STA = 5
 ISP_MST = 11
+ISP_LAP = 28
+ISP_SPX = 29
 
 ISF_MCI = 1 << 0  # receive multi car info packets
 ISF_CON = 1 << 1  # receive contact packets
@@ -40,6 +42,38 @@ class InSimConfig:
     timeout: Optional[float] = 5.0
 
 
+@dataclass
+class LapEvent:
+    """Represents the data contained within an ``IS_LAP`` packet."""
+
+    plid: int
+    lap_time_ms: int
+    estimate_time_ms: int
+    flags: int
+    penalty: int
+    num_pit_stops: int
+    fuel_percent: int
+    player_name: str
+    spare: int = 0
+    raw_sp0: int = 0
+
+
+@dataclass
+class SplitEvent:
+    """Represents the data contained within an ``IS_SPX`` packet."""
+
+    plid: int
+    split_time_ms: int
+    estimate_time_ms: int
+    split_index: int
+    flags: int
+    penalty: int
+    num_pit_stops: int
+    fuel_percent: int
+    player_name: str
+    spare: int = 0
+
+
 class InSimClient:
     """Minimal TCP client for the Live for Speed InSim protocol."""
 
@@ -48,13 +82,21 @@ class InSimClient:
         config: InSimConfig,
         *,
         state_listeners: Optional[List[Callable[[int], None]]] = None,
+        lap_listeners: Optional[List[Callable[["LapEvent"], None]]] = None,
+        split_listeners: Optional[List[Callable[["SplitEvent"], None]]] = None,
     ) -> None:
         self._config = config
         self._sock: Optional[socket.socket] = None
         self._buffer = bytearray()
         self._state_listeners: List[Callable[[int], None]] = []
+        self._lap_listeners: List[Callable[["LapEvent"], None]] = []
+        self._split_listeners: List[Callable[["SplitEvent"], None]] = []
         if state_listeners:
             self._state_listeners.extend(state_listeners)
+        if lap_listeners:
+            self._lap_listeners.extend(lap_listeners)
+        if split_listeners:
+            self._split_listeners.extend(split_listeners)
 
     # -- socket lifecycle --------------------------------------------------
     def connect(self) -> None:
@@ -144,6 +186,16 @@ class InSimClient:
 
         self._state_listeners.append(listener)
 
+    def add_lap_listener(self, listener: Callable[["LapEvent"], None]) -> None:
+        """Register a callback invoked when an ``IS_LAP`` packet is received."""
+
+        self._lap_listeners.append(listener)
+
+    def add_split_listener(self, listener: Callable[["SplitEvent"], None]) -> None:
+        """Register a callback invoked when an ``IS_SPX`` packet is received."""
+
+        self._split_listeners.append(listener)
+
     def poll(self) -> None:
         """Poll the socket for incoming packets and dispatch them."""
 
@@ -192,6 +244,22 @@ class InSimClient:
         packet_type = packet[1]
         if packet_type == ISP_STA:
             self._handle_is_sta(packet)
+        elif packet_type == ISP_LAP:
+            event = self._parse_lap_packet(packet)
+            if event:
+                for listener in list(self._lap_listeners):
+                    try:
+                        listener(event)
+                    except Exception:  # pragma: no cover - defensive logging
+                        logger.exception("Error while handling InSim lap listener")
+        elif packet_type == ISP_SPX:
+            event = self._parse_split_packet(packet)
+            if event:
+                for listener in list(self._split_listeners):
+                    try:
+                        listener(event)
+                    except Exception:  # pragma: no cover - defensive logging
+                        logger.exception("Error while handling InSim split listener")
 
     def _handle_is_sta(self, packet: bytes) -> None:
         # IS_STA packets are 28 bytes long in current protocol versions.
@@ -207,6 +275,102 @@ class InSimClient:
             except Exception:  # pragma: no cover - defensive logging
                 logger.exception("Error while handling InSim state listener")
 
+    def _parse_lap_packet(self, packet: bytes) -> Optional["LapEvent"]:
+        if len(packet) < 4 + 8 + 2:
+            logger.debug("Dropping incomplete IS_LAP packet: %s", packet)
+            return None
+
+        size = packet[0]
+        if len(packet) < size:
+            logger.debug("Dropping truncated IS_LAP packet: %s", packet)
+            return None
+
+        _, _, _, plid = struct.unpack_from("<BBBB", packet)
+        lap_time, est_time = struct.unpack_from("<II", packet, 4)
+        flags = struct.unpack_from("<H", packet, 12)[0]
+
+        offset = 14
+        sp0 = packet[offset] if size > offset else 0
+        offset += 1
+        penalty = packet[offset] if size > offset else 0
+        offset += 1
+        num_stops = packet[offset] if size > offset else 0
+        offset += 1
+        fuel_200 = packet[offset] if size > offset else 0
+        offset += 1
+
+        remaining = size - offset
+        spare = 0
+        if remaining > 24:
+            spare = packet[offset]
+            offset += 1
+            remaining -= 1
+
+        name_length = min(24, max(0, size - offset))
+        name_bytes = packet[offset : offset + name_length]
+        player_name = name_bytes.split(b"\x00", 1)[0].decode("latin-1", errors="ignore").strip()
+
+        return LapEvent(
+            plid=plid,
+            lap_time_ms=lap_time,
+            estimate_time_ms=est_time,
+            flags=flags,
+            penalty=penalty,
+            num_pit_stops=num_stops,
+            fuel_percent=fuel_200,
+            player_name=player_name,
+            spare=spare,
+            raw_sp0=sp0,
+        )
+
+    def _parse_split_packet(self, packet: bytes) -> Optional["SplitEvent"]:
+        if len(packet) < 4 + 8 + 2:
+            logger.debug("Dropping incomplete IS_SPX packet: %s", packet)
+            return None
+
+        size = packet[0]
+        if len(packet) < size:
+            logger.debug("Dropping truncated IS_SPX packet: %s", packet)
+            return None
+
+        _, _, _, plid = struct.unpack_from("<BBBB", packet)
+        split_time, est_time = struct.unpack_from("<II", packet, 4)
+        flags = struct.unpack_from("<H", packet, 12)[0]
+
+        offset = 14
+        split = packet[offset] if size > offset else 0
+        offset += 1
+        penalty = packet[offset] if size > offset else 0
+        offset += 1
+        num_stops = packet[offset] if size > offset else 0
+        offset += 1
+        fuel_200 = packet[offset] if size > offset else 0
+        offset += 1
+
+        remaining = size - offset
+        spare = 0
+        if remaining > 24:
+            spare = packet[offset]
+            offset += 1
+            remaining -= 1
+
+        name_length = min(24, max(0, size - offset))
+        name_bytes = packet[offset : offset + name_length]
+        player_name = name_bytes.split(b"\x00", 1)[0].decode("latin-1", errors="ignore").strip()
+
+        return SplitEvent(
+            plid=plid,
+            split_time_ms=split_time,
+            estimate_time_ms=est_time,
+            split_index=split,
+            flags=flags,
+            penalty=penalty,
+            num_pit_stops=num_stops,
+            fuel_percent=fuel_200,
+            player_name=player_name,
+            spare=spare,
+        )
+
     def __enter__(self) -> "InSimClient":
         self.connect()
         return self
@@ -215,4 +379,10 @@ class InSimClient:
         self.close()
 
 
-__all__ = ["InSimClient", "InSimConfig", "ISS_MULTI"]
+__all__ = [
+    "InSimClient",
+    "InSimConfig",
+    "LapEvent",
+    "SplitEvent",
+    "ISS_MULTI",
+]
