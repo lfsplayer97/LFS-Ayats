@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict
@@ -109,8 +110,13 @@ def main() -> None:
 
     current_mode = "sp"
     mode_settings = {"sp": config.sp, "mp": config.mp}
-    radar_enabled = mode_settings[current_mode].radar_enabled
-    beep_system.set_enabled(mode_settings[current_mode].beeps_enabled)
+
+    config_lock = threading.RLock()
+    with config_lock:
+        radar_enabled = mode_settings[current_mode].radar_enabled
+        beep_system.set_enabled(mode_settings[current_mode].beeps_enabled)
+
+    stop_event = threading.Event()
 
     def handle_state(flags2: int) -> None:
         nonlocal current_mode, radar_enabled
@@ -119,16 +125,74 @@ def main() -> None:
         if new_mode == current_mode:
             return
 
-        current_mode = new_mode
-        settings = mode_settings[new_mode]
-        radar_enabled = settings.radar_enabled
-        beep_system.set_enabled(settings.beeps_enabled)
+        with config_lock:
+            current_mode = new_mode
+            settings = mode_settings[new_mode]
+            radar_enabled = settings.radar_enabled
+            beep_system.set_enabled(settings.beeps_enabled)
+            radar_state = radar_enabled
+            beeps_state = settings.beeps_enabled
+
         logger.info(
             "Detected %splayer mode: radar=%s beeps=%s",
             "multi" if new_mode == "mp" else "single ",
-            "on" if settings.radar_enabled else "off",
-            "on" if settings.beeps_enabled else "off",
+            "on" if radar_state else "off",
+            "on" if beeps_state else "off",
         )
+
+    def watch_config() -> None:
+        nonlocal config, mode_settings, radar_enabled
+
+        try:
+            last_mtime = config_path.stat().st_mtime_ns
+        except FileNotFoundError:
+            logger.warning("Configuration file %s not found; waiting for it to appear", config_path)
+            last_mtime = None
+
+        while not stop_event.wait(1.0):
+            try:
+                current_mtime = config_path.stat().st_mtime_ns
+            except FileNotFoundError:
+                if last_mtime is not None:
+                    logger.warning(
+                        "Configuration file %s missing; retaining previous settings", config_path
+                    )
+                    last_mtime = None
+                continue
+
+            if last_mtime is not None and current_mtime == last_mtime:
+                continue
+
+            last_mtime = current_mtime
+
+            try:
+                new_config = AppConfig.from_dict(load_config(config_path))
+            except Exception:  # pragma: no cover - defensive logging
+                logger.exception("Failed to reload configuration from %s", config_path)
+                continue
+
+            with config_lock:
+                config = new_config
+                mode_settings = {"sp": config.sp, "mp": config.mp}
+                beep_system.set_mode(config.beep_mode)
+                mode_name = current_mode
+                settings = mode_settings[mode_name]
+                radar_enabled = settings.radar_enabled
+                beep_system.set_enabled(settings.beeps_enabled)
+                radar_state = radar_enabled
+                beeps_state = settings.beeps_enabled
+                beep_mode_state = config.beep_mode
+
+            logger.info(
+                "Reloaded configuration (mode=%s, radar=%s, beeps=%s, beep_mode=%s)",
+                mode_name,
+                "on" if radar_state else "off",
+                "on" if beeps_state else "off",
+                beep_mode_state,
+            )
+
+    watcher_thread = threading.Thread(target=watch_config, name="config-watcher", daemon=True)
+    watcher_thread.start()
 
     try:
         with InSimClient(config.insim, state_listeners=[handle_state]) as insim, OutSimClient(
@@ -137,11 +201,17 @@ def main() -> None:
             logger.info("Telemetry clients initialised; awaiting OutSim frames")
             for frame in outsim.frames():
                 insim.poll()
-                if radar_enabled:
+                with config_lock:
+                    render_radar = radar_enabled
+
+                if render_radar:
                     radar.draw(frame)
                 beep_system.process_frame(frame)
     except KeyboardInterrupt:
         logger.info("Interrupted by user, shutting down")
+    finally:
+        stop_event.set()
+        watcher_thread.join()
 
 
 if __name__ == "__main__":
