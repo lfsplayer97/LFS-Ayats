@@ -16,6 +16,31 @@ from src.persistence import PersonalBestRecord, load_personal_best, record_lap
 logger = logging.getLogger(__name__)
 
 
+def clear_session_timing(lap_state: Dict[str, Any]) -> None:
+    """Reset timing-related session fields in ``lap_state``."""
+
+    lap_state["current_lap_start_ms"] = None
+    lap_state["best_lap_ms"] = None
+    lap_state["current_split_times"] = {}
+    lap_state["last_lap_split_fractions"] = []
+    lap_state["pb_split_fractions"] = []
+    lap_state["latest_estimated_total_ms"] = None
+
+
+def update_session_best(lap_state: Dict[str, Any], lap_time_ms: int) -> bool:
+    """Update the session best lap time if ``lap_time_ms`` is an improvement."""
+
+    if lap_time_ms <= 0:
+        return False
+
+    best_lap = lap_state.get("best_lap_ms")
+    if best_lap is None or lap_time_ms < best_lap:
+        lap_state["best_lap_ms"] = lap_time_ms
+        return True
+
+    return False
+
+
 def load_config(path: Path) -> Dict[str, Any]:
     with path.open("r", encoding="utf-8") as fh:
         return json.load(fh)
@@ -220,10 +245,9 @@ def main() -> None:
             current_car = normalised_car
 
         if track_changed or car_changed:
+            clear_session_timing(lap_state)
             if current_track and current_car:
                 persistent_best = load_personal_best(current_track, current_car)
-                lap_state["pb_split_fractions"] = []
-                lap_state["last_lap_split_fractions"] = []
                 reset_split_tracking()
                 if persistent_best is None:
                     logger.info(
@@ -291,11 +315,10 @@ def main() -> None:
         split_times = [current_splits[idx] for idx in sorted_indices]
 
         if lap_time > 0:
-            best_lap = lap_state["best_lap_ms"]
-            if best_lap is None or lap_time < best_lap:
-                lap_state["best_lap_ms"] = lap_time
+            if update_session_best(lap_state, lap_time):
                 logger.info("New session best lap: %s ms", lap_time)
             else:
+                best_lap = lap_state.get("best_lap_ms")
                 best_display = best_lap if best_lap is not None else "n/a"
                 logger.info("Lap completed: %s ms (best %s ms)", lap_time, best_display)
 
