@@ -56,6 +56,8 @@ class LapEvent:
     player_name: str
     spare: int = 0
     raw_sp0: int = 0
+    track: Optional[str] = None
+    car: Optional[str] = None
 
 
 @dataclass
@@ -72,6 +74,17 @@ class SplitEvent:
     fuel_percent: int
     player_name: str
     spare: int = 0
+    track: Optional[str] = None
+    car: Optional[str] = None
+
+
+@dataclass
+class StateEvent:
+    """Represents high level state changes reported via ``IS_STA``."""
+
+    flags2: int
+    track: Optional[str] = None
+    car: Optional[str] = None
 
 
 class InSimClient:
@@ -81,14 +94,14 @@ class InSimClient:
         self,
         config: InSimConfig,
         *,
-        state_listeners: Optional[List[Callable[[int], None]]] = None,
+        state_listeners: Optional[List[Callable[["StateEvent"], None]]] = None,
         lap_listeners: Optional[List[Callable[["LapEvent"], None]]] = None,
         split_listeners: Optional[List[Callable[["SplitEvent"], None]]] = None,
     ) -> None:
         self._config = config
         self._sock: Optional[socket.socket] = None
         self._buffer = bytearray()
-        self._state_listeners: List[Callable[[int], None]] = []
+        self._state_listeners: List[Callable[["StateEvent"], None]] = []
         self._lap_listeners: List[Callable[["LapEvent"], None]] = []
         self._split_listeners: List[Callable[["SplitEvent"], None]] = []
         if state_listeners:
@@ -181,8 +194,8 @@ class InSimClient:
         logger.debug("Sending IS_MST command packet: %s", packet)
         self._sock.sendall(packet)
 
-    def add_state_listener(self, listener: Callable[[int], None]) -> None:
-        """Register a callback invoked with the ``Flags2`` value from ``IS_STA`` packets."""
+    def add_state_listener(self, listener: Callable[["StateEvent"], None]) -> None:
+        """Register a callback invoked for ``IS_STA`` packets."""
 
         self._state_listeners.append(listener)
 
@@ -269,9 +282,21 @@ class InSimClient:
 
         # Flags2 is stored as a 16-bit little endian value starting at offset 16.
         flags2 = struct.unpack_from("<H", packet, 16)[0]
+
+        track: Optional[str] = None
+        if len(packet) >= 30:
+            track_bytes = packet[24:30]
+            track = track_bytes.split(b"\x00", 1)[0].decode("ascii", errors="ignore").strip() or None
+
+        car: Optional[str] = None
+        if len(packet) >= 36:
+            car_bytes = packet[30:36]
+            car = car_bytes.split(b"\x00", 1)[0].decode("ascii", errors="ignore").strip() or None
+
+        event = StateEvent(flags2=flags2, track=track, car=car)
         for listener in list(self._state_listeners):
             try:
-                listener(flags2)
+                listener(event)
             except Exception:  # pragma: no cover - defensive logging
                 logger.exception("Error while handling InSim state listener")
 
@@ -384,5 +409,6 @@ __all__ = [
     "InSimConfig",
     "LapEvent",
     "SplitEvent",
+    "StateEvent",
     "ISS_MULTI",
 ]
