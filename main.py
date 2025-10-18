@@ -6,7 +6,7 @@ import logging
 import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from src.insim_client import ISS_MULTI, InSimClient, InSimConfig, LapEvent, SplitEvent, StateEvent
 from src.outsim_client import OutSimClient, OutSimFrame
@@ -112,6 +112,10 @@ def main() -> None:
     lap_state = {
         "current_lap_start_ms": None,  # type: Optional[int]
         "best_lap_ms": None,  # type: Optional[int]
+        "current_split_times": {},  # type: Dict[int, int]
+        "last_lap_split_fractions": [],  # type: List[float]
+        "pb_split_fractions": [],  # type: List[float]
+        "latest_estimated_total_ms": None,  # type: Optional[int]
     }
     tracked_plid: Optional[int] = None
     tracked_driver: Optional[str] = None
@@ -126,6 +130,75 @@ def main() -> None:
     mode_settings = {"sp": config.sp, "mp": config.mp}
 
     config_lock = threading.RLock()
+
+    def normalise_fractions(values: List[float]) -> List[float]:
+        cleaned: List[float] = []
+        last_value = 0.0
+        for value in values:
+            if value <= 0.0:
+                continue
+            clamped = max(last_value, min(value, 1.0))
+            if clamped >= 1.0:
+                break
+            if clamped > last_value:
+                cleaned.append(clamped)
+                last_value = clamped
+        return cleaned
+
+    def resolve_reference_fractions() -> List[float]:
+        fractions = lap_state.get("pb_split_fractions") or []
+        if fractions:
+            return normalise_fractions(list(fractions))
+
+        fallback = lap_state.get("last_lap_split_fractions") or []
+        if fallback:
+            return normalise_fractions(list(fallback))
+
+        current_splits: Dict[int, int] = lap_state.get("current_split_times", {})
+        estimate = lap_state.get("latest_estimated_total_ms")
+        if current_splits and estimate and estimate > 0:
+            ordered = [current_splits[idx] for idx in sorted(current_splits)]
+            derived = [split / estimate for split in ordered if split < estimate]
+            return normalise_fractions(derived)
+
+        return []
+
+    def estimate_reference_time(current_ms: Optional[int]) -> Optional[int]:
+        if current_ms is None:
+            return None
+        if persistent_best is None or persistent_best.laptime_ms <= 0:
+            return None
+
+        pb_total = persistent_best.laptime_ms
+        fractions = resolve_reference_fractions()
+        boundaries = fractions + [1.0]
+
+        current_splits: Dict[int, int] = lap_state.get("current_split_times", {})
+        sorted_split_times = [current_splits[idx] for idx in sorted(current_splits)]
+        passed_split_times = [t for t in sorted_split_times if t <= current_ms]
+
+        segment_index = min(len(passed_split_times), len(boundaries) - 1)
+        start_fraction = boundaries[segment_index - 1] if segment_index > 0 else 0.0
+        end_fraction = boundaries[segment_index]
+
+        pb_start = int(round(pb_total * start_fraction))
+        pb_end = int(round(pb_total * end_fraction))
+        pb_segment_duration = max(pb_end - pb_start, 1)
+
+        segment_start_time = (
+            passed_split_times[segment_index - 1]
+            if segment_index > 0 and segment_index - 1 < len(passed_split_times)
+            else 0
+        )
+        segment_elapsed = max(current_ms - segment_start_time, 0)
+        progress_within_segment = min(segment_elapsed / pb_segment_duration, 1.0)
+        reference_time = pb_start + int(round(progress_within_segment * pb_segment_duration))
+        return min(reference_time, pb_total)
+
+    def reset_split_tracking() -> None:
+        lap_state["current_split_times"] = {}
+        lap_state["latest_estimated_total_ms"] = None
+
     with config_lock:
         radar_enabled = mode_settings[current_mode].radar_enabled
         beep_system.set_enabled(mode_settings[current_mode].beeps_enabled)
@@ -149,6 +222,9 @@ def main() -> None:
         if track_changed or car_changed:
             if current_track and current_car:
                 persistent_best = load_personal_best(current_track, current_car)
+                lap_state["pb_split_fractions"] = []
+                lap_state["last_lap_split_fractions"] = []
+                reset_split_tracking()
                 if persistent_best is None:
                     logger.info(
                         "No stored personal best for %s / %s", current_track, current_car
@@ -195,6 +271,8 @@ def main() -> None:
             tracked_plid = event.plid
             tracked_driver = event.player_name or f"PLID {event.plid}"
             logger.info("Tracking lap data for %s (PLID %s)", tracked_driver, event.plid)
+            reset_split_tracking()
+            lap_state["last_lap_split_fractions"] = []
 
         if event.plid != tracked_plid:
             logger.debug(
@@ -205,6 +283,13 @@ def main() -> None:
             return
 
         lap_time = event.lap_time_ms
+        if event.estimate_time_ms > 0:
+            lap_state["latest_estimated_total_ms"] = event.estimate_time_ms
+
+        current_splits: Dict[int, int] = lap_state.get("current_split_times", {})
+        sorted_indices = sorted(current_splits)
+        split_times = [current_splits[idx] for idx in sorted_indices]
+
         if lap_time > 0:
             best_lap = lap_state["best_lap_ms"]
             if best_lap is None or lap_time < best_lap:
@@ -213,6 +298,22 @@ def main() -> None:
             else:
                 best_display = best_lap if best_lap is not None else "n/a"
                 logger.info("Lap completed: %s ms (best %s ms)", lap_time, best_display)
+
+            if split_times:
+                fractions: List[float] = []
+                last_fraction = 0.0
+                for split_time in split_times:
+                    if lap_time <= 0:
+                        break
+                    fraction = max(last_fraction, min(split_time / lap_time, 1.0))
+                    if fraction >= 1.0:
+                        break
+                    if fraction > last_fraction:
+                        fractions.append(fraction)
+                        last_fraction = fraction
+                lap_state["last_lap_split_fractions"] = fractions
+            else:
+                lap_state["last_lap_split_fractions"] = []
 
             if current_track and current_car:
                 pb_record, improved = record_lap(current_track, current_car, lap_time)
@@ -225,13 +326,26 @@ def main() -> None:
                         lap_time,
                         pb_record.recorded_at.isoformat(),
                     )
-        
+                    lap_state["pb_split_fractions"] = list(
+                        lap_state.get("last_lap_split_fractions", [])
+                    )
+                elif (
+                    lap_state.get("pb_split_fractions") in (None, [])
+                    and persistent_best.laptime_ms == lap_time
+                    and split_times
+                ):
+                    lap_state["pb_split_fractions"] = list(
+                        lap_state.get("last_lap_split_fractions", [])
+                    )
+
         if last_frame_time_ms is None:
             pending_lap_start = True
             logger.debug("Lap start timestamp unavailable; awaiting OutSim frame data")
         else:
             lap_state["current_lap_start_ms"] = last_frame_time_ms
             pending_lap_start = False
+
+        reset_split_tracking()
 
     def watch_config() -> None:
         nonlocal config, mode_settings, radar_enabled
@@ -285,7 +399,24 @@ def main() -> None:
             )
 
     def handle_split(event: SplitEvent) -> None:
+        nonlocal tracked_plid, tracked_driver
+
         update_track_context(event.track, event.car)
+
+        if tracked_plid is None:
+            tracked_plid = event.plid
+            tracked_driver = event.player_name or f"PLID {event.plid}"
+            reset_split_tracking()
+            lap_state["last_lap_split_fractions"] = []
+
+        if event.plid != tracked_plid:
+            return
+
+        lap_state.setdefault("current_split_times", {})[event.split_index] = (
+            event.split_time_ms
+        )
+        if event.estimate_time_ms > 0:
+            lap_state["latest_estimated_total_ms"] = event.estimate_time_ms
 
     watcher_thread = threading.Thread(target=watch_config, name="config-watcher", daemon=True)
     watcher_thread.start()
@@ -330,9 +461,18 @@ def main() -> None:
                 pb_display = (
                     f"{persistent_best.laptime_ms:>7} ms" if persistent_best else "-- ms"
                 )
+                reference_time = estimate_reference_time(current_lap_ms)
+                if reference_time is not None and current_lap_ms is not None:
+                    delta_ms = current_lap_ms - reference_time
+                else:
+                    delta_ms = None
+                delta_display = (
+                    f"{delta_ms:+7} ms" if delta_ms is not None else "  -- ms"
+                )
                 status_line = (
                     "Current lap: "
                     f"{current_display} | Session best: {best_display} | Personal best: {pb_display}"
+                    f" | Δ vs PB: {delta_display}"
                 )
                 if status_line != last_status_line:
                     padded_line = status_line
