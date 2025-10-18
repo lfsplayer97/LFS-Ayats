@@ -8,9 +8,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from src.insim_client import ISS_MULTI, InSimClient, InSimConfig, LapEvent
+from src.insim_client import ISS_MULTI, InSimClient, InSimConfig, LapEvent, SplitEvent, StateEvent
 from src.outsim_client import OutSimClient, OutSimFrame
 from src.radar import RadarRenderer
+from src.persistence import PersonalBestRecord, load_personal_best, record_lap
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +115,9 @@ def main() -> None:
     }
     tracked_plid: Optional[int] = None
     tracked_driver: Optional[str] = None
+    current_track: Optional[str] = None
+    current_car: Optional[str] = None
+    persistent_best: Optional[PersonalBestRecord] = None
     last_frame_time_ms: Optional[int] = None
     pending_lap_start = False
     last_status_line: str = ""
@@ -128,10 +132,42 @@ def main() -> None:
 
     stop_event = threading.Event()
 
-    def handle_state(flags2: int) -> None:
+    def update_track_context(track: Optional[str], car: Optional[str]) -> None:
+        nonlocal current_track, current_car, persistent_best
+
+        normalised_track = track.strip() if track else None
+        normalised_car = car.strip() if car else None
+
+        track_changed = bool(normalised_track and normalised_track != current_track)
+        car_changed = bool(normalised_car and normalised_car != current_car)
+
+        if track_changed:
+            current_track = normalised_track
+        if car_changed:
+            current_car = normalised_car
+
+        if track_changed or car_changed:
+            if current_track and current_car:
+                persistent_best = load_personal_best(current_track, current_car)
+                if persistent_best is None:
+                    logger.info(
+                        "No stored personal best for %s / %s", current_track, current_car
+                    )
+                else:
+                    logger.info(
+                        "Loaded personal best for %s / %s: %s ms (recorded %s)",
+                        current_track,
+                        current_car,
+                        persistent_best.laptime_ms,
+                        persistent_best.recorded_at.isoformat(),
+                    )
+
+    def handle_state(event: StateEvent) -> None:
         nonlocal current_mode, radar_enabled
 
-        new_mode = "mp" if flags2 & ISS_MULTI else "sp"
+        update_track_context(event.track, event.car)
+
+        new_mode = "mp" if event.flags2 & ISS_MULTI else "sp"
         if new_mode == current_mode:
             return
 
@@ -151,7 +187,9 @@ def main() -> None:
         )
 
     def handle_lap(event: LapEvent) -> None:
-        nonlocal tracked_plid, tracked_driver, last_frame_time_ms, pending_lap_start
+        nonlocal tracked_plid, tracked_driver, last_frame_time_ms, pending_lap_start, persistent_best
+
+        update_track_context(event.track, event.car)
 
         if tracked_plid is None:
             tracked_plid = event.plid
@@ -175,6 +213,18 @@ def main() -> None:
             else:
                 best_display = best_lap if best_lap is not None else "n/a"
                 logger.info("Lap completed: %s ms (best %s ms)", lap_time, best_display)
+
+            if current_track and current_car:
+                pb_record, improved = record_lap(current_track, current_car, lap_time)
+                persistent_best = pb_record
+                if improved:
+                    logger.info(
+                        "New personal best for %s / %s: %s ms (recorded %s)",
+                        current_track,
+                        current_car,
+                        lap_time,
+                        pb_record.recorded_at.isoformat(),
+                    )
         
         if last_frame_time_ms is None:
             pending_lap_start = True
@@ -234,6 +284,9 @@ def main() -> None:
                 beep_mode_state,
             )
 
+    def handle_split(event: SplitEvent) -> None:
+        update_track_context(event.track, event.car)
+
     watcher_thread = threading.Thread(target=watch_config, name="config-watcher", daemon=True)
     watcher_thread.start()
 
@@ -242,6 +295,7 @@ def main() -> None:
             config.insim,
             state_listeners=[handle_state],
             lap_listeners=[handle_lap],
+            split_listeners=[handle_split],
         ) as insim, OutSimClient(
             config.outsim_port
         ) as outsim:
@@ -273,7 +327,13 @@ def main() -> None:
                 best_display = (
                     f"{best_lap_ms:>7} ms" if best_lap_ms is not None else "-- ms"
                 )
-                status_line = f"Current lap: {current_display} | Session best: {best_display}"
+                pb_display = (
+                    f"{persistent_best.laptime_ms:>7} ms" if persistent_best else "-- ms"
+                )
+                status_line = (
+                    "Current lap: "
+                    f"{current_display} | Session best: {best_display} | Personal best: {pb_display}"
+                )
                 if status_line != last_status_line:
                     padded_line = status_line
                     if len(last_status_line) > len(status_line):
