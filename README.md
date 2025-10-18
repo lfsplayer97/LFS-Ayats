@@ -26,7 +26,12 @@ All runtime settings are stored in [`config.json`](config.json):
   "outsim": {
     "port": 30000,
     "update_hz": 60
-  }
+  },
+  "sp_radar_enabled": true,
+  "sp_beeps_enabled": true,
+  "mp_radar_enabled": true,
+  "mp_beeps_enabled": false,
+  "beep_mode": "standard"
 }
 ```
 
@@ -38,6 +43,19 @@ All runtime settings are stored in [`config.json`](config.json):
   this in `cfg.txt` within LFS).
 * **`outsim.update_hz`** – documentation value for your preferred update rate;
   currently informational only for the prototype.
+* **`sp_radar_enabled` / `sp_beeps_enabled`** – toggle the radar renderer and
+  beep subsystem while driving in single-player sessions.
+* **`mp_radar_enabled` / `mp_beeps_enabled`** – equivalent toggles when InSim
+  reports that you are connected to a multiplayer host.
+* **`beep_mode`** – selects the strategy used by the beep subsystem (currently a
+  placeholder string).
+
+The app automatically swaps between the single-player (`sp_*`) and
+multiplayer (`mp_*`) settings whenever InSim updates its state. When the
+`ISS_MULTI` flag is set, the multiplayer configuration is applied; otherwise the
+single-player options remain in effect. Configuration edits are watched on disk
+and hot-reloaded at runtime, so you can tweak these values without restarting
+the program.
 
 Adjust the values to match your LFS setup before running the program.
 
