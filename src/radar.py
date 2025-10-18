@@ -1,7 +1,6 @@
 """ASCII radar visualisation for OutSim telemetry."""
 from __future__ import annotations
 
-import math
 import sys
 from typing import List, TextIO
 
@@ -28,12 +27,12 @@ class RadarRenderer:
         if 0 <= row < self._grid_size and 0 <= col < self._grid_size:
             grid[row][col] = "X"
 
+        yaw_deg, pitch_deg, roll_deg = frame.yaw_pitch_roll_degrees
         lines = [
             "Radar view (O = origin, X = current OutSim position)",
             f"Time: {frame.time_ms / 1000:.2f}s  Speed: {frame.speed * 3.6:.1f} km/h",
             f"Pos: x={x:7.2f}m y={y:7.2f}m z={frame.position[2]:7.2f}m",
-            f"Orientation: heading={math.degrees(frame.orientation[0]):6.1f}° "
-            f"pitch={math.degrees(frame.orientation[1]):6.1f}° roll={math.degrees(frame.orientation[2]):6.1f}°",
+            f"Orientation: yaw={yaw_deg:6.1f}° pitch={pitch_deg:6.1f}° roll={roll_deg:6.1f}°",
             "",
         ]
         for row_cells in grid:

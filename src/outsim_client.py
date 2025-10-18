@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import math
 import socket
 import struct
 from dataclasses import dataclass
@@ -20,7 +21,7 @@ class OutSimFrame:
 
     time_ms: int
     ang_vel: Tuple[float, float, float]
-    orientation: Tuple[float, float, float]  # heading, pitch, roll
+    heading: Tuple[float, float, float]
     acceleration: Tuple[float, float, float]
     velocity: Tuple[float, float, float]
     position: Tuple[float, float, float]
@@ -34,14 +35,14 @@ class OutSimFrame:
 
         (time_ms, *values) = _OUTSIM_STRUCT.unpack_from(packet)
         ang_vel = tuple(values[0:3])  # type: ignore[assignment]
-        orientation = tuple(values[3:6])  # heading, pitch, roll
+        heading = tuple(values[3:6])
         acceleration = tuple(values[6:9])
         velocity = tuple(values[9:12])
         position = tuple(values[12:15])
         return cls(
             time_ms=time_ms,
             ang_vel=ang_vel,  # type: ignore[arg-type]
-            orientation=orientation,  # type: ignore[arg-type]
+            heading=heading,  # type: ignore[arg-type]
             acceleration=acceleration,  # type: ignore[arg-type]
             velocity=velocity,  # type: ignore[arg-type]
             position=position,  # type: ignore[arg-type]
@@ -51,6 +52,32 @@ class OutSimFrame:
     def speed(self) -> float:
         vx, vy, vz = self.velocity
         return (vx * vx + vy * vy + vz * vz) ** 0.5
+
+    @property
+    def yaw_pitch_roll(self) -> Tuple[float, float, float]:
+        """Orientation expressed as yaw, pitch and roll angles in radians."""
+
+        hx, hy, hz = self.heading
+        horizontal_mag = math.hypot(hx, hy)
+
+        if horizontal_mag < 1e-12:
+            yaw = 0.0
+        else:
+            yaw = math.atan2(hx, hy)
+
+        if horizontal_mag < 1e-12:
+            pitch = math.copysign(math.pi / 2, hz) if hz else 0.0
+        else:
+            pitch = math.atan2(hz, horizontal_mag)
+
+        roll = 0.0
+        return yaw, pitch, roll
+
+    @property
+    def yaw_pitch_roll_degrees(self) -> Tuple[float, float, float]:
+        """Orientation expressed as yaw, pitch and roll angles in degrees."""
+
+        return tuple(math.degrees(angle) for angle in self.yaw_pitch_roll)
 
 
 class OutSimClient:
