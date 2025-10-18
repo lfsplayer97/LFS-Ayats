@@ -8,5 +8,10 @@
   "outsim": {
     "port": 30000,
     "update_hz": 60
-  }
+  },
+  "sp_radar_enabled": true,
+  "sp_beeps_enabled": true,
+  "mp_radar_enabled": true,
+  "mp_beeps_enabled": false,
+  "beep_mode": "standard"
 }

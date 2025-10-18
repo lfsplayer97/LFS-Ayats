@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import logging
+import select
 import socket
 import struct
 from dataclasses import dataclass
-from typing import Optional
+from typing import Callable, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -16,11 +17,16 @@ logger = logging.getLogger(__name__)
 # enabling multiplayer-safe telemetry are included – additional flags can be
 # added in the future as the prototype grows.
 ISP_ISI = 1
+ISP_STA = 5
 ISP_MST = 11
 
 ISF_MCI = 1 << 0  # receive multi car info packets
 ISF_CON = 1 << 1  # receive contact packets
 ISF_OBH = 1 << 2  # receive object hit packets
+
+
+# InSim state flags (Flags2 field of ``IS_STA``)
+ISS_MULTI = 1 << 0
 
 
 @dataclass
@@ -37,9 +43,18 @@ class InSimConfig:
 class InSimClient:
     """Minimal TCP client for the Live for Speed InSim protocol."""
 
-    def __init__(self, config: InSimConfig) -> None:
+    def __init__(
+        self,
+        config: InSimConfig,
+        *,
+        state_listeners: Optional[List[Callable[[int], None]]] = None,
+    ) -> None:
         self._config = config
         self._sock: Optional[socket.socket] = None
+        self._buffer = bytearray()
+        self._state_listeners: List[Callable[[int], None]] = []
+        if state_listeners:
+            self._state_listeners.extend(state_listeners)
 
     # -- socket lifecycle --------------------------------------------------
     def connect(self) -> None:
@@ -54,6 +69,8 @@ class InSimClient:
             (self._config.host, self._config.port), timeout=self._config.timeout
         )
         self._sock = sock
+        self._buffer.clear()
+        sock.setblocking(False)
 
         size = 44
         reqi = 0
@@ -122,6 +139,74 @@ class InSimClient:
         logger.debug("Sending IS_MST command packet: %s", packet)
         self._sock.sendall(packet)
 
+    def add_state_listener(self, listener: Callable[[int], None]) -> None:
+        """Register a callback invoked with the ``Flags2`` value from ``IS_STA`` packets."""
+
+        self._state_listeners.append(listener)
+
+    def poll(self) -> None:
+        """Poll the socket for incoming packets and dispatch them."""
+
+        if self._sock is None:
+            return
+
+        ready, _, _ = select.select([self._sock], [], [], 0)
+        if not ready:
+            return
+
+        try:
+            data = self._sock.recv(4096)
+        except BlockingIOError:
+            return
+
+        if not data:
+            logger.info("InSim connection closed by remote host")
+            self.close()
+            return
+
+        self._buffer.extend(data)
+        self._process_buffer()
+
+    # -- internal helpers ------------------------------------------------
+    def _process_buffer(self) -> None:
+        while len(self._buffer) >= 1:
+            packet_size = self._buffer[0]
+            if packet_size == 0:
+                # Avoid infinite loops if malformed data is received.
+                logger.warning("Encountered zero-length packet in InSim buffer")
+                self._buffer.clear()
+                return
+
+            if len(self._buffer) < packet_size:
+                return
+
+            packet = bytes(self._buffer[:packet_size])
+            del self._buffer[:packet_size]
+            self._handle_packet(packet)
+
+    def _handle_packet(self, packet: bytes) -> None:
+        if len(packet) < 2:
+            logger.debug("Dropping truncated InSim packet: %s", packet)
+            return
+
+        packet_type = packet[1]
+        if packet_type == ISP_STA:
+            self._handle_is_sta(packet)
+
+    def _handle_is_sta(self, packet: bytes) -> None:
+        # IS_STA packets are 28 bytes long in current protocol versions.
+        if len(packet) < 20:
+            logger.debug("Dropping incomplete IS_STA packet: %s", packet)
+            return
+
+        # Flags2 is stored as a 16-bit little endian value starting at offset 16.
+        flags2 = struct.unpack_from("<H", packet, 16)[0]
+        for listener in list(self._state_listeners):
+            try:
+                listener(flags2)
+            except Exception:  # pragma: no cover - defensive logging
+                logger.exception("Error while handling InSim state listener")
+
     def __enter__(self) -> "InSimClient":
         self.connect()
         return self
@@ -130,4 +215,4 @@ class InSimClient:
         self.close()
 
 
-__all__ = ["InSimClient", "InSimConfig"]
+__all__ = ["InSimClient", "InSimConfig", "ISS_MULTI"]
