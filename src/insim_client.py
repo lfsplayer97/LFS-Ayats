@@ -19,12 +19,14 @@ logger = logging.getLogger(__name__)
 ISP_ISI = 1
 ISP_STA = 5
 ISP_MST = 11
+ISP_NPL = 21
 ISP_LAP = 28
 ISP_SPX = 29
 
 ISF_MCI = 1 << 0  # receive multi car info packets
 ISF_CON = 1 << 1  # receive contact packets
 ISF_OBH = 1 << 2  # receive object hit packets
+ISF_NLP = 1 << 3  # receive IS_NPL packets containing player load info
 
 
 # InSim state flags (Flags2 field of ``IS_STA``)
@@ -104,6 +106,10 @@ class InSimClient:
         self._state_listeners: List[Callable[["StateEvent"], None]] = []
         self._lap_listeners: List[Callable[["LapEvent"], None]] = []
         self._split_listeners: List[Callable[["SplitEvent"], None]] = []
+        self._plid_to_car: dict[int, str] = {}
+        self._current_track: Optional[str] = None
+        self._current_car: Optional[str] = None
+        self._view_plid: Optional[int] = None
         if state_listeners:
             self._state_listeners.extend(state_listeners)
         if lap_listeners:
@@ -125,12 +131,16 @@ class InSimClient:
         )
         self._sock = sock
         self._buffer.clear()
+        self._plid_to_car.clear()
+        self._current_track = None
+        self._current_car = None
+        self._view_plid = None
         sock.setblocking(False)
 
         size = 44
         reqi = 0
         udp_port = 0  # we are not using a UDP connection for InSim packets here
-        flags = ISF_MCI | ISF_CON | ISF_OBH
+        flags = ISF_MCI | ISF_CON | ISF_OBH | ISF_NLP
         sp0 = 0
         prefix = ord("/")
         interval = max(1, self._config.interval_ms)
@@ -257,9 +267,16 @@ class InSimClient:
         packet_type = packet[1]
         if packet_type == ISP_STA:
             self._handle_is_sta(packet)
+        elif packet_type == ISP_NPL:
+            self._handle_is_npl(packet)
         elif packet_type == ISP_LAP:
             event = self._parse_lap_packet(packet)
             if event:
+                event.track = self._current_track
+                car = self._plid_to_car.get(event.plid)
+                if car is None and self._view_plid is not None and event.plid == self._view_plid:
+                    car = self._current_car
+                event.car = car
                 for listener in list(self._lap_listeners):
                     try:
                         listener(event)
@@ -268,6 +285,11 @@ class InSimClient:
         elif packet_type == ISP_SPX:
             event = self._parse_split_packet(packet)
             if event:
+                event.track = self._current_track
+                car = self._plid_to_car.get(event.plid)
+                if car is None and self._view_plid is not None and event.plid == self._view_plid:
+                    car = self._current_car
+                event.car = car
                 for listener in list(self._split_listeners):
                     try:
                         listener(event)
@@ -283,17 +305,48 @@ class InSimClient:
         # Flags2 is stored as a 16-bit little endian value starting at offset 16.
         flags2 = struct.unpack_from("<H", packet, 16)[0]
 
+        view_plid = packet[10] if len(packet) > 10 else 0
+        self._view_plid = view_plid or None
+
         track: Optional[str] = None
-        if len(packet) >= 30:
-            track_bytes = packet[24:30]
+        if len(packet) >= 26:
+            track_bytes = packet[20:26]
             track = track_bytes.split(b"\x00", 1)[0].decode("ascii", errors="ignore").strip() or None
 
-        car: Optional[str] = None
-        if len(packet) >= 36:
-            car_bytes = packet[30:36]
-            car = car_bytes.split(b"\x00", 1)[0].decode("ascii", errors="ignore").strip() or None
+        if track:
+            self._current_track = track
 
-        event = StateEvent(flags2=flags2, track=track, car=car)
+        car: Optional[str] = None
+        if self._view_plid is not None:
+            car = self._plid_to_car.get(self._view_plid)
+
+        if car:
+            self._current_car = car
+
+        event = StateEvent(flags2=flags2, track=self._current_track, car=self._current_car)
+        for listener in list(self._state_listeners):
+            try:
+                listener(event)
+            except Exception:  # pragma: no cover - defensive logging
+                logger.exception("Error while handling InSim state listener")
+
+    def _handle_is_npl(self, packet: bytes) -> None:
+        if len(packet) < 44:
+            logger.debug("Dropping incomplete IS_NPL packet: %s", packet)
+            return
+
+        plid = packet[3]
+        car_bytes = packet[40:44]
+        car = car_bytes.split(b"\x00", 1)[0].decode("ascii", errors="ignore").strip()
+
+        if not car:
+            return
+
+        self._plid_to_car[plid] = car
+        if self._view_plid is not None and plid == self._view_plid:
+            self._current_car = car
+
+        event = StateEvent(flags2=0, track=self._current_track, car=self._current_car)
         for listener in list(self._state_listeners):
             try:
                 listener(event)
@@ -411,4 +464,8 @@ __all__ = [
     "SplitEvent",
     "StateEvent",
     "ISS_MULTI",
+    "ISP_NPL",
+    "ISP_STA",
+    "ISP_LAP",
+    "ISP_SPX",
 ]
