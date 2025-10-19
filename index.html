@@ -19,6 +19,15 @@
   </head>
   <body>
     <a class="skip-link" href="#contingut-principal">Salta al contingut principal</a>
+    <header class="site-header" role="banner">
+      <div class="site-header__inner">
+        <p class="site-brand" aria-label="LFS-Ayats">LFS-Ayats</p>
+        <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Canvia el mode de color">
+          <span class="theme-toggle__icon" aria-hidden="true">🌙</span>
+          <span class="theme-toggle__label">Mode fosc</span>
+        </button>
+      </div>
+    </header>
     <section class="hero" aria-labelledby="hero-titol">
       <div class="hero-inner">
         <div class="hero-content">
@@ -75,12 +84,28 @@
 
       <section id="caracteristiques" aria-labelledby="caracteristiques-titol">
         <h2 id="caracteristiques-titol">Característiques clau</h2>
-        <ul>
-          <li>Radar ASCII amb actualitzacions en temps real i refresc configurable.</li>
-          <li>Mode multijugador amb detecció de proximitat i alertes acústiques opcionals.</li>
-          <li>Personalització de la visualització amb perfils d&rsquo;usuari i temes de color via configuració.</li>
-          <li>Registre d&rsquo;events i estadístiques bàsiques per analitzar sessions de conducció.</li>
-        </ul>
+        <div class="feature-grid" role="list">
+          <article class="feature-card" role="listitem">
+            <span class="feature-card__icon" aria-hidden="true">⚡</span>
+            <h3>Actualitzacions en temps real</h3>
+            <p>Radar ASCII amb refresc configurable per mantenir la pista sempre sota control.</p>
+          </article>
+          <article class="feature-card" role="listitem">
+            <span class="feature-card__icon" aria-hidden="true">🤝</span>
+            <h3>Multijugador intel·ligent</h3>
+            <p>Mode multijugador amb detecció de proximitat i alertes acústiques opcionals.</p>
+          </article>
+          <article class="feature-card" role="listitem">
+            <span class="feature-card__icon" aria-hidden="true">🎨</span>
+            <h3>Temes personalitzables</h3>
+            <p>Personalitza perfils, HUD i temes de color sense dependre de biblioteques externes.</p>
+          </article>
+          <article class="feature-card" role="listitem">
+            <span class="feature-card__icon" aria-hidden="true">📊</span>
+            <h3>Estadístiques i registres</h3>
+            <p>Recull events i mètriques bàsiques per analitzar sessions i detectar patrons.</p>
+          </article>
+        </div>
         <figure>
           <pre aria-hidden="true">
    ┌───────────── Radar ASCII ─────────────┐
@@ -102,22 +127,68 @@
           vehicle i dels rivals. La connexió es negocia mitjançant sockets TCP/UDP i es manté un cicle constant de
           peticions i actualitzacions per garantir la coherència entre la simulació i el radar.
         </p>
-        <ul>
-          <li><strong>InSim</strong>: recepció d&rsquo;events de carrera, estat del vehicle i control remot.</li>
-          <li><strong>OutSim</strong>: obtenció de vectors de posició, velocitat i orientació a 60 Hz.</li>
-          <li><strong>Sincronització</strong>: gestió de latència i reconeixement de desconnexions per mantenir el radar actiu.</li>
-        </ul>
+        <table class="data-table">
+          <caption class="visually-hidden">Resum dels protocols de comunicació utilitzats pel radar</caption>
+          <thead>
+            <tr>
+              <th scope="col">Protocol</th>
+              <th scope="col">Transport</th>
+              <th scope="col">Freqüència</th>
+              <th scope="col">Funcions principals</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">InSim</th>
+              <td>TCP</td>
+              <td>Interval configurable</td>
+              <td>Events de carrera, estat del vehicle, control remot</td>
+            </tr>
+            <tr>
+              <th scope="row">OutSim</th>
+              <td>UDP</td>
+              <td>60 Hz</td>
+              <td>Vectors de posició, orientació i velocitat</td>
+            </tr>
+            <tr>
+              <th scope="row">Sincronització</th>
+              <td>TCP &amp; UDP</td>
+              <td>Continu</td>
+              <td>Gestió de latència, reconeixement de desconnexions</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
 
       <section id="arquitectura" aria-labelledby="arquitectura-titol">
         <h2 id="arquitectura-titol">Arquitectura i components</h2>
         <p>La solució es divideix en capes ben definides que faciliten l&rsquo;extensió del projecte:</p>
-        <ul>
-          <li><strong>Entrada de dades</strong>: clients d&rsquo;InSim i OutSim que encapsulen la comunicació.</li>
-          <li><strong>Processament</strong>: motor de càlcul que filtra i normalitza posicions i distàncies.</li>
-          <li><strong>Renderitzat</strong>: mòdul de radar ASCII i HUD per mostrar informació contextual.</li>
-          <li><strong>Configuració</strong>: gestor de paràmetres amb recàrrega dinàmica i validacions.</li>
-        </ul>
+        <div class="architecture-grid" role="list">
+          <article class="architecture-card" role="listitem">
+            <span class="architecture-card__icon" aria-hidden="true">📥</span>
+            <h3>Entrada de dades</h3>
+            <p>Clients d&rsquo;InSim i OutSim que encapsulen la comunicació amb Live for Speed.</p>
+            <span class="data-tag">Sockets TCP/UDP</span>
+          </article>
+          <article class="architecture-card" role="listitem">
+            <span class="architecture-card__icon" aria-hidden="true">🧮</span>
+            <h3>Processament</h3>
+            <p>Motor de càlcul que filtra posicions, distàncies i gestiona el context multijugador.</p>
+            <span class="data-tag">Normalització de vectors</span>
+          </article>
+          <article class="architecture-card" role="listitem">
+            <span class="architecture-card__icon" aria-hidden="true">🖥️</span>
+            <h3>Renderitzat</h3>
+            <p>Mòduls de radar ASCII i HUD per mostrar informació contextual i alertes.</p>
+            <span class="data-tag">Interfície textual</span>
+          </article>
+          <article class="architecture-card" role="listitem">
+            <span class="architecture-card__icon" aria-hidden="true">🛠️</span>
+            <h3>Configuració</h3>
+            <p>Gestor de paràmetres amb recàrrega en calent i validacions en temps real.</p>
+            <span class="data-tag">JSON dinàmic</span>
+          </article>
+        </div>
       </section>
 
       <section id="flux" aria-labelledby="flux-titol">
@@ -133,7 +204,7 @@
 
       <section id="casos-us" aria-labelledby="casos-us-titol">
         <h2 id="casos-us-titol">Casos d&rsquo;ús</h2>
-        <ul>
+        <ul class="decorated-list">
           <li><strong>Sessions privades</strong>: millorar l&rsquo;awareness del pilot en entrenaments individuals.</li>
           <li><strong>Competicions en línia</strong>: suport als marshals per monitorar incidents en temps real.</li>
           <li><strong>Streaming</strong>: integrar la sortida del radar en directes per oferir context addicional.</li>
@@ -147,6 +218,11 @@
           Totes les opcions s&rsquo;editen a <code>config.json</code>. A continuació tens l&rsquo;estructura bàsica i els camps més
           rellevants per adaptar el radar al teu servidor de LFS:
         </p>
+        <div class="tag-strip" role="list">
+          <span class="data-tag" role="listitem">Python 3.10+</span>
+          <span class="data-tag" role="listitem">Sense dependències externes</span>
+          <span class="data-tag" role="listitem">Recàrrega en calent</span>
+        </div>
         <pre><code>{
   "insim": {
     "host": "127.0.0.1",
@@ -200,6 +276,12 @@
           <li><a href="../../src/radar.py">Renderitzat ASCII del radar a src/radar.py</a></li>
           <li><a href="../../src/hud.py">Visualització d&rsquo;informació auxiliar a src/hud.py</a></li>
         </ul>
+        <div class="callout">
+          <p>
+            Consulta els fitxers anteriors per entendre l&rsquo;estructura modular i detecta ràpidament punts on afegir noves
+            funcionalitats o depurar comportaments.
+          </p>
+        </div>
       </section>
 
       <section id="faq" aria-labelledby="faq-titol">
@@ -228,6 +310,29 @@
       <p>&copy; <span id="year"></span> LFS-Ayats · Projecte comunitari</p>
     </footer>
     <script>
+      const root = document.documentElement;
+      const body = document.body;
+      const toggle = document.querySelector(".theme-toggle");
+      const THEME_KEY = "lfs-ayats-theme";
+
+      const applyTheme = (theme) => {
+        body.dataset.theme = theme;
+        toggle.setAttribute("aria-pressed", theme === "dark");
+        toggle.querySelector(".theme-toggle__icon").textContent = theme === "dark" ? "☀️" : "🌙";
+        toggle.querySelector(".theme-toggle__label").textContent = theme === "dark" ? "Mode clar" : "Mode fosc";
+        root.style.colorScheme = theme === "dark" ? "dark" : "light";
+      };
+
+      const storedTheme = window.localStorage.getItem(THEME_KEY);
+      const preferred = storedTheme || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      applyTheme(preferred);
+
+      toggle.addEventListener("click", () => {
+        const next = body.dataset.theme === "dark" ? "light" : "dark";
+        window.localStorage.setItem(THEME_KEY, next);
+        applyTheme(next);
+      });
+
       document.getElementById("year").textContent = new Date().getFullYear();
     </script>
   </body>
