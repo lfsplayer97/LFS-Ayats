@@ -102,6 +102,22 @@ make lint
 També podeu invocar les eines individualment: `make lint-flake8`,
 `make lint-pylint`, `make lint-mypy` o `make lint-bandit`.
 
+### Tests automatitzats
+
+Els tests utilitzen `pytest` i pressuposen que el paquet s'ha instal·lat en mode
+editable perquè els imports `src.*` funcionin sense hacks de camí. Des de
+l'arrel del projecte:
+
+```bash
+python -m pip install -e .
+python -m pip install -r requirements-dev.txt  # opcional, per a eines addicionals
+pytest
+```
+
+El fitxer [`tests/conftest.py`](tests/conftest.py) conté fixtures compartides,
+com ara `insim_client_factory`, per crear instàncies d'`InSimClient` de manera
+consistent entre proves.
+
 ### Flux amb pre-commit
 
 Instal·leu [pre-commit](https://pre-commit.com) i registreu els hooks definits a
