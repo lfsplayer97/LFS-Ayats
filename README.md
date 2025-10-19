@@ -1,5 +1,7 @@
 # LFS-Ayats
 
+[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
+
 Prototype telemetry radar for Live for Speed (LFS).
 
 ## Resum executiu
@@ -55,6 +57,27 @@ la configuració segons la teva instal·lació de LFS.
 - [Options_Controls - LFS Manual](docs/Options_Controls%20-%20LFS%20Manual.pdf)
 - [Views - LFS Manual](docs/Views%20-%20LFS%20Manual.pdf)
 - [Documentació interactiva](docs/site/index.html)
+
+## Integració contínua
+
+- Substituïu `OWNER/REPO` a la insignia anterior pel nom real del projecte a
+  GitHub per activar l’enllaç automàtic a la pipeline.
+- La pipeline `CI` s’executa en `push` i en `pull_request` i inclou una matriu
+  d’entorns amb `ubuntu-latest` i Python `3.10`/`3.11`.
+- Cada feina instal·la el paquet en mode editable, reutilitza la memòria cau de
+  `pip` (tant des de `actions/setup-python` com amb una memòria cau dedicada del
+  directori retornat per `python -m pip cache dir`) i després executa les
+  comprovacions següents:
+  - `black --check`
+  - `isort --check-only`
+  - `flake8`
+  - `pylint`
+  - `mypy`
+  - `bandit`
+  - `pytest`
+- Una feina addicional genera un informe consolidat amb la sortida de totes les
+  eines anteriors i l’adjunta com a artefacte (`static-analysis-report.txt`) per
+  facilitar la revisió sense haver de consultar els logs de cada feina.
 
 ## Notes per a desenvolupadors
 
