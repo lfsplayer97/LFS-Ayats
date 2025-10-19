@@ -83,3 +83,10 @@ The telemetry helpers live in the `src/` package:
 
 These modules are intentionally small and can be extended with additional
 functionality from the InSim/OutSim specifications as needed.
+
+## Additional documentation
+
+| Resource | Description |
+| --- | --- |
+| [Interactive documentation site](docs/site/index.html) | Browser-based overview of the prototype with interactive summaries and deep links to common workflows. |
+| [LFS manual extracts](docs/) | Official PDF guides (commands, controls, scripting, and more) that complement the interactive notes with the full simulator manuals. |
