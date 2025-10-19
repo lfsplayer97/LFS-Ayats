@@ -44,10 +44,17 @@
     <nav class="site-nav" aria-label="Seccions del lloc">
       <ul>
         <li><a href="#resum">Resum del projecte</a></li>
+        <li><a href="#caracteristiques">Característiques clau</a></li>
+        <li><a href="#integracio">Integració amb Live for Speed</a></li>
+        <li><a href="#arquitectura">Arquitectura i components</a></li>
+        <li><a href="#flux">Flux d&rsquo;execució</a></li>
+        <li><a href="#casos-us">Casos d&rsquo;ús</a></li>
         <li><a href="#configuracio">Configuració</a></li>
         <li><a href="#execucio">Execució</a></li>
         <li><a href="#manuals">PDF de referència</a></li>
         <li><a href="#tecnica">Referència tècnica</a></li>
+        <li><a href="#faq">Preguntes freqüents</a></li>
+        <li><a href="#roadmap">Roadmap / Estat</a></li>
       </ul>
     </nav>
 
@@ -63,6 +70,74 @@
         <ul>
           <li>Només necessita <strong>Python 3.10 o superior</strong>.</li>
           <li>No té <strong>cap dependència externa</strong>; utilitza exclusivament la llibreria estàndard.</li>
+        </ul>
+      </section>
+
+      <section id="caracteristiques" aria-labelledby="caracteristiques-titol">
+        <h2 id="caracteristiques-titol">Característiques clau</h2>
+        <ul>
+          <li>Radar ASCII amb actualitzacions en temps real i refresc configurable.</li>
+          <li>Mode multijugador amb detecció de proximitat i alertes acústiques opcionals.</li>
+          <li>Personalització de la visualització amb perfils d&rsquo;usuari i temes de color via configuració.</li>
+          <li>Registre d&rsquo;events i estadístiques bàsiques per analitzar sessions de conducció.</li>
+        </ul>
+        <figure>
+          <pre aria-hidden="true">
+   ┌───────────── Radar ASCII ─────────────┐
+   │       ·        ↑        ·             │
+   │   ·       ┌─────────┐        ·       │
+   │           │   YOU   │                │
+   │   ·       └─────────┘   ·            │
+   │        rival ◄──●──► rival          │
+   └──────────────────────────────────────┘
+          </pre>
+          <figcaption>Exemple simplificat de la visualització del radar en una terminal.</figcaption>
+        </figure>
+      </section>
+
+      <section id="integracio" aria-labelledby="integracio-titol">
+        <h2 id="integracio-titol">Integració amb Live for Speed</h2>
+        <p>
+          El radar s&rsquo;integra amb Live for Speed utilitzant els protocols InSim i OutSim per obtenir informació del
+          vehicle i dels rivals. La connexió es negocia mitjançant sockets TCP/UDP i es manté un cicle constant de
+          peticions i actualitzacions per garantir la coherència entre la simulació i el radar.
+        </p>
+        <ul>
+          <li><strong>InSim</strong>: recepció d&rsquo;events de carrera, estat del vehicle i control remot.</li>
+          <li><strong>OutSim</strong>: obtenció de vectors de posició, velocitat i orientació a 60 Hz.</li>
+          <li><strong>Sincronització</strong>: gestió de latència i reconeixement de desconnexions per mantenir el radar actiu.</li>
+        </ul>
+      </section>
+
+      <section id="arquitectura" aria-labelledby="arquitectura-titol">
+        <h2 id="arquitectura-titol">Arquitectura i components</h2>
+        <p>La solució es divideix en capes ben definides que faciliten l&rsquo;extensió del projecte:</p>
+        <ul>
+          <li><strong>Entrada de dades</strong>: clients d&rsquo;InSim i OutSim que encapsulen la comunicació.</li>
+          <li><strong>Processament</strong>: motor de càlcul que filtra i normalitza posicions i distàncies.</li>
+          <li><strong>Renderitzat</strong>: mòdul de radar ASCII i HUD per mostrar informació contextual.</li>
+          <li><strong>Configuració</strong>: gestor de paràmetres amb recàrrega dinàmica i validacions.</li>
+        </ul>
+      </section>
+
+      <section id="flux" aria-labelledby="flux-titol">
+        <h2 id="flux-titol">Flux d&rsquo;execució</h2>
+        <ol>
+          <li>Carrega de configuració i establiment de connexions amb InSim/OutSim.</li>
+          <li>Recepció contínua de paquets de telemetria i events de carrera.</li>
+          <li>Processament de la informació per detectar proximitats, col·lisions i context.</li>
+          <li>Actualització del radar ASCII i del HUD amb la darrera informació disponible.</li>
+          <li>Registre d&rsquo;events i gestió de comandes d&rsquo;usuari fins que es finalitza el programa.</li>
+        </ol>
+      </section>
+
+      <section id="casos-us" aria-labelledby="casos-us-titol">
+        <h2 id="casos-us-titol">Casos d&rsquo;ús</h2>
+        <ul>
+          <li><strong>Sessions privades</strong>: millorar l&rsquo;awareness del pilot en entrenaments individuals.</li>
+          <li><strong>Competicions en línia</strong>: suport als marshals per monitorar incidents en temps real.</li>
+          <li><strong>Streaming</strong>: integrar la sortida del radar en directes per oferir context addicional.</li>
+          <li><strong>Recerca</strong>: analitzar patrons de conducció per projectes d&rsquo;IA o telemetria avançada.</li>
         </ul>
       </section>
 
@@ -124,6 +199,27 @@
           <li><a href="../../src/outsim_client.py">Gestor UDP i parseig d&rsquo;OutSim a src/outsim_client.py</a></li>
           <li><a href="../../src/radar.py">Renderitzat ASCII del radar a src/radar.py</a></li>
           <li><a href="../../src/hud.py">Visualització d&rsquo;informació auxiliar a src/hud.py</a></li>
+        </ul>
+      </section>
+
+      <section id="faq" aria-labelledby="faq-titol">
+        <h2 id="faq-titol">Preguntes freqüents</h2>
+        <dl>
+          <dt>Necessito permisos d&rsquo;administrador per utilitzar el radar?</dt>
+          <dd>No, només cal tenir accés al servidor o host local on s&rsquo;executa Live for Speed.</dd>
+          <dt>Es pot executar en Windows i Linux?</dt>
+          <dd>Sí, qualsevol plataforma amb Python 3.10+ és compatible.</dd>
+          <dt>Com puc afegir nous temes de color?</dt>
+          <dd>Afegeix les opcions corresponents a <code>config.json</code> i reinicia el procés per aplicar-les.</dd>
+        </dl>
+      </section>
+
+      <section id="roadmap" aria-labelledby="roadmap-titol">
+        <h2 id="roadmap-titol">Roadmap / Estat del projecte</h2>
+        <ul>
+          <li><strong>Fet</strong>: base del radar ASCII, integració InSim/OutSim, configuració dinàmica.</li>
+          <li><strong>En progrés</strong>: millora de la detecció d&rsquo;incidents i optimització del processament.</li>
+          <li><strong>Planificat</strong>: mode espectador amb superposició visual i exportació de telemetria.</li>
         </ul>
       </section>
     </main>
