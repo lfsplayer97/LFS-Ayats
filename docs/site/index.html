@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Documentació · LFS-Ayats</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      line-height: 1.6;
+      color: #1f2933;
+      background: #f8fafc;
+    }
+
+    header,
+    footer {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 2rem 1.5rem;
+      text-align: center;
+    }
+
+    main {
+      padding: 2rem 1.5rem 3rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    section {
+      background: #ffffff;
+      border-radius: 0.75rem;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      padding: 1.75rem;
+      margin-bottom: 2rem;
+    }
+
+    h1,
+    h2 {
+      margin-top: 0;
+      color: #0f172a;
+    }
+
+    ul {
+      padding-left: 1.5rem;
+    }
+
+    code,
+    pre {
+      font-family: "Fira Code", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+      background: #0f172a;
+      color: #f8fafc;
+      border-radius: 0.5rem;
+    }
+
+    pre {
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+
+    a {
+      color: #2563eb;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>LFS-Ayats</h1>
+    <p>Radar de telemetria per Live for Speed amb renderitzat ASCII i integració InSim/OutSim.</p>
+  </header>
+
+  <main>
+    <section id="resum">
+      <h2>Resum del projecte</h2>
+      <p>
+        LFS-Ayats és un prototip que es connecta al simulador <em>Live for Speed</em> mitjançant InSim i OutSim
+        per mostrar un radar ASCII en temps real. El projecte manté el comportament original del prototip,
+        tot prioritzant la simplicitat i l&rsquo;observabilitat mentre es desenvolupen noves funcionalitats.
+      </p>
+      <h3>Requisits principals</h3>
+      <ul>
+        <li>Només necessita <strong>Python 3.10 o superior</strong>.</li>
+        <li>No té <strong>cap dependència externa</strong>; utilitza exclusivament la llibreria estàndard.</li>
+      </ul>
+    </section>
+
+    <section id="configuracio">
+      <h2>Configuració</h2>
+      <p>
+        Totes les opcions s&rsquo;editen a <code>config.json</code>. A continuació tens l&rsquo;estructura bàsica i els camps més
+        rellevants per adaptar el radar al teu servidor de LFS:
+      </p>
+      <pre><code>{
+  "insim": {
+    "host": "127.0.0.1",
+    "port": 29999,
+    "admin_password": "",
+    "interval_ms": 100
+  },
+  "outsim": {
+    "port": 30000,
+    "update_hz": 60
+  },
+  "sp_radar_enabled": true,
+  "sp_beeps_enabled": true,
+  "mp_radar_enabled": true,
+  "mp_beeps_enabled": false,
+  "beep_mode": "standard"
+}</code></pre>
+      <p>
+        Ajusta els valors segons la teva configuració d&rsquo;InSim/OutSim i recorda que els canvis es recarreguen en calent
+        mentre el programa està en execució.
+      </p>
+    </section>
+
+    <section id="execucio">
+      <h2>Com executar-ho</h2>
+      <p>Amb la configuració preparada i Live for Speed apuntant al teu equip, llança l&rsquo;aplicació així:</p>
+      <pre><code>python main.py</code></pre>
+      <p>Prem <kbd>Ctrl</kbd> + <kbd>C</kbd> per aturar el radar quan vulguis.</p>
+    </section>
+
+    <section id="manuals">
+      <h2>Documentació en PDF</h2>
+      <p>Consulta els manuals originals de Live for Speed per aprofundir en la configuració i protocols:</p>
+      <ul>
+        <li><a href="../Category_Options - LFS Manual.pdf">Category Options</a></li>
+        <li><a href="../Commands - LFS Manual.pdf">Commands</a></li>
+        <li><a href="../Display - LFS Manual.pdf">Display</a></li>
+        <li><a href="../LFS Programming - LFS Manual.pdf">LFS Programming</a></li>
+        <li><a href="../Options_Controls - LFS Manual.pdf">Options &amp; Controls</a></li>
+        <li><a href="../Script Guide - LFS Manual.pdf">Script Guide</a></li>
+        <li><a href="../Views - LFS Manual.pdf">Views</a></li>
+      </ul>
+    </section>
+
+    <section id="tecnica">
+      <h2>Referència tècnica</h2>
+      <p>Els components principals del radar estan implementats als mòduls següents:</p>
+      <ul>
+        <li><a href="../../src/insim_client.py">src/insim_client.py</a> &ndash; client TCP minimalista per a InSim.</li>
+        <li><a href="../../src/outsim_client.py">src/outsim_client.py</a> &ndash; escolta UDP i parseja la telemetria OutSim.</li>
+        <li><a href="../../src/radar.py">src/radar.py</a> &ndash; renderitza la representació ASCII del radar.</li>
+        <li><a href="../../src/hud.py">src/hud.py</a> &ndash; gestiona la visualització d&rsquo;informació auxiliar a la terminal.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; <span id="year"></span> LFS-Ayats · Projecte comunitari</p>
+  </footer>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
