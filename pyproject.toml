@@ -39,3 +39,12 @@ exclude_dirs = ["tests", "docs"]
 severity = "LOW"
 confidence = "HIGH"
 skip = ["B101"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+src_paths = ["src", "tests", "main.py"]

@@ -8,10 +8,10 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from src.hud import HUDController  # noqa: E402
 from src.insim_client import (  # noqa: E402
+    ISB_CLICK,
     ISP_LAP,
     ISP_NPL,
     ISP_STA,
-    ISB_CLICK,
     InSimClient,
     InSimConfig,
 )
@@ -116,4 +116,3 @@ def test_hud_buttons_request_clickable_style() -> None:
     controller.show(radar_enabled=True, beeps_enabled=False)
 
     assert insim.styles == [ISB_CLICK, ISB_CLICK]
-

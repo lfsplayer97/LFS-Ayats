@@ -102,6 +102,30 @@ make lint
 També podeu invocar les eines individualment: `make lint-flake8`,
 `make lint-pylint`, `make lint-mypy` o `make lint-bandit`.
 
+### Flux amb pre-commit
+
+Instal·leu [pre-commit](https://pre-commit.com) i registreu els hooks definits a
+`.pre-commit-config.yaml`:
+
+```bash
+python -m pip install pre-commit
+pre-commit install
+```
+
+Per executar totes les comprovacions manualment abans de fer `commit` utilitzeu:
+
+```bash
+pre-commit run --all-files
+```
+
+## Convencions d'estil
+
+- Les eines de formatatge (`black` i `isort`) comparteixen una longitud de línia de 100
+  caràcters i configuració compatible (`profile = black`).
+- La base de codi utilitza anotacions de tipus i es verifica amb `mypy`.
+- Les regles de `flake8`, `pylint` i `bandit` definides al projecte són part del procés de
+  revisió i s'espera que passin abans d'enviar canvis.
+
 ## Crèdits
 
 - Desenvolupament del prototip: equip LFS-Ayats.

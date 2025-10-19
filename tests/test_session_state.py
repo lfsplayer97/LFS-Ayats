@@ -7,6 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from main import clear_session_timing, update_session_best
+
 from src.insim_client import LapEvent, StateEvent
 from src.outsim_client import OutSimFrame
 from src.persistence import PersonalBestRecord
@@ -282,8 +283,7 @@ def test_track_change_resets_pending_lap_start(monkeypatch) -> None:
     )
 
     FakeOutSimClient.frames_to_yield = [
-        OutSimFrame(time_ms=idx * 1000, **base_frame_kwargs)
-        for idx in range(1, 5)
+        OutSimFrame(time_ms=idx * 1000, **base_frame_kwargs) for idx in range(1, 5)
     ]
 
     try:

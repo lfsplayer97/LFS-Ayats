@@ -1,4 +1,5 @@
 """OutSim UDP client utilities."""
+
 from __future__ import annotations
 
 import logging
@@ -83,7 +84,13 @@ class OutSimFrame:
 class OutSimClient:
     """UDP client that yields :class:`OutSimFrame` objects."""
 
-    def __init__(self, port: int, host: str = "0.0.0.0", buffer_size: int = 256, timeout: Optional[float] = None) -> None:
+    def __init__(
+        self,
+        port: int,
+        host: str = "0.0.0.0",
+        buffer_size: int = 256,
+        timeout: Optional[float] = None,
+    ) -> None:
         self._host = host
         self._port = port
         self._buffer_size = buffer_size

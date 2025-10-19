@@ -1,4 +1,5 @@
 """Simple HUD controller for drawing toggle buttons via InSim."""
+
 from __future__ import annotations
 
 import logging
