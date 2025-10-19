@@ -67,6 +67,7 @@ class AppConfig:
     insim: InSimConfig
     outsim_port: int
     outsim_allowed_sources: Optional[List[str]]
+    outsim_rate_limit: Optional[float]
     beep_mode: str
     sp: ModeConfig
     mp: ModeConfig
@@ -92,6 +93,21 @@ class AppConfig:
             outsim_allowed_sources = [allowed_sources_raw]
         else:
             outsim_allowed_sources = [str(value) for value in allowed_sources_raw]
+        rate_limit_raw = outsim_cfg_raw.get("max_packets_per_second")
+        outsim_rate_limit: Optional[float]
+        if rate_limit_raw is None:
+            outsim_rate_limit = None
+        else:
+            try:
+                outsim_rate_limit = float(rate_limit_raw)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    "OutSim max_packets_per_second must be a number"
+                ) from exc
+            if outsim_rate_limit <= 0:
+                raise ValueError(
+                    "OutSim max_packets_per_second must be greater than zero"
+                )
         beep_mode = str(raw.get("beep_mode", "standard"))
 
         sp_cfg = ModeConfig(
@@ -108,6 +124,7 @@ class AppConfig:
             insim=insim_cfg,
             outsim_port=outsim_port,
             outsim_allowed_sources=outsim_allowed_sources,
+            outsim_rate_limit=outsim_rate_limit,
             beep_mode=beep_mode,
             sp=sp_cfg,
             mp=mp_cfg,
@@ -532,6 +549,7 @@ def main() -> None:
             OutSimClient(
                 config.outsim_port,
                 allowed_sources=config.outsim_allowed_sources,
+                max_packets_per_second=config.outsim_rate_limit,
             ) as outsim,
         ):
             hud_controller = HUDController(insim)

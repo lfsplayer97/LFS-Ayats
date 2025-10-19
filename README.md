@@ -32,6 +32,7 @@ principals:
 | `insim.admin_password` | Contrasenya opcional per autenticar la sessió InSim. |
 | `outsim.port`, `outsim.update_hz` | Port UDP on LFS emet OutSim i freqüència esperada d’actualització. |
 | `outsim.allowed_sources` | Llista d’adreces IP o xarxes CIDR autoritzades a enviar paquets OutSim. Si s’omet, s’accepten totes les fonts. |
+| `outsim.max_packets_per_second` | Límit opcional de paquets OutSim per segon. Els paquets que superen el llindar es descarten i s’enregistra un avís. |
 | `sp_radar_enabled`, `sp_beeps_enabled` | Activen radar i avisos sonors en sessions d’un sol jugador. |
 | `mp_radar_enabled`, `mp_beeps_enabled` | Equivalents per a partides multijugador quan `ISS_MULTI` està actiu. |
 | `beep_mode` | Estratègia del subsistema d’avisos (actualment marcador). |

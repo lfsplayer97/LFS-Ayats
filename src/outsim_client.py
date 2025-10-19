@@ -7,6 +7,7 @@ import logging
 import math
 import socket
 import struct
+import time
 from dataclasses import dataclass
 from typing import Collection, Iterable, Optional, Tuple, Union
 
@@ -100,6 +101,10 @@ class OutSimClient:
         Optional collection of IP addresses or CIDR networks that are allowed to
         feed data into the client.  When present, packets from other sources are
         ignored.
+    max_packets_per_second:
+        Optional positive float that limits how many packets are accepted each
+        second.  When the incoming rate exceeds the limit, packets are dropped
+        and a warning is logged.  Defaults to ``None`` (no rate limiting).
     """
 
     def __init__(
@@ -109,6 +114,7 @@ class OutSimClient:
         buffer_size: int = 256,
         timeout: Optional[float] = None,
         allowed_sources: Optional[Collection[str]] = None,
+        max_packets_per_second: Optional[float] = None,
     ) -> None:
         self._host = host
         self._port = port
@@ -125,6 +131,18 @@ class OutSimClient:
             if allowed_sources
             else None
         )
+        self._rate_limit_last_refill: float = time.monotonic()
+        if max_packets_per_second is not None:
+            if max_packets_per_second <= 0:
+                raise ValueError("OutSim rate limit must be positive when provided")
+            refill_rate = float(max_packets_per_second)
+            self._rate_limit_capacity: Optional[float] = max(1.0, refill_rate)
+            self._rate_limit_refill_rate: float = refill_rate
+            self._rate_limit_tokens: float = self._rate_limit_capacity
+        else:
+            self._rate_limit_capacity = None
+            self._rate_limit_tokens = 0.0
+            self._rate_limit_refill_rate = 0.0
 
     @staticmethod
     def _normalise_allowed_sources(
@@ -177,10 +195,36 @@ class OutSimClient:
                 )
                 continue
 
+            if not self._consume_rate_limit_token():
+                logger.warning(
+                    "Discarding OutSim packet from %s due to rate limit (%.2f pkt/s)",
+                    source_ip,
+                    self._rate_limit_refill_rate,
+                )
+                continue
+
             try:
                 yield OutSimFrame.from_packet(data)
             except ValueError as exc:
                 logger.warning("Discarding invalid OutSim packet: %s", exc)
+
+    def _consume_rate_limit_token(self) -> bool:
+        if self._rate_limit_capacity is None:
+            return True
+
+        now = time.monotonic()
+        elapsed = max(0.0, now - self._rate_limit_last_refill)
+        self._rate_limit_last_refill = now
+        refill = elapsed * self._rate_limit_refill_rate
+        self._rate_limit_tokens = min(
+            self._rate_limit_capacity, self._rate_limit_tokens + refill
+        )
+
+        if self._rate_limit_tokens >= 1.0:
+            self._rate_limit_tokens -= 1.0
+            return True
+
+        return False
 
     def _is_source_allowed(self, source_ip: str) -> bool:
         if self._allowed_networks is None:
