@@ -88,5 +88,5 @@ functionality from the InSim/OutSim specifications as needed.
 
 | Resource | Description |
 | --- | --- |
-| [Interactive documentation site](docs/site/index.html) | Browser-based overview of the prototype with interactive summaries and deep links to common workflows. |
+| [Interactive documentation site](docs/site/index.html) | Accessible overview with navegació ràpida, enllaços interns i configuracions pas a pas del radar. |
 | [LFS manual extracts](docs/) | Official PDF guides (commands, controls, scripting, and more) that complement the interactive notes with the full simulator manuals. |
