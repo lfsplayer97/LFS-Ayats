@@ -22,6 +22,9 @@ ISP_MST = 11
 ISP_NPL = 21
 ISP_LAP = 28
 ISP_SPX = 29
+ISP_BTN = 45
+ISP_BFN = 46
+ISP_BTC = 47
 
 ISF_MCI = 1 << 0  # receive multi car info packets
 ISF_CON = 1 << 1  # receive contact packets
@@ -89,6 +92,17 @@ class StateEvent:
     car: Optional[str] = None
 
 
+@dataclass
+class ButtonClickEvent:
+    """Represents a click interaction from an ``IS_BTC`` packet."""
+
+    req_id: int
+    ucid: int
+    click_id: int
+    inst: int
+    flags: int
+
+
 class InSimClient:
     """Minimal TCP client for the Live for Speed InSim protocol."""
 
@@ -99,6 +113,7 @@ class InSimClient:
         state_listeners: Optional[List[Callable[["StateEvent"], None]]] = None,
         lap_listeners: Optional[List[Callable[["LapEvent"], None]]] = None,
         split_listeners: Optional[List[Callable[["SplitEvent"], None]]] = None,
+        button_listeners: Optional[List[Callable[["ButtonClickEvent"], None]]] = None,
     ) -> None:
         self._config = config
         self._sock: Optional[socket.socket] = None
@@ -106,6 +121,7 @@ class InSimClient:
         self._state_listeners: List[Callable[["StateEvent"], None]] = []
         self._lap_listeners: List[Callable[["LapEvent"], None]] = []
         self._split_listeners: List[Callable[["SplitEvent"], None]] = []
+        self._button_listeners: List[Callable[["ButtonClickEvent"], None]] = []
         self._plid_to_car: dict[int, str] = {}
         self._current_track: Optional[str] = None
         self._current_car: Optional[str] = None
@@ -116,6 +132,8 @@ class InSimClient:
             self._lap_listeners.extend(lap_listeners)
         if split_listeners:
             self._split_listeners.extend(split_listeners)
+        if button_listeners:
+            self._button_listeners.extend(button_listeners)
 
     # -- socket lifecycle --------------------------------------------------
     def connect(self) -> None:
@@ -178,6 +196,12 @@ class InSimClient:
                 self._sock.close()
                 self._sock = None
 
+    @property
+    def connected(self) -> bool:
+        """Return ``True`` if the client currently has an active socket."""
+
+        return self._sock is not None
+
     # -- messaging ---------------------------------------------------------
     def send_command(self, message: str, req_id: int = 0) -> None:
         """Send a plain text command via an ``IS_MST`` packet."""
@@ -204,6 +228,79 @@ class InSimClient:
         logger.debug("Sending IS_MST command packet: %s", packet)
         self._sock.sendall(packet)
 
+    def show_button(
+        self,
+        *,
+        button_id: int,
+        text: str,
+        left: int,
+        top: int,
+        width: int,
+        height: int,
+        req_id: int = 0,
+        ucid: int = 0,
+        inst: int = 0,
+        style: int = 0,
+        type_in: int = 0,
+    ) -> None:
+        """Display or update an on-screen button using ``IS_BTN``."""
+
+        if self._sock is None:
+            raise RuntimeError("InSim socket is not connected")
+
+        encoded_text = text.encode("latin-1", errors="ignore")[:239]
+        payload = encoded_text + b"\x00"
+        size = 12 + len(payload)
+        if size > 255:
+            raise ValueError("Button text is too long for an IS_BTN packet")
+
+        packet = struct.pack(
+            "<BBBBBBHBBBBB",
+            size,
+            ISP_BTN,
+            req_id & 0xFF,
+            ucid & 0xFF,
+            button_id & 0xFF,
+            inst & 0xFF,
+            style & 0xFFFF,
+            type_in & 0xFF,
+            left & 0xFF,
+            top & 0xFF,
+            width & 0xFF,
+            height & 0xFF,
+        )
+        logger.debug("Sending IS_BTN packet: %s (text=%r)", packet, text)
+        self._sock.sendall(packet + payload)
+
+    def delete_button(
+        self,
+        *,
+        button_id: int = 0,
+        req_id: int = 0,
+        ucid: int = 0,
+        inst: int = 0,
+        clear_all: bool = False,
+    ) -> None:
+        """Remove a previously displayed button using ``IS_BFN``."""
+
+        if self._sock is None:
+            return
+
+        bfn_type = 2 if clear_all else 0
+        packet = struct.pack(
+            "<BBBBBBBB",
+            8,
+            ISP_BFN,
+            req_id & 0xFF,
+            ucid & 0xFF,
+            button_id & 0xFF,
+            inst & 0xFF,
+            bfn_type & 0xFF,
+            0,
+        )
+        logger.debug("Sending IS_BFN packet: %s", packet)
+        self._sock.sendall(packet)
+
     def add_state_listener(self, listener: Callable[["StateEvent"], None]) -> None:
         """Register a callback invoked for ``IS_STA`` packets."""
 
@@ -218,6 +315,11 @@ class InSimClient:
         """Register a callback invoked when an ``IS_SPX`` packet is received."""
 
         self._split_listeners.append(listener)
+
+    def add_button_listener(self, listener: Callable[["ButtonClickEvent"], None]) -> None:
+        """Register a callback invoked when an ``IS_BTC`` packet is received."""
+
+        self._button_listeners.append(listener)
 
     def poll(self) -> None:
         """Poll the socket for incoming packets and dispatch them."""
@@ -295,6 +397,14 @@ class InSimClient:
                         listener(event)
                     except Exception:  # pragma: no cover - defensive logging
                         logger.exception("Error while handling InSim split listener")
+        elif packet_type == ISP_BTC:
+            event = self._parse_button_click_packet(packet)
+            if event:
+                for listener in list(self._button_listeners):
+                    try:
+                        listener(event)
+                    except Exception:  # pragma: no cover - defensive logging
+                        logger.exception("Error while handling InSim button listener")
 
     def _handle_is_sta(self, packet: bytes) -> None:
         # IS_STA packets are 28 bytes long in current protocol versions.
@@ -449,6 +559,32 @@ class InSimClient:
             spare=spare,
         )
 
+    def _parse_button_click_packet(
+        self, packet: bytes
+    ) -> Optional["ButtonClickEvent"]:
+        if len(packet) < 8:
+            logger.debug("Dropping incomplete IS_BTC packet: %s", packet)
+            return None
+
+        size = packet[0]
+        if len(packet) < size:
+            logger.debug("Dropping truncated IS_BTC packet: %s", packet)
+            return None
+
+        req_id = packet[2]
+        ucid = packet[3]
+        click_id = packet[4]
+        inst = packet[5]
+        flags = struct.unpack_from("<H", packet, 6)[0]
+
+        return ButtonClickEvent(
+            req_id=req_id,
+            ucid=ucid,
+            click_id=click_id,
+            inst=inst,
+            flags=flags,
+        )
+
     def __enter__(self) -> "InSimClient":
         self.connect()
         return self
@@ -463,9 +599,13 @@ __all__ = [
     "LapEvent",
     "SplitEvent",
     "StateEvent",
+    "ButtonClickEvent",
     "ISS_MULTI",
     "ISP_NPL",
     "ISP_STA",
     "ISP_LAP",
     "ISP_SPX",
+    "ISP_BTN",
+    "ISP_BFN",
+    "ISP_BTC",
 ]

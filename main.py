@@ -8,7 +8,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from src.insim_client import ISS_MULTI, InSimClient, InSimConfig, LapEvent, SplitEvent, StateEvent
+from src.hud import HUDController
+from src.insim_client import (
+    ISS_MULTI,
+    ButtonClickEvent,
+    InSimClient,
+    InSimConfig,
+    LapEvent,
+    SplitEvent,
+    StateEvent,
+)
 from src.outsim_client import OutSimClient, OutSimFrame
 from src.radar import RadarRenderer
 from src.persistence import PersonalBestRecord, load_personal_best, record_lap
@@ -155,6 +164,7 @@ def main() -> None:
     mode_settings = {"sp": config.sp, "mp": config.mp}
 
     config_lock = threading.RLock()
+    hud_controller: Optional[HUDController] = None
 
     def normalise_fractions(values: List[float]) -> List[float]:
         cleaned: List[float] = []
@@ -290,7 +300,7 @@ def main() -> None:
             radar_enabled = settings.radar_enabled
             beep_system.set_enabled(settings.beeps_enabled)
             radar_state = radar_enabled
-            beeps_state = settings.beeps_enabled
+            beeps_state = beep_system.enabled
 
         logger.info(
             "Detected %splayer mode: radar=%s beeps=%s",
@@ -298,6 +308,10 @@ def main() -> None:
             "on" if radar_state else "off",
             "on" if beeps_state else "off",
         )
+
+        hud = hud_controller
+        if hud is not None:
+            hud.update(radar_state, beeps_state)
 
     def handle_lap(event: LapEvent) -> None:
         nonlocal tracked_plid, tracked_driver, last_frame_time_ms, pending_lap_start, persistent_best
@@ -428,7 +442,7 @@ def main() -> None:
                 radar_enabled = settings.radar_enabled
                 beep_system.set_enabled(settings.beeps_enabled)
                 radar_state = radar_enabled
-                beeps_state = settings.beeps_enabled
+                beeps_state = beep_system.enabled
                 beep_mode_state = config.beep_mode
 
             logger.info(
@@ -438,6 +452,10 @@ def main() -> None:
                 "on" if beeps_state else "off",
                 beep_mode_state,
             )
+
+            hud = hud_controller
+            if hud is not None:
+                hud.update(radar_state, beeps_state)
 
     def handle_split(event: SplitEvent) -> None:
         nonlocal tracked_plid, tracked_driver
@@ -459,6 +477,40 @@ def main() -> None:
         if event.estimate_time_ms > 0:
             lap_state["latest_estimated_total_ms"] = event.estimate_time_ms
 
+    def handle_button(event: ButtonClickEvent) -> None:
+        nonlocal radar_enabled
+
+        if not (event.flags & 0x01):
+            return
+
+        updated = False
+        with config_lock:
+            settings = mode_settings[current_mode]
+            if event.click_id == HUDController.RADAR_BUTTON_ID:
+                settings.radar_enabled = not settings.radar_enabled
+                radar_enabled = settings.radar_enabled
+                updated = True
+            elif event.click_id == HUDController.BEEPS_BUTTON_ID:
+                settings.beeps_enabled = not settings.beeps_enabled
+                beep_system.set_enabled(settings.beeps_enabled)
+                updated = True
+
+            new_radar = radar_enabled
+            new_beeps = beep_system.enabled
+
+        if not updated:
+            return
+
+        logger.info(
+            "HUD toggle applied: radar=%s beeps=%s",
+            "on" if new_radar else "off",
+            "on" if new_beeps else "off",
+        )
+
+        hud = hud_controller
+        if hud is not None:
+            hud.update(new_radar, new_beeps)
+
     watcher_thread = threading.Thread(target=watch_config, name="config-watcher", daemon=True)
     watcher_thread.start()
 
@@ -471,19 +523,33 @@ def main() -> None:
         ) as insim, OutSimClient(
             config.outsim_port
         ) as outsim:
-            logger.info("Telemetry clients initialised; awaiting OutSim frames")
-            for frame in outsim.frames():
-                last_frame_time_ms = frame.time_ms
-                if pending_lap_start:
-                    lap_state["current_lap_start_ms"] = frame.time_ms
-                    pending_lap_start = False
-                insim.poll()
-                with config_lock:
-                    render_radar = radar_enabled
+            hud_controller = HUDController(insim)
+            add_button_listener = getattr(insim, "add_button_listener", None)
+            if callable(add_button_listener):
+                add_button_listener(handle_button)
+            with config_lock:
+                initial_radar = radar_enabled
+                initial_beeps = beep_system.enabled
+            hud_controller.show(initial_radar, initial_beeps)
 
-                if render_radar:
-                    radar.draw(frame)
-                beep_system.process_frame(frame)
+            logger.info("Telemetry clients initialised; awaiting OutSim frames")
+            try:
+                for frame in outsim.frames():
+                    last_frame_time_ms = frame.time_ms
+                    if pending_lap_start:
+                        lap_state["current_lap_start_ms"] = frame.time_ms
+                        pending_lap_start = False
+                    insim.poll()
+                    if not getattr(insim, "connected", True):
+                        logger.info("InSim connection closed; stopping frame loop")
+                        break
+                    with config_lock:
+                        render_radar = radar_enabled
+
+                    if render_radar:
+                        radar.draw(frame)
+
+                    beep_system.process_frame(frame)
 
                 current_start = lap_state["current_lap_start_ms"]
                 best_lap_ms = lap_state["best_lap_ms"]
@@ -521,6 +587,9 @@ def main() -> None:
                         padded_line = status_line.ljust(len(last_status_line))
                     print(padded_line, end="\r", flush=True)
                     last_status_line = status_line
+            finally:
+                hud_controller.remove()
+                hud_controller = None
     except KeyboardInterrupt:
         logger.info("Interrupted by user, shutting down")
     finally:
