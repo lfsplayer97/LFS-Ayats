@@ -87,7 +87,16 @@ def test_handle_lap_switches_driver_after_track_change(monkeypatch) -> None:
     class FakeOutSimClient:
         frames_to_yield: list[OutSimFrame] = []
 
-        def __init__(self, port, host="0.0.0.0", buffer_size: int = 256, timeout=None) -> None:
+        def __init__(
+            self,
+            port,
+            host="0.0.0.0",
+            buffer_size: int = 256,
+            timeout=None,
+            *,
+            allowed_sources=None,
+            max_packets_per_second=None,
+        ) -> None:
             self._frames = list(self.frames_to_yield)
 
         def __enter__(self):
@@ -229,7 +238,16 @@ def test_track_change_resets_pending_lap_start(monkeypatch) -> None:
     class FakeOutSimClient:
         frames_to_yield: list[OutSimFrame] = []
 
-        def __init__(self, port, host="0.0.0.0", buffer_size: int = 256, timeout=None) -> None:
+        def __init__(
+            self,
+            port,
+            host="0.0.0.0",
+            buffer_size: int = 256,
+            timeout=None,
+            *,
+            allowed_sources=None,
+            max_packets_per_second=None,
+        ) -> None:
             self._frames = list(self.frames_to_yield)
 
         def __enter__(self):
@@ -338,7 +356,16 @@ def test_reference_delta_without_pb_splits_uses_estimates(monkeypatch) -> None:
     class FakeOutSimClient:
         frames_to_yield: list[OutSimFrame] = []
 
-        def __init__(self, port, host="0.0.0.0", buffer_size: int = 256, timeout=None) -> None:
+        def __init__(
+            self,
+            port,
+            host="0.0.0.0",
+            buffer_size: int = 256,
+            timeout=None,
+            *,
+            allowed_sources=None,
+            max_packets_per_second=None,
+        ) -> None:
             self._frames = list(self.frames_to_yield)
 
         def __enter__(self):
