@@ -232,6 +232,7 @@ def main() -> None:
 
     def update_track_context(track: Optional[str], car: Optional[str]) -> None:
         nonlocal current_track, current_car, persistent_best, tracked_plid, tracked_driver
+        nonlocal pending_lap_start
 
         normalised_track = track.strip() if track else None
         normalised_car = car.strip() if car else None
@@ -248,6 +249,7 @@ def main() -> None:
             tracked_plid = None
             tracked_driver = None
             clear_session_timing(lap_state)
+            pending_lap_start = True
             if current_track and current_car:
                 persistent_best = load_personal_best(current_track, current_car)
                 reset_split_tracking()
