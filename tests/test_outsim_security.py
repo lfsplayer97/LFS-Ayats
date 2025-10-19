@@ -119,6 +119,13 @@ def test_outsim_client_validates_allowed_source_entries() -> None:
         OutSimClient(port=30101, allowed_sources=["   ", "\t\n"])
 
 
+def test_outsim_client_rejects_empty_allowed_sources() -> None:
+    """Explicit empty whitelists should fail fast instead of disabling checks."""
+
+    with pytest.raises(ValueError, match="No valid OutSim allowed sources"):
+        OutSimClient(port=30104, allowed_sources=[])
+
+
 def test_outsim_client_rejects_invalid_rate_limits() -> None:
     """Zero or negative rate limits are rejected."""
 
