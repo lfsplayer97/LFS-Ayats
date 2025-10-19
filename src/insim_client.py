@@ -27,6 +27,18 @@ ISP_BTN = 45
 ISP_BFN = 46
 ISP_BTC = 47
 
+_KNOWN_PACKET_TYPES = {
+    ISP_ISI,
+    ISP_STA,
+    ISP_MST,
+    ISP_NPL,
+    ISP_LAP,
+    ISP_SPX,
+    ISP_BTN,
+    ISP_BFN,
+    ISP_BTC,
+}
+
 # InSim button style flags
 ISB_CLICK = 1 << 2  # emits IS_BTC when the button is clicked
 
@@ -378,46 +390,87 @@ class InSimClient:
             del self._buffer[:discard]
             self._buffer.extend(data)
 
-        if not self._buffer:
-            return
-
-        dropped = 0
-        while self._buffer and (
-            self._buffer[0] == 0 or self._buffer[0] > len(self._buffer)
-        ):
-            del self._buffer[0]
-            dropped += 1
-
-        if dropped:
-            if self._buffer:
-                logger.warning(
-                    "Discarded %d additional bytes from InSim buffer due to invalid packet header",
-                    dropped,
-                )
-            else:
-                logger.warning(
-                    "Cleared InSim buffer after discarding %d bytes with no valid packet header",
-                    dropped,
-                )
-
-        if not self._buffer:
-            self._buffer.clear()
+        if self._buffer:
+            self._discard_until_valid_header(require_complete=True)
 
     def _process_buffer(self) -> None:
-        while len(self._buffer) >= 1:
+        while self._buffer:
+            if not self._discard_until_valid_header(require_complete=False):
+                return
+
+            if len(self._buffer) < 2:
+                return
+
             packet_size = self._buffer[0]
             if packet_size == 0:
-                # Avoid infinite loops if malformed data is received.
                 logger.warning("Encountered zero-length packet in InSim buffer")
                 self._buffer.clear()
                 return
 
-            if len(self._buffer) < packet_size:
+            if packet_size > len(self._buffer):
                 return
 
             packet = bytes(self._buffer[:packet_size])
             del self._buffer[:packet_size]
             self._handle_packet(packet)
+
+    def _discard_until_valid_header(self, *, require_complete: bool) -> bool:
+        if not self._buffer:
+            return False
+
+        offset = self._scan_for_valid_packet_start(require_complete=require_complete)
+        if offset is None:
+            dropped = len(self._buffer)
+            if dropped:
+                logger.warning(
+                    "Cleared InSim buffer after discarding %d bytes with no valid packet header",
+                    dropped,
+                )
+            self._buffer.clear()
+            return False
+
+        if offset:
+            del self._buffer[:offset]
+            logger.warning(
+                "Discarded %d additional bytes from InSim buffer due to invalid packet header",
+                offset,
+            )
+
+        if require_complete and len(self._buffer) >= 2:
+            packet_size = self._buffer[0]
+            if packet_size > len(self._buffer):
+                # No complete packet is available yet.
+                return False
+
+        return bool(self._buffer)
+
+    def _scan_for_valid_packet_start(self, *, require_complete: bool) -> Optional[int]:
+        buffer_len = len(self._buffer)
+        for offset in range(buffer_len):
+            packet_size = self._buffer[offset]
+            if packet_size == 0:
+                continue
+
+            remaining = buffer_len - offset
+            if remaining < 2:
+                break
+
+            packet_type = self._buffer[offset + 1]
+            if packet_type not in _KNOWN_PACKET_TYPES:
+                continue
+
+            if packet_size < 2:
+                continue
+
+            if require_complete and packet_size > remaining:
+                continue
+
+            if not require_complete and packet_size > self._buffer_limit:
+                continue
+
+            return offset
+
+        return None
 
     def _handle_packet(self, packet: bytes) -> None:
         if len(packet) < 2:

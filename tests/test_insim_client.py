@@ -5,7 +5,14 @@ import struct
 from typing import Callable
 
 from src.hud import HUDController
-from src.insim_client import ISB_CLICK, ISP_LAP, ISP_NPL, ISP_STA, InSimClient
+from src.insim_client import (
+    ISB_CLICK,
+    ISP_LAP,
+    ISP_NPL,
+    ISP_STA,
+    ISP_BTC,
+    InSimClient,
+)
 
 def _build_sta_packet(view_plid: int, track_code: bytes) -> bytes:
     packet = bytearray(28)
@@ -131,7 +138,7 @@ def test_buffer_limit_preserves_latest_packet_after_overflow(
     packets = [
         bytes([4, 1, 0, 0]),
         bytes([4, 200, 0, 0]),
-        bytes([4, 2, 0, 0]),
+        bytes([4, ISP_STA, 0, 0]),
     ]
     processed: list[bytes] = []
 
@@ -149,3 +156,27 @@ def test_buffer_limit_preserves_latest_packet_after_overflow(
     messages = [record.message for record in caplog.records]
     assert "Discarded 5 bytes from InSim buffer to enforce limit" in messages
     assert any("invalid packet header" in message for message in messages)
+
+
+def test_buffer_limit_recovers_from_truncated_small_prefix(
+    insim_client_factory: Callable[..., InSimClient], caplog
+) -> None:
+    client = insim_client_factory(buffer_limit=9)
+    truncated_packet = bytes([8, ISP_STA, 170, 4, 153, 136, 119, 102])
+    valid_packet = bytes([4, ISP_BTC, 0, 0])
+    processed: list[bytes] = []
+
+    def recorder(packet: bytes) -> None:
+        processed.append(packet)
+
+    client._handle_packet = recorder  # type: ignore[method-assign]
+
+    with caplog.at_level(logging.WARNING):
+        client._append_to_buffer(truncated_packet)
+        client._append_to_buffer(valid_packet)
+        client._process_buffer()
+
+    assert processed == [valid_packet]
+    assert client._buffer == bytearray()
+    messages = [record.message for record in caplog.records]
+    assert "invalid packet header" in " ".join(messages)
