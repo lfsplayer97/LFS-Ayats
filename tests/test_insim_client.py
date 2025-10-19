@@ -6,10 +6,12 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
+from src.hud import HUDController  # noqa: E402
 from src.insim_client import (  # noqa: E402
+    ISP_LAP,
     ISP_NPL,
     ISP_STA,
-    ISP_LAP,
+    ISB_CLICK,
     InSimClient,
     InSimConfig,
 )
@@ -92,4 +94,26 @@ def test_lap_events_inherit_track_and_car_context() -> None:
     event = lap_events[-1]
     assert event.track == "BL1"
     assert event.car == "XFG"
+
+
+class _RecordingInSim:
+    connected = True
+
+    def __init__(self) -> None:
+        self.styles: list[int] = []
+
+    def show_button(self, *, style: int, **kwargs) -> None:
+        self.styles.append(style)
+
+    def delete_button(self, **kwargs) -> None:  # pragma: no cover - unused in test
+        pass
+
+
+def test_hud_buttons_request_clickable_style() -> None:
+    insim = _RecordingInSim()
+    controller = HUDController(insim)
+
+    controller.show(radar_enabled=True, beeps_enabled=False)
+
+    assert insim.styles == [ISB_CLICK, ISB_CLICK]
 
