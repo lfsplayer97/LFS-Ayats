@@ -12,7 +12,6 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.outsim_client import OutSimFrame
 from src.radar import RadarRenderer
 
-
 _OUTSIM_STRUCT = struct.Struct("<I3f3f3f3f3f")
 
 
@@ -62,7 +61,5 @@ def test_heading_vector_converts_to_expected_yaw_pitch_roll() -> None:
     orientation_line = next(
         line for line in renderer.render(frame).splitlines() if line.startswith("Orientation:")
     )
-    expected_line = (
-        f"Orientation: yaw={yaw_deg_expected:6.1f}° pitch={pitch_deg_expected:6.1f}° roll={0.0:6.1f}°"
-    )
+    expected_line = f"Orientation: yaw={yaw_deg_expected:6.1f}° pitch={pitch_deg_expected:6.1f}° roll={0.0:6.1f}°"
     assert orientation_line == expected_line

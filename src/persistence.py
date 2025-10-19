@@ -1,4 +1,5 @@
 """Telemetry persistence helpers for storing personal best lap times."""
+
 from __future__ import annotations
 
 import sqlite3
@@ -69,7 +70,9 @@ def _parse_row(row: sqlite3.Row) -> PersonalBestRecord:
     )
 
 
-def load_personal_best(track: str, car: str, *, db_path: Optional[Path] = None) -> Optional[PersonalBestRecord]:
+def load_personal_best(
+    track: str, car: str, *, db_path: Optional[Path] = None
+) -> Optional[PersonalBestRecord]:
     """Return the stored PB for the given track/car combination if it exists."""
 
     with _connect(db_path) as conn:
@@ -123,7 +126,9 @@ def record_lap(
             )
             conn.commit()
             return (
-                PersonalBestRecord(track=track, car=car, laptime_ms=int(laptime_ms), recorded_at=timestamp),
+                PersonalBestRecord(
+                    track=track, car=car, laptime_ms=int(laptime_ms), recorded_at=timestamp
+                ),
                 True,
             )
 

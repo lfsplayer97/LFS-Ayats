@@ -1,4 +1,5 @@
 """Client utilities for working with the Live for Speed InSim interface."""
+
 from __future__ import annotations
 
 import logging
@@ -424,7 +425,9 @@ class InSimClient:
         track: Optional[str] = None
         if len(packet) >= 26:
             track_bytes = packet[20:26]
-            track = track_bytes.split(b"\x00", 1)[0].decode("ascii", errors="ignore").strip() or None
+            track = (
+                track_bytes.split(b"\x00", 1)[0].decode("ascii", errors="ignore").strip() or None
+            )
 
         if track:
             self._current_track = track
@@ -562,9 +565,7 @@ class InSimClient:
             spare=spare,
         )
 
-    def _parse_button_click_packet(
-        self, packet: bytes
-    ) -> Optional["ButtonClickEvent"]:
+    def _parse_button_click_packet(self, packet: bytes) -> Optional["ButtonClickEvent"]:
         if len(packet) < 8:
             logger.debug("Dropping incomplete IS_BTC packet: %s", packet)
             return None

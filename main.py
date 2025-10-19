@@ -1,4 +1,5 @@
 """Entry point for the telemetry radar prototype."""
+
 from __future__ import annotations
 
 import json
@@ -19,8 +20,8 @@ from src.insim_client import (
     StateEvent,
 )
 from src.outsim_client import OutSimClient, OutSimFrame
-from src.radar import RadarRenderer
 from src.persistence import PersonalBestRecord, load_personal_best, record_lap
+from src.radar import RadarRenderer
 
 logger = logging.getLogger(__name__)
 
@@ -273,9 +274,7 @@ def main() -> None:
                 persistent_best = load_personal_best(current_track, current_car)
                 reset_split_tracking()
                 if persistent_best is None:
-                    logger.info(
-                        "No stored personal best for %s / %s", current_track, current_car
-                    )
+                    logger.info("No stored personal best for %s / %s", current_track, current_car)
                 else:
                     logger.info(
                         "Loaded personal best for %s / %s: %s ms (recorded %s)",
@@ -471,9 +470,7 @@ def main() -> None:
         if event.plid != tracked_plid:
             return
 
-        lap_state.setdefault("current_split_times", {})[event.split_index] = (
-            event.split_time_ms
-        )
+        lap_state.setdefault("current_split_times", {})[event.split_index] = event.split_time_ms
         if event.estimate_time_ms > 0:
             lap_state["latest_estimated_total_ms"] = event.estimate_time_ms
 
@@ -515,14 +512,15 @@ def main() -> None:
     watcher_thread.start()
 
     try:
-        with InSimClient(
-            config.insim,
-            state_listeners=[handle_state],
-            lap_listeners=[handle_lap],
-            split_listeners=[handle_split],
-        ) as insim, OutSimClient(
-            config.outsim_port
-        ) as outsim:
+        with (
+            InSimClient(
+                config.insim,
+                state_listeners=[handle_state],
+                lap_listeners=[handle_lap],
+                split_listeners=[handle_split],
+            ) as insim,
+            OutSimClient(config.outsim_port) as outsim,
+        ):
             hud_controller = HUDController(insim)
             add_button_listener = getattr(insim, "add_button_listener", None)
             if callable(add_button_listener):
@@ -562,20 +560,14 @@ def main() -> None:
                 current_display = (
                     f"{current_lap_ms:>7} ms" if current_lap_ms is not None else "-- ms"
                 )
-                best_display = (
-                    f"{best_lap_ms:>7} ms" if best_lap_ms is not None else "-- ms"
-                )
-                pb_display = (
-                    f"{persistent_best.laptime_ms:>7} ms" if persistent_best else "-- ms"
-                )
+                best_display = f"{best_lap_ms:>7} ms" if best_lap_ms is not None else "-- ms"
+                pb_display = f"{persistent_best.laptime_ms:>7} ms" if persistent_best else "-- ms"
                 reference_time = estimate_reference_time(current_lap_ms)
                 if reference_time is not None and current_lap_ms is not None:
                     delta_ms = current_lap_ms - reference_time
                 else:
                     delta_ms = None
-                delta_display = (
-                    f"{delta_ms:+7} ms" if delta_ms is not None else "  -- ms"
-                )
+                delta_display = f"{delta_ms:+7} ms" if delta_ms is not None else "  -- ms"
                 status_line = (
                     "Current lap: "
                     f"{current_display} | Session best: {best_display} | Personal best: {pb_display}"
