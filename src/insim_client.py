@@ -118,10 +118,12 @@ class InSimClient:
         lap_listeners: Optional[List[Callable[["LapEvent"], None]]] = None,
         split_listeners: Optional[List[Callable[["SplitEvent"], None]]] = None,
         button_listeners: Optional[List[Callable[["ButtonClickEvent"], None]]] = None,
+        buffer_limit: int = 65_536,
     ) -> None:
         self._config = config
         self._sock: Optional[socket.socket] = None
         self._buffer = bytearray()
+        self._buffer_limit = buffer_limit
         self._state_listeners: List[Callable[["StateEvent"], None]] = []
         self._lap_listeners: List[Callable[["LapEvent"], None]] = []
         self._split_listeners: List[Callable[["SplitEvent"], None]] = []
@@ -345,10 +347,37 @@ class InSimClient:
             self.close()
             return
 
-        self._buffer.extend(data)
+        self._append_to_buffer(data)
         self._process_buffer()
 
     # -- internal helpers ------------------------------------------------
+    def _append_to_buffer(self, data: bytes) -> None:
+        if self._buffer_limit <= 0:
+            self._buffer.clear()
+            return
+
+        if not data:
+            return
+
+        total_len = len(self._buffer) + len(data)
+        if total_len <= self._buffer_limit:
+            self._buffer.extend(data)
+            return
+
+        discard = total_len - self._buffer_limit
+        logger.warning("Discarded %d bytes from InSim buffer to enforce limit", discard)
+
+        if discard >= len(self._buffer):
+            discard_from_data = discard - len(self._buffer)
+            self._buffer.clear()
+            if discard_from_data >= len(data):
+                self._buffer.extend(data[-self._buffer_limit :])
+            else:
+                self._buffer.extend(data[discard_from_data:])
+        else:
+            del self._buffer[:discard]
+            self._buffer.extend(data)
+
     def _process_buffer(self) -> None:
         while len(self._buffer) >= 1:
             packet_size = self._buffer[0]

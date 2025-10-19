@@ -1,5 +1,6 @@
 """Tests for the minimal InSim client helpers."""
 
+import logging
 import struct
 from typing import Callable
 
@@ -100,3 +101,25 @@ def test_hud_buttons_request_clickable_style() -> None:
     controller.show(radar_enabled=True, beeps_enabled=False)
 
     assert insim.styles == [ISB_CLICK, ISB_CLICK]
+
+
+def test_buffer_limit_discards_old_bytes(
+    insim_client_factory: Callable[..., InSimClient], caplog
+) -> None:
+    client = insim_client_factory(buffer_limit=8)
+
+    with caplog.at_level(logging.WARNING):
+        client._append_to_buffer(b"1234")
+        assert bytes(client._buffer) == b"1234"
+        assert caplog.records == []
+
+        caplog.clear()
+
+        client._append_to_buffer(b"abcdefghijk")
+
+        assert bytes(client._buffer) == b"defghijk"
+        assert caplog.records
+        assert (
+            caplog.records[-1].message
+            == "Discarded 7 bytes from InSim buffer to enforce limit"
+        )
