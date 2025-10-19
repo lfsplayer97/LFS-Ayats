@@ -1,0 +1,12 @@
+# Configuració avançada de Bandit per a LFS-Ayats.
+# Justificació: ignorem la regla B101 (ús d'assert) perquè el prototip utilitza
+# asserts internament per validar càlculs de simulació i són acceptables.
+exclude_dirs:
+  - tests
+  - docs
+targets:
+  - src
+skips:
+  - B101
+severity: LOW
+confidence: HIGH
