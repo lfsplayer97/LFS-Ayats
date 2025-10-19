@@ -7,7 +7,8 @@
   },
   "outsim": {
     "port": 30000,
-    "update_hz": 60
+    "update_hz": 60,
+    "allowed_sources": ["127.0.0.1"]
   },
   "sp_radar_enabled": true,
   "sp_beeps_enabled": true,

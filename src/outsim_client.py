@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import ipaddress
 import logging
 import math
 import socket
 import struct
 from dataclasses import dataclass
-from typing import Iterable, Optional, Tuple
+from typing import Collection, Iterable, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +83,24 @@ class OutSimFrame:
 
 
 class OutSimClient:
-    """UDP client that yields :class:`OutSimFrame` objects."""
+    """UDP client that yields :class:`OutSimFrame` objects.
+
+    Parameters
+    ----------
+    port:
+        Port to bind the UDP socket to.
+    host:
+        Host interface to bind the UDP socket to.  Defaults to ``"0.0.0.0"``.
+    buffer_size:
+        Size of the UDP receive buffer.
+    timeout:
+        Optional socket timeout in seconds.  When provided, the client will
+        periodically wake up even if no packets are received.
+    allowed_sources:
+        Optional collection of IP addresses or CIDR networks that are allowed to
+        feed data into the client.  When present, packets from other sources are
+        ignored.
+    """
 
     def __init__(
         self,
@@ -90,12 +108,39 @@ class OutSimClient:
         host: str = "0.0.0.0",
         buffer_size: int = 256,
         timeout: Optional[float] = None,
+        allowed_sources: Optional[Collection[str]] = None,
     ) -> None:
         self._host = host
         self._port = port
         self._buffer_size = buffer_size
         self._timeout = timeout
         self._sock: Optional[socket.socket] = None
+        self._allowed_source_strings: Optional[Tuple[str, ...]] = (
+            tuple(allowed_sources) if allowed_sources else None
+        )
+        self._allowed_networks: Optional[
+            Tuple[Union[ipaddress.IPv4Network, ipaddress.IPv6Network], ...]
+        ] = (
+            self._normalise_allowed_sources(allowed_sources)
+            if allowed_sources
+            else None
+        )
+
+    @staticmethod
+    def _normalise_allowed_sources(
+        allowed_sources: Collection[str],
+    ) -> Tuple[Union[ipaddress.IPv4Network, ipaddress.IPv6Network], ...]:
+        networks = []
+        for entry in allowed_sources:
+            text = entry.strip()
+            if not text:
+                continue
+            try:
+                network = ipaddress.ip_network(text, strict=False)
+            except ValueError as exc:
+                raise ValueError(f"Invalid OutSim allowed source '{entry}': {exc}")
+            networks.append(network)
+        return tuple(networks)
 
     def start(self) -> None:
         if self._sock is not None:
@@ -123,11 +168,34 @@ class OutSimClient:
                 logger.debug("OutSim socket error: %s", exc)
                 raise
 
+            source_ip = addr[0]
             logger.debug("Received OutSim packet from %s", addr)
+
+            if not self._is_source_allowed(source_ip):
+                logger.warning(
+                    "Discarding OutSim packet from disallowed source %s", source_ip
+                )
+                continue
+
             try:
                 yield OutSimFrame.from_packet(data)
             except ValueError as exc:
                 logger.warning("Discarding invalid OutSim packet: %s", exc)
+
+    def _is_source_allowed(self, source_ip: str) -> bool:
+        if self._allowed_networks is None:
+            return True
+
+        try:
+            ip_obj = ipaddress.ip_address(source_ip)
+        except ValueError:
+            logger.warning(
+                "Discarding OutSim packet from malformed source address %s",
+                source_ip,
+            )
+            return False
+
+        return any(ip_obj in network for network in self._allowed_networks)
 
     def close(self) -> None:
         if self._sock is not None:
