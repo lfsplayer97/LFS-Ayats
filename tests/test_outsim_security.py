@@ -109,6 +109,26 @@ def test_outsim_client_rejects_disallowed_sources(monkeypatch, caplog) -> None:
     client.close()
 
 
+def test_outsim_client_validates_allowed_source_entries() -> None:
+    """Misconfigured allowed sources raise early errors."""
+
+    with pytest.raises(ValueError, match="Invalid OutSim allowed source"):
+        OutSimClient(port=30100, allowed_sources=["this-is-not-an-ip"])
+
+    with pytest.raises(ValueError, match="No valid OutSim allowed sources"):
+        OutSimClient(port=30101, allowed_sources=["   ", "\t\n"])
+
+
+def test_outsim_client_rejects_invalid_rate_limits() -> None:
+    """Zero or negative rate limits are rejected."""
+
+    with pytest.raises(ValueError, match="rate limit must be positive"):
+        OutSimClient(port=30102, max_packets_per_second=0)
+
+    with pytest.raises(ValueError, match="rate limit must be positive"):
+        OutSimClient(port=30103, max_packets_per_second=-5)
+
+
 def test_outsim_client_enforces_packet_rate_limit(monkeypatch, caplog) -> None:
     """Packets beyond the configured rate are dropped and reported."""
 
