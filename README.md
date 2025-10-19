@@ -15,6 +15,8 @@ Prototype telemetry radar for Live for Speed (LFS).
 
 - Python 3.10 o superior.
 - No calen dependències externes; s’utilitza exclusivament la llibreria estàndard.
+- Dependències de desenvolupament opcionals per a analitzadors estàtics: consulteu
+  `requirements-dev.txt`.
 
 ## Configuració essencial
 
@@ -71,6 +73,34 @@ la configuració segons la teva instal·lació de LFS.
 
 - Afegiu camps addicionals a `radar.py` segons les necessitats del prototip.
 - Utilitzeu els manuals d’InSim/OutSim per incorporar nous paquets o esdeveniments.
+
+### Qualitat de codi
+
+Instal·leu les dependències de desenvolupament amb:
+
+```bash
+python -m pip install -r requirements-dev.txt
+```
+
+Les eines de qualitat estan configurades perquè apuntin al paquet principal
+(`src`) i comparteixen llindars comuns:
+
+- **Flake8**: longitud de línia màxima de 100 caràcters.
+- **Pylint**: puntuació mínima (`fail-under`) de 9.0 amb algunes regles
+  desactivades (`missing-docstring`, `too-few-public-methods`, `fixme`).
+- **Mypy**: comprovacions estrictes amb prohibició de funcions sense anotacions
+  i opcions relaxades a `tests`.
+- **Bandit**: severitat mínima `LOW` i confiança `HIGH`, permetent l’ús d’`assert`
+  (regla `B101`) justificat al prototip.
+
+Per executar totes les comprovacions d’una vegada, utilitzeu el `Makefile`:
+
+```bash
+make lint
+```
+
+També podeu invocar les eines individualment: `make lint-flake8`,
+`make lint-pylint`, `make lint-mypy` o `make lint-bandit`.
 
 ## Crèdits
 
