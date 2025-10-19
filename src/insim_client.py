@@ -65,17 +65,28 @@ class _PacketSchema:
     min_size: int
     fields: tuple[_PacketField, ...]
     exact_size: Optional[int] = None
+    max_size: Optional[int] = None
 
 
 class PacketValidator:
     """Validate known InSim packets against predefined schemas."""
 
     def __init__(self) -> None:
+        # Conservative packet size bounds (inclusive) that allow the validator to
+        # reject obviously corrupted headers before attempting to parse payloads.
+        self._size_bounds: dict[int, tuple[int, int]] = {
+            ISP_STA: (28, 28),
+            ISP_NPL: (44, 120),
+            ISP_LAP: (18, 96),
+            ISP_SPX: (18, 96),
+            ISP_BTC: (8, 12),
+        }
         self._schemas: dict[int, _PacketSchema] = {
             ISP_STA: _PacketSchema(
                 name="IS_STA",
                 min_size=28,
                 exact_size=28,
+                max_size=28,
                 fields=(
                     _PacketField(name="header", offset=0, length=4),
                     _PacketField(name="flags2", offset=16, length=2),
@@ -84,6 +95,7 @@ class PacketValidator:
             ISP_NPL: _PacketSchema(
                 name="IS_NPL",
                 min_size=44,
+                max_size=120,
                 fields=(
                     _PacketField(name="header", offset=0, length=4),
                     _PacketField(name="plid", offset=3, length=1),
@@ -93,6 +105,7 @@ class PacketValidator:
             ISP_LAP: _PacketSchema(
                 name="IS_LAP",
                 min_size=18,
+                max_size=96,
                 fields=(
                     _PacketField(name="header", offset=0, length=4),
                     _PacketField(name="lap_time", offset=4, length=8),
@@ -106,6 +119,7 @@ class PacketValidator:
             ISP_SPX: _PacketSchema(
                 name="IS_SPX",
                 min_size=18,
+                max_size=96,
                 fields=(
                     _PacketField(name="header", offset=0, length=4),
                     _PacketField(name="split_time", offset=4, length=8),
@@ -119,6 +133,7 @@ class PacketValidator:
             ISP_BTC: _PacketSchema(
                 name="IS_BTC",
                 min_size=8,
+                max_size=12,
                 fields=(
                     _PacketField(name="header", offset=0, length=4),
                     _PacketField(name="flags", offset=6, length=2),
@@ -126,18 +141,34 @@ class PacketValidator:
             ),
         }
 
+    def validate_header(self, size: int, packet_type: int) -> tuple[bool, Optional[str]]:
+        if size < 2:
+            return False, f"size field {size} smaller than header length"
+
+        bounds = self._size_bounds.get(packet_type)
+        if bounds is not None:
+            min_size, max_size = bounds
+            if size < min_size:
+                return False, f"size field {size} is smaller than minimum {min_size}"
+            if size > max_size:
+                return False, f"size field {size} exceeds maximum {max_size}"
+
+        return True, None
+
     def validate(self, packet: bytes) -> tuple[bool, Optional[str]]:
         if len(packet) < 2:
             return False, "packet shorter than minimum header"
 
         size = packet[0]
-        if size < 2:
-            return False, f"size field {size} smaller than header length"
+        packet_type = packet[1]
+
+        header_valid, header_reason = self.validate_header(size, packet_type)
+        if not header_valid:
+            return False, header_reason
 
         if len(packet) < size:
             return False, f"packet payload shorter than declared size (len={len(packet)}, size={size})"
 
-        packet_type = packet[1]
         schema = self._schemas.get(packet_type)
         if schema is None:
             return True, None
@@ -145,8 +176,8 @@ class PacketValidator:
         if schema.exact_size is not None and size != schema.exact_size:
             return False, f"expected size {schema.exact_size} but received {size}"
 
-        if size < schema.min_size:
-            return False, f"size field {size} is smaller than minimum {schema.min_size}"
+        if schema.max_size is not None and size > schema.max_size:
+            return False, f"size field {size} exceeds maximum {schema.max_size}"
 
         for field in schema.fields:
             end = field.offset + field.length
@@ -535,34 +566,51 @@ class InSimClient:
             self._handle_packet(packet)
 
     def _discard_until_valid_header(self, *, require_complete: bool) -> bool:
-        if not self._buffer:
-            return False
+        while self._buffer:
+            offset = self._scan_for_valid_packet_start(require_complete=require_complete)
+            if offset is None:
+                dropped = len(self._buffer)
+                if dropped:
+                    logger.warning(
+                        "Cleared InSim buffer after discarding %d bytes with no valid packet header",
+                        dropped,
+                    )
+                self._buffer.clear()
+                return False
 
-        offset = self._scan_for_valid_packet_start(require_complete=require_complete)
-        if offset is None:
-            dropped = len(self._buffer)
-            if dropped:
+            if offset:
+                del self._buffer[:offset]
                 logger.warning(
-                    "Cleared InSim buffer after discarding %d bytes with no valid packet header",
-                    dropped,
+                    "Discarded %d additional bytes from InSim buffer due to invalid packet header",
+                    offset,
                 )
-            self._buffer.clear()
-            return False
+                continue
 
-        if offset:
-            del self._buffer[:offset]
-            logger.warning(
-                "Discarded %d additional bytes from InSim buffer due to invalid packet header",
-                offset,
-            )
+            if len(self._buffer) < 2:
+                return False
 
-        if require_complete and len(self._buffer) >= 2:
             packet_size = self._buffer[0]
-            if packet_size > len(self._buffer):
+            packet_type = self._buffer[1]
+            header_valid, reason = self._validator.validate_header(packet_size, packet_type)
+            if not header_valid:
+                discard = 2 if len(self._buffer) >= 2 else 1
+                type_name = self._validator.get_type_name(packet_type)
+                logger.warning(
+                    "Discarded %d byte(s) from InSim buffer due to invalid %s header: %s",
+                    discard,
+                    type_name,
+                    reason,
+                )
+                del self._buffer[:discard]
+                continue
+
+            if require_complete and packet_size > len(self._buffer):
                 # No complete packet is available yet.
                 return False
 
-        return bool(self._buffer)
+            return True
+
+        return False
 
     def _scan_for_valid_packet_start(self, *, require_complete: bool) -> Optional[int]:
         buffer_len = len(self._buffer)
