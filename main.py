@@ -66,6 +66,7 @@ class ModeConfig:
 class AppConfig:
     insim: InSimConfig
     outsim_port: int
+    outsim_allowed_sources: Optional[List[str]]
     beep_mode: str
     sp: ModeConfig
     mp: ModeConfig
@@ -83,6 +84,14 @@ class AppConfig:
         )
 
         outsim_port = int(outsim_cfg_raw.get("port", 30000))
+        allowed_sources_raw = outsim_cfg_raw.get("allowed_sources")
+        outsim_allowed_sources: Optional[List[str]]
+        if allowed_sources_raw is None:
+            outsim_allowed_sources = None
+        elif isinstance(allowed_sources_raw, str):
+            outsim_allowed_sources = [allowed_sources_raw]
+        else:
+            outsim_allowed_sources = [str(value) for value in allowed_sources_raw]
         beep_mode = str(raw.get("beep_mode", "standard"))
 
         sp_cfg = ModeConfig(
@@ -98,6 +107,7 @@ class AppConfig:
         return cls(
             insim=insim_cfg,
             outsim_port=outsim_port,
+            outsim_allowed_sources=outsim_allowed_sources,
             beep_mode=beep_mode,
             sp=sp_cfg,
             mp=mp_cfg,
@@ -519,7 +529,10 @@ def main() -> None:
                 lap_listeners=[handle_lap],
                 split_listeners=[handle_split],
             ) as insim,
-            OutSimClient(config.outsim_port) as outsim,
+            OutSimClient(
+                config.outsim_port,
+                allowed_sources=config.outsim_allowed_sources,
+            ) as outsim,
         ):
             hud_controller = HUDController(insim)
             add_button_listener = getattr(insim, "add_button_listener", None)
