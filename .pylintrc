@@ -3,6 +3,8 @@
 init-hook='import sys; from pathlib import Path; sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))'
 ignore=tests,docs
 extension-pkg-whitelist=
+jobs=0
+py-version=3.10
 
 [MESSAGES CONTROL]
 # Documentem els missatges desactivats per coherència amb l'estil actual.
@@ -16,3 +18,4 @@ max-line-length=100
 
 [REPORTS]
 score=yes
+fail-under=9.0

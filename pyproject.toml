@@ -27,21 +27,6 @@ max-line-length = 100
 extend-ignore = ["E203"]
 exclude = ["docs", "tests/data"]
 
-[tool.pylint.main]
-py-version = "3.10"
-fail-under = 9.0
-jobs = 0
-
-[tool.pylint.messages_control]
-disable = [
-    "missing-docstring",
-    "too-few-public-methods"
-]
-
-[tool.pylint.basic]
-extension-pkg-allow-list = []
-good-names = ["dx", "dy", "dt"]
-
 [tool.mypy]
 python_version = "3.10"
 mypy_path = ["src"]
