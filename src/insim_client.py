@@ -378,6 +378,31 @@ class InSimClient:
             del self._buffer[:discard]
             self._buffer.extend(data)
 
+        if not self._buffer:
+            return
+
+        dropped = 0
+        while self._buffer and (
+            self._buffer[0] == 0 or self._buffer[0] > len(self._buffer)
+        ):
+            del self._buffer[0]
+            dropped += 1
+
+        if dropped:
+            if self._buffer:
+                logger.warning(
+                    "Discarded %d additional bytes from InSim buffer due to invalid packet header",
+                    dropped,
+                )
+            else:
+                logger.warning(
+                    "Cleared InSim buffer after discarding %d bytes with no valid packet header",
+                    dropped,
+                )
+
+        if not self._buffer:
+            self._buffer.clear()
+
     def _process_buffer(self) -> None:
         while len(self._buffer) >= 1:
             packet_size = self._buffer[0]
