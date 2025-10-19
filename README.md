@@ -133,7 +133,7 @@ l'arrel del projecte:
 
 ```bash
 python -m pip install -e .
-python -m pip install -r requirements-dev.txt  # opcional, per a eines addicionals
+python -m pip install -r requirements-dev.txt  # inclou pytest i les eines de qualitat
 pytest
 ```
 
