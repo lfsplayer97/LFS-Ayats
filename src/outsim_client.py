@@ -150,7 +150,7 @@ class OutSimClient:
     ) -> Tuple[Union[ipaddress.IPv4Network, ipaddress.IPv6Network], ...]:
         networks = []
         for entry in allowed_sources:
-            text = entry.strip()
+            text = str(entry).strip()
             if not text:
                 continue
             try:
@@ -158,6 +158,10 @@ class OutSimClient:
             except ValueError as exc:
                 raise ValueError(f"Invalid OutSim allowed source '{entry}': {exc}")
             networks.append(network)
+
+        if not networks:
+            raise ValueError("No valid OutSim allowed sources were provided")
+
         return tuple(networks)
 
     def start(self) -> None:
