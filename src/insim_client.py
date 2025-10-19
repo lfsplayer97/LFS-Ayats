@@ -39,6 +39,125 @@ _KNOWN_PACKET_TYPES = {
     ISP_BTC,
 }
 
+_PACKET_TYPE_NAMES = {
+    ISP_ISI: "IS_ISI",
+    ISP_STA: "IS_STA",
+    ISP_MST: "IS_MST",
+    ISP_NPL: "IS_NPL",
+    ISP_LAP: "IS_LAP",
+    ISP_SPX: "IS_SPX",
+    ISP_BTN: "IS_BTN",
+    ISP_BFN: "IS_BFN",
+    ISP_BTC: "IS_BTC",
+}
+
+
+@dataclass(frozen=True)
+class _PacketField:
+    name: str
+    offset: int
+    length: int
+
+
+@dataclass(frozen=True)
+class _PacketSchema:
+    name: str
+    min_size: int
+    fields: tuple[_PacketField, ...]
+    exact_size: Optional[int] = None
+
+
+class PacketValidator:
+    """Validate known InSim packets against predefined schemas."""
+
+    def __init__(self) -> None:
+        self._schemas: dict[int, _PacketSchema] = {
+            ISP_STA: _PacketSchema(
+                name="IS_STA",
+                min_size=28,
+                exact_size=28,
+                fields=(
+                    _PacketField(name="header", offset=0, length=4),
+                    _PacketField(name="flags2", offset=16, length=2),
+                ),
+            ),
+            ISP_NPL: _PacketSchema(
+                name="IS_NPL",
+                min_size=44,
+                fields=(
+                    _PacketField(name="header", offset=0, length=4),
+                    _PacketField(name="plid", offset=3, length=1),
+                    _PacketField(name="car", offset=40, length=4),
+                ),
+            ),
+            ISP_LAP: _PacketSchema(
+                name="IS_LAP",
+                min_size=18,
+                fields=(
+                    _PacketField(name="header", offset=0, length=4),
+                    _PacketField(name="lap_time", offset=4, length=8),
+                    _PacketField(name="flags", offset=12, length=2),
+                    _PacketField(name="sp0", offset=14, length=1),
+                    _PacketField(name="penalty", offset=15, length=1),
+                    _PacketField(name="num_stops", offset=16, length=1),
+                    _PacketField(name="fuel_200", offset=17, length=1),
+                ),
+            ),
+            ISP_SPX: _PacketSchema(
+                name="IS_SPX",
+                min_size=18,
+                fields=(
+                    _PacketField(name="header", offset=0, length=4),
+                    _PacketField(name="split_time", offset=4, length=8),
+                    _PacketField(name="flags", offset=12, length=2),
+                    _PacketField(name="split", offset=14, length=1),
+                    _PacketField(name="penalty", offset=15, length=1),
+                    _PacketField(name="num_stops", offset=16, length=1),
+                    _PacketField(name="fuel_200", offset=17, length=1),
+                ),
+            ),
+            ISP_BTC: _PacketSchema(
+                name="IS_BTC",
+                min_size=8,
+                fields=(
+                    _PacketField(name="header", offset=0, length=4),
+                    _PacketField(name="flags", offset=6, length=2),
+                ),
+            ),
+        }
+
+    def validate(self, packet: bytes) -> tuple[bool, Optional[str]]:
+        if len(packet) < 2:
+            return False, "packet shorter than minimum header"
+
+        size = packet[0]
+        if size < 2:
+            return False, f"size field {size} smaller than header length"
+
+        if len(packet) < size:
+            return False, f"packet payload shorter than declared size (len={len(packet)}, size={size})"
+
+        packet_type = packet[1]
+        schema = self._schemas.get(packet_type)
+        if schema is None:
+            return True, None
+
+        if schema.exact_size is not None and size != schema.exact_size:
+            return False, f"expected size {schema.exact_size} but received {size}"
+
+        if size < schema.min_size:
+            return False, f"size field {size} is smaller than minimum {schema.min_size}"
+
+        for field in schema.fields:
+            end = field.offset + field.length
+            if end > size:
+                return False, f"field '{field.name}' exceeds packet size (requires {end}, size={size})"
+
+        return True, None
+
+    def get_type_name(self, packet_type: int) -> str:
+        return _PACKET_TYPE_NAMES.get(packet_type, f"0x{packet_type:02X}")
+
 # InSim button style flags
 ISB_CLICK = 1 << 2  # emits IS_BTC when the button is clicked
 
@@ -144,6 +263,7 @@ class InSimClient:
         self._current_track: Optional[str] = None
         self._current_car: Optional[str] = None
         self._view_plid: Optional[int] = None
+        self._validator = PacketValidator()
         if state_listeners:
             self._state_listeners.extend(state_listeners)
         if lap_listeners:
@@ -478,6 +598,11 @@ class InSimClient:
             return
 
         packet_type = packet[1]
+        is_valid, reason = self._validator.validate(packet)
+        if not is_valid:
+            type_name = self._validator.get_type_name(packet_type)
+            logger.warning("Rejecting %s packet: %s", type_name, reason)
+            return
         if packet_type == ISP_STA:
             self._handle_is_sta(packet)
         elif packet_type == ISP_NPL:
@@ -591,24 +716,40 @@ class InSimClient:
         flags = struct.unpack_from("<H", packet, 12)[0]
 
         offset = 14
-        sp0 = packet[offset] if size > offset else 0
+        sp0 = packet[offset]
         offset += 1
-        penalty = packet[offset] if size > offset else 0
+        penalty = packet[offset]
         offset += 1
-        num_stops = packet[offset] if size > offset else 0
+        num_stops = packet[offset]
         offset += 1
-        fuel_200 = packet[offset] if size > offset else 0
+        fuel_200 = packet[offset]
         offset += 1
 
         remaining = size - offset
+        if remaining <= 0:
+            logger.error("IS_LAP packet missing player name segment")
+            return None
+
         spare = 0
+        if remaining < 24:
+            logger.error(
+                "IS_LAP packet contains truncated player name segment (%d bytes)",
+                remaining,
+            )
+            return None
+
         if remaining > 24:
             spare = packet[offset]
             offset += 1
             remaining -= 1
+            if remaining < 24:
+                logger.error(
+                    "IS_LAP packet missing player name after spare byte (remaining=%d)",
+                    remaining,
+                )
+                return None
 
-        name_length = min(24, max(0, size - offset))
-        name_bytes = packet[offset : offset + name_length]
+        name_bytes = packet[offset : offset + 24]
         player_name = name_bytes.split(b"\x00", 1)[0].decode("latin-1", errors="ignore").strip()
 
         return LapEvent(
@@ -639,24 +780,40 @@ class InSimClient:
         flags = struct.unpack_from("<H", packet, 12)[0]
 
         offset = 14
-        split = packet[offset] if size > offset else 0
+        split = packet[offset]
         offset += 1
-        penalty = packet[offset] if size > offset else 0
+        penalty = packet[offset]
         offset += 1
-        num_stops = packet[offset] if size > offset else 0
+        num_stops = packet[offset]
         offset += 1
-        fuel_200 = packet[offset] if size > offset else 0
+        fuel_200 = packet[offset]
         offset += 1
 
         remaining = size - offset
+        if remaining <= 0:
+            logger.error("IS_SPX packet missing player name segment")
+            return None
+
         spare = 0
+        if remaining < 24:
+            logger.error(
+                "IS_SPX packet contains truncated player name segment (%d bytes)",
+                remaining,
+            )
+            return None
+
         if remaining > 24:
             spare = packet[offset]
             offset += 1
             remaining -= 1
+            if remaining < 24:
+                logger.error(
+                    "IS_SPX packet missing player name after spare byte (remaining=%d)",
+                    remaining,
+                )
+                return None
 
-        name_length = min(24, max(0, size - offset))
-        name_bytes = packet[offset : offset + name_length]
+        name_bytes = packet[offset : offset + 24]
         player_name = name_bytes.split(b"\x00", 1)[0].decode("latin-1", errors="ignore").strip()
 
         return SplitEvent(
@@ -711,6 +868,7 @@ __all__ = [
     "SplitEvent",
     "StateEvent",
     "ButtonClickEvent",
+    "PacketValidator",
     "ISS_MULTI",
     "ISP_NPL",
     "ISP_STA",

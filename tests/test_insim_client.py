@@ -7,10 +7,11 @@ from typing import Callable
 from src.hud import HUDController
 from src.insim_client import (
     ISB_CLICK,
+    ISP_BTC,
     ISP_LAP,
     ISP_NPL,
+    ISP_SPX,
     ISP_STA,
-    ISP_BTC,
     InSimClient,
 )
 
@@ -86,6 +87,89 @@ def test_lap_events_inherit_track_and_car_context(
     event = lap_events[-1]
     assert event.track == "BL1"
     assert event.car == "XFG"
+
+
+def test_handle_packet_rejects_truncated_lap_packet(
+    insim_client_factory: Callable[..., InSimClient], caplog
+) -> None:
+    lap_events = []
+    client = insim_client_factory(lap_listeners=[lap_events.append])
+    packet = bytearray(12)
+    packet[0] = 12  # smaller than minimum lap schema
+    packet[1] = ISP_LAP
+    packet[3] = 7
+
+    with caplog.at_level(logging.WARNING):
+        client._handle_packet(bytes(packet))
+
+    assert not lap_events
+    assert any("Rejecting IS_LAP packet" in record.message for record in caplog.records)
+
+
+def _build_lap_packet_with_size(size: int) -> bytes:
+    packet = bytearray(size)
+    packet[0] = size
+    packet[1] = ISP_LAP
+    packet[3] = 5
+    struct.pack_into("<II", packet, 4, 73_000, 74_000)
+    struct.pack_into("<H", packet, 12, 0)
+    packet[14] = 1
+    packet[15] = 0
+    packet[16] = 0
+    packet[17] = 0
+    return bytes(packet)
+
+
+def test_lap_packet_with_truncated_name_is_rejected(
+    insim_client_factory: Callable[..., InSimClient], caplog
+) -> None:
+    lap_events = []
+    client = insim_client_factory(lap_listeners=[lap_events.append])
+    packet = bytearray(_build_lap_packet_with_size(30))
+
+    with caplog.at_level(logging.ERROR):
+        client._handle_packet(bytes(packet))
+
+    assert not lap_events
+    assert any("truncated player name" in record.message for record in caplog.records)
+
+
+def test_split_packet_with_truncated_name_is_rejected(
+    insim_client_factory: Callable[..., InSimClient], caplog
+) -> None:
+    split_events = []
+    client = insim_client_factory(split_listeners=[split_events.append])
+    size = 30
+    packet = bytearray(size)
+    packet[0] = size
+    packet[1] = ISP_SPX
+    packet[3] = 5
+    struct.pack_into("<II", packet, 4, 12_000, 13_000)
+    struct.pack_into("<H", packet, 12, 0)
+    packet[14] = 1
+    packet[15] = 0
+    packet[16] = 0
+    packet[17] = 0
+
+    with caplog.at_level(logging.ERROR):
+        client._handle_packet(bytes(packet))
+
+    assert not split_events
+    assert any("IS_SPX packet contains truncated player name" in record.message for record in caplog.records)
+
+
+def test_truncated_button_packet_is_rejected(
+    insim_client_factory: Callable[..., InSimClient], caplog
+) -> None:
+    button_events = []
+    client = insim_client_factory(button_listeners=[button_events.append])
+    packet = bytes([6, ISP_BTC, 0, 0, 0, 0])
+
+    with caplog.at_level(logging.WARNING):
+        client._handle_packet(packet)
+
+    assert not button_events
+    assert any("Rejecting IS_BTC packet" in record.message for record in caplog.records)
 
 
 class _RecordingInSim:
