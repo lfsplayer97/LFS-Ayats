@@ -196,6 +196,15 @@ def main() -> None:
 
         pb_total = persistent_best.laptime_ms
         fractions = resolve_reference_fractions()
+        if not fractions:
+            estimate_total = lap_state.get("latest_estimated_total_ms")
+            if not estimate_total or estimate_total <= 0:
+                return None
+
+            progress = min(max(current_ms / estimate_total, 0.0), 1.0)
+            reference_time = int(round(pb_total * progress))
+            return min(reference_time, pb_total)
+
         boundaries = fractions + [1.0]
 
         current_splits: Dict[int, int] = lap_state.get("current_split_times", {})
@@ -311,8 +320,11 @@ def main() -> None:
             return
 
         lap_time = event.lap_time_ms
+        estimate_hint: Optional[int] = None
         if event.estimate_time_ms > 0:
             lap_state["latest_estimated_total_ms"] = event.estimate_time_ms
+            if lap_time <= 0:
+                estimate_hint = event.estimate_time_ms
 
         current_splits: Dict[int, int] = lap_state.get("current_split_times", {})
         sorted_indices = sorted(current_splits)
@@ -373,6 +385,8 @@ def main() -> None:
             pending_lap_start = False
 
         reset_split_tracking()
+        if estimate_hint is not None:
+            lap_state["latest_estimated_total_ms"] = estimate_hint
 
     def watch_config() -> None:
         nonlocal config, mode_settings, radar_enabled

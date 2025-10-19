@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import re
 import sys
-from pathlib import Path
 from datetime import datetime, timezone
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from main import clear_session_timing, update_session_best
@@ -292,3 +293,139 @@ def test_track_change_resets_pending_lap_start(monkeypatch) -> None:
         FakeOutSimClient.frames_to_yield = []
 
     assert any("Current lap:       0 ms" in line for line in printed_lines)
+
+
+def test_reference_delta_without_pb_splits_uses_estimates(monkeypatch) -> None:
+    main_module = sys.modules["main"]
+
+    printed_lines: list[str] = []
+
+    def fake_print(*args, **kwargs):
+        text = "".join(str(arg) for arg in args)
+        printed_lines.append(text)
+
+    class FakeInSimClient:
+        events: list[tuple[str, object]] = []
+
+        def __init__(
+            self,
+            config,
+            *,
+            state_listeners=None,
+            lap_listeners=None,
+            split_listeners=None,
+        ) -> None:
+            self._state_listeners = list(state_listeners or [])
+            self._lap_listeners = list(lap_listeners or [])
+            self._event_queue = list(self.events)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):  # type: ignore[override]
+            return False
+
+        def poll(self) -> None:
+            if not self._event_queue:
+                return
+
+            kind, payload = self._event_queue.pop(0)
+            if kind == "state":
+                for callback in self._state_listeners:
+                    callback(payload)
+            elif kind == "lap":
+                for callback in self._lap_listeners:
+                    callback(payload)
+
+    class FakeOutSimClient:
+        frames_to_yield: list[OutSimFrame] = []
+
+        def __init__(self, port, host="0.0.0.0", buffer_size: int = 256, timeout=None) -> None:
+            self._frames = list(self.frames_to_yield)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):  # type: ignore[override]
+            return False
+
+        def frames(self):
+            yield from self._frames
+
+    class DummyRadar:
+        def draw(self, frame):
+            pass
+
+    def run_session(estimate_total: int) -> list[int]:
+        printed_lines.clear()
+
+        FakeInSimClient.events = [
+            ("state", StateEvent(flags2=0, track="SO1", car="UF1")),
+            (
+                "lap",
+                LapEvent(
+                    plid=42,
+                    lap_time_ms=0,
+                    estimate_time_ms=estimate_total,
+                    flags=0,
+                    penalty=0,
+                    num_pit_stops=0,
+                    fuel_percent=0,
+                    player_name="Driver",
+                    track="SO1",
+                    car="UF1",
+                ),
+            ),
+        ]
+
+        base_frame_kwargs = dict(
+            ang_vel=(0.0, 0.0, 0.0),
+            heading=(0.0, 1.0, 0.0),
+            acceleration=(0.0, 0.0, 0.0),
+            velocity=(0.0, 0.0, 0.0),
+            position=(0.0, 0.0, 0.0),
+        )
+
+        FakeOutSimClient.frames_to_yield = [
+            OutSimFrame(time_ms=idx * 1000, **base_frame_kwargs) for idx in range(1, 7)
+        ]
+
+        try:
+            main_module.main()
+        finally:
+            FakeInSimClient.events = []
+            FakeOutSimClient.frames_to_yield = []
+
+        deltas: list[int] = []
+        for line in printed_lines:
+            if "Δ vs PB:" not in line:
+                continue
+            match = re.search(r"Δ vs PB:\s*([+-]\s*\d+)\s*ms", line)
+            if not match:
+                continue
+            value = int(match.group(1).replace(" ", ""))
+            deltas.append(value)
+
+        return deltas
+
+    monkeypatch.setattr(main_module, "InSimClient", FakeInSimClient)
+    monkeypatch.setattr(main_module, "OutSimClient", FakeOutSimClient)
+    monkeypatch.setattr(main_module, "RadarRenderer", lambda: DummyRadar())
+    monkeypatch.setattr(main_module, "record_lap", lambda *args, **kwargs: (None, False))
+    monkeypatch.setattr(
+        main_module,
+        "load_personal_best",
+        lambda track, car: PersonalBestRecord(
+            track=track,
+            car=car,
+            laptime_ms=90000,
+            recorded_at=datetime.now(timezone.utc),
+        ),
+    )
+    monkeypatch.setattr("builtins.print", fake_print)
+
+    ahead_deltas = run_session(estimate_total=85000)
+    behind_deltas = run_session(estimate_total=95000)
+
+    assert ahead_deltas and ahead_deltas[-1] < 0
+    assert behind_deltas and behind_deltas[-1] > 0
