@@ -26,6 +26,9 @@ ISP_BTN = 45
 ISP_BFN = 46
 ISP_BTC = 47
 
+# InSim button style flags
+ISB_CLICK = 1 << 2  # emits IS_BTC when the button is clicked
+
 ISF_MCI = 1 << 0  # receive multi car info packets
 ISF_CON = 1 << 1  # receive contact packets
 ISF_OBH = 1 << 2  # receive object hit packets

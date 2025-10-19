@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 
-from .insim_client import InSimClient
+from .insim_client import ISB_CLICK, InSimClient
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +66,7 @@ class HUDController:
                 top=150,
                 width=35,
                 height=6,
+                style=ISB_CLICK,
             )
             self._insim.show_button(
                 button_id=self.BEEPS_BUTTON_ID,
@@ -74,6 +75,7 @@ class HUDController:
                 top=150,
                 width=35,
                 height=6,
+                style=ISB_CLICK,
             )
         except Exception:  # pragma: no cover - defensive logging
             logger.exception("Failed to draw HUD buttons")
