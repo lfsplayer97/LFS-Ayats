@@ -1,26 +1,10 @@
 """Tests for the minimal InSim client helpers."""
 
 import struct
-import sys
-from pathlib import Path
+from typing import Callable
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))
-
-from src.hud import HUDController  # noqa: E402
-from src.insim_client import (  # noqa: E402
-    ISB_CLICK,
-    ISP_LAP,
-    ISP_NPL,
-    ISP_STA,
-    InSimClient,
-    InSimConfig,
-)
-
-
-def _make_client(**kwargs) -> InSimClient:
-    config = InSimConfig(host="127.0.0.1", port=12345)
-    return InSimClient(config, **kwargs)
-
+from src.hud import HUDController
+from src.insim_client import ISB_CLICK, ISP_LAP, ISP_NPL, ISP_STA, InSimClient
 
 def _build_sta_packet(view_plid: int, track_code: bytes) -> bytes:
     packet = bytearray(28)
@@ -31,11 +15,11 @@ def _build_sta_packet(view_plid: int, track_code: bytes) -> bytes:
     padded_track = track_code.ljust(6, b"\x00")[:6]
     packet[20:26] = padded_track
     return bytes(packet)
-
-
-def test_handle_is_sta_extracts_track_and_resolves_car() -> None:
+def test_handle_is_sta_extracts_track_and_resolves_car(
+    insim_client_factory: Callable[..., InSimClient],
+) -> None:
     events = []
-    client = _make_client(state_listeners=[events.append])
+    client = insim_client_factory(state_listeners=[events.append])
     client._plid_to_car[7] = "FXO"
 
     packet = _build_sta_packet(7, b"BL1")
@@ -45,11 +29,11 @@ def test_handle_is_sta_extracts_track_and_resolves_car() -> None:
     event = events[-1]
     assert event.track == "BL1"
     assert event.car == "FXO"
-
-
-def test_handle_is_npl_populates_car_mapping() -> None:
+def test_handle_is_npl_populates_car_mapping(
+    insim_client_factory: Callable[..., InSimClient],
+) -> None:
     events = []
-    client = _make_client(state_listeners=[events.append])
+    client = insim_client_factory(state_listeners=[events.append])
 
     # Establish view PLID to simulate an active driver context.
     client._handle_is_sta(_build_sta_packet(12, b"SO1"))
@@ -66,11 +50,11 @@ def test_handle_is_npl_populates_car_mapping() -> None:
     assert events
     # The latest notification should include the resolved car.
     assert events[-1].car == "FXO"
-
-
-def test_lap_events_inherit_track_and_car_context() -> None:
+def test_lap_events_inherit_track_and_car_context(
+    insim_client_factory: Callable[..., InSimClient],
+) -> None:
     lap_events = []
-    client = _make_client(lap_listeners=[lap_events.append])
+    client = insim_client_factory(lap_listeners=[lap_events.append])
     client._current_track = "BL1"
     client._plid_to_car[5] = "XFG"
 
