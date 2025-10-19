@@ -1,92 +1,78 @@
 # LFS-Ayats
 
-Prototype telemetry radar for Live for Speed (LFS).  The project connects to
-InSim for control commands, listens to OutSim telemetry, and renders a simple
-ASCII radar that mirrors the original prototype behaviour.
+Prototype telemetry radar for Live for Speed (LFS).
 
-## Requirements
+## Resum executiu
 
-* Python 3.10 or newer
+- **Objectiu:** Visualitzar en temps real un radar ASCII que replica el
+  comportament del prototip original mentre es rep telemetria de LFS.
+- **Fonts de telemetria:** Control per InSim (TCP) i dades OutSim (UDP) per
+  sincronitzar la posició dels vehicles i l’estat del servidor.
+- **Abast del projecte:** Prototype enfocat a proves locals que pot estendre’s
+  amb funcionalitats addicionals de les especificacions InSim/OutSim.
 
-No third-party dependencies are required; only the Python standard library is
-used.
+## Requisits
 
-## Configuration
+- Python 3.10 o superior.
+- No calen dependències externes; s’utilitza exclusivament la llibreria estàndard.
 
-All runtime settings are stored in [`config.json`](config.json):
+## Configuració essencial
 
-```json
-{
-  "insim": {
-    "host": "127.0.0.1",
-    "port": 29999,
-    "admin_password": "",
-    "interval_ms": 100
-  },
-  "outsim": {
-    "port": 30000,
-    "update_hz": 60
-  },
-  "sp_radar_enabled": true,
-  "sp_beeps_enabled": true,
-  "mp_radar_enabled": true,
-  "mp_beeps_enabled": false,
-  "beep_mode": "standard"
-}
-```
+Totes les opcions de temps d’execució es defineixen a
+[`config.json`](config.json). Els blocs següents resumeixen els paràmetres
+principals:
 
-* **`insim.host` / `insim.port`** – address of the LFS InSim server.
-* **`insim.admin_password`** – optional admin password if your server requires
-  authentication.
-* **`insim.interval_ms`** – desired update interval for InSim packets.
-* **`outsim.port`** – UDP port the game broadcasts OutSim packets to (configure
-  this in `cfg.txt` within LFS).
-* **`outsim.update_hz`** – documentation value for your preferred update rate;
-  currently informational only for the prototype.
-* **`sp_radar_enabled` / `sp_beeps_enabled`** – toggle the radar renderer and
-  beep subsystem while driving in single-player sessions.
-* **`mp_radar_enabled` / `mp_beeps_enabled`** – equivalent toggles when InSim
-  reports that you are connected to a multiplayer host.
-* **`beep_mode`** – selects the strategy used by the beep subsystem (currently a
-  placeholder string).
-
-The app automatically swaps between the single-player (`sp_*`) and
-multiplayer (`mp_*`) settings whenever InSim updates its state. When the
-`ISS_MULTI` flag is set, the multiplayer configuration is applied; otherwise the
-single-player options remain in effect. Configuration edits are watched on disk
-and hot-reloaded at runtime, so you can tweak these values without restarting
-the program.
-
-Adjust the values to match your LFS setup before running the program.
-
-## Running the radar
-
-1. Ensure LFS is configured to send OutSim packets to the machine running this
-   script and that InSim is enabled.
-2. Start the prototype:
-
-   ```bash
-   python main.py
-   ```
-
-   The script connects to InSim, waits for OutSim telemetry, and continuously
-   prints the ASCII radar to the terminal. Press `Ctrl+C` to exit.
-
-## Development notes
-
-The telemetry helpers live in the `src/` package:
-
-* [`src/insim_client.py`](src/insim_client.py) – minimal TCP wrapper for InSim.
-* [`src/outsim_client.py`](src/outsim_client.py) – UDP listener parsing OutSim
-  frames.
-* [`src/radar.py`](src/radar.py) – ASCII renderer for OutSim positions.
-
-These modules are intentionally small and can be extended with additional
-functionality from the InSim/OutSim specifications as needed.
-
-## Additional documentation
-
-| Resource | Description |
+| Secció / Clau | Funció |
 | --- | --- |
-| [Interactive documentation site](docs/site/index.html) | Accessible overview with navegació ràpida, enllaços interns i configuracions pas a pas del radar. |
-| [LFS manual extracts](docs/) | Official PDF guides (commands, controls, scripting, and more) that complement the interactive notes with the full simulator manuals. |
+| `insim.host`, `insim.port` | Destinació del servidor InSim i interval (`insim.interval_ms`) per als paquets de control. |
+| `insim.admin_password` | Contrasenya opcional per autenticar la sessió InSim. |
+| `outsim.port`, `outsim.update_hz` | Port UDP on LFS emet OutSim i freqüència esperada d’actualització. |
+| `sp_radar_enabled`, `sp_beeps_enabled` | Activen radar i avisos sonors en sessions d’un sol jugador. |
+| `mp_radar_enabled`, `mp_beeps_enabled` | Equivalents per a partides multijugador quan `ISS_MULTI` està actiu. |
+| `beep_mode` | Estratègia del subsistema d’avisos (actualment marcador). |
+
+Els canvis al fitxer es detecten i s’apliquen sense reiniciar, permetent ajustar
+la configuració segons la teva instal·lació de LFS.
+
+## Quick start
+
+1. Activa OutSim i InSim a LFS, apuntant OutSim al port definit a `config.json`.
+2. Revisa i adapta els valors de `config.json` perquè coincideixin amb la teva
+   configuració local.
+3. Executa el radar des de l’arrel del projecte amb **`python main.py`**.
+4. Mantén la terminal oberta: el client esperarà telemetria OutSim i mostrarà
+   el radar ASCII contínuament fins que premis `Ctrl+C`.
+
+## Documentació
+
+- [LFS Programming - LFS Manual](docs/LFS%20Programming%20-%20LFS%20Manual.pdf)
+- [Script Guide - LFS Manual](docs/Script%20Guide%20-%20LFS%20Manual.pdf)
+- [Commands - LFS Manual](docs/Commands%20-%20LFS%20Manual.pdf)
+- [Category_Options - LFS Manual](docs/Category_Options%20-%20LFS%20Manual.pdf)
+- [Display - LFS Manual](docs/Display%20-%20LFS%20Manual.pdf)
+- [Options_Controls - LFS Manual](docs/Options_Controls%20-%20LFS%20Manual.pdf)
+- [Views - LFS Manual](docs/Views%20-%20LFS%20Manual.pdf)
+- [Documentació interactiva](docs/site/index.html)
+
+## Notes per a desenvolupadors
+
+### Arquitectura
+
+- `main.py` orquestra el bucle principal i gestiona la recàrrega de configuració.
+- Els clients InSim i OutSim encapsulen la comunicació TCP/UDP.
+
+### Fitxers clau
+
+- [`src/insim_client.py`](src/insim_client.py): client mínim per a InSim.
+- [`src/outsim_client.py`](src/outsim_client.py): receptor i parser de trames OutSim.
+- [`src/radar.py`](src/radar.py): renderitza el radar ASCII.
+
+### Extensió
+
+- Afegiu camps addicionals a `radar.py` segons les necessitats del prototip.
+- Utilitzeu els manuals d’InSim/OutSim per incorporar nous paquets o esdeveniments.
+
+## Crèdits
+
+- Desenvolupament del prototip: equip LFS-Ayats.
+- Documentació original de LFS: Scavier / Live for Speed.
