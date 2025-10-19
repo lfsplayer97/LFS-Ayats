@@ -100,7 +100,7 @@ class OutSimClient:
     allowed_sources:
         Optional collection of IP addresses or CIDR networks that are allowed to
         feed data into the client.  When present, packets from other sources are
-        ignored.
+        ignored.  Supplying an empty collection is considered invalid.
     max_packets_per_second:
         Optional positive float that limits how many packets are accepted each
         second.  When the incoming rate exceeds the limit, packets are dropped
@@ -121,16 +121,13 @@ class OutSimClient:
         self._buffer_size = buffer_size
         self._timeout = timeout
         self._sock: Optional[socket.socket] = None
-        self._allowed_source_strings: Optional[Tuple[str, ...]] = (
-            tuple(allowed_sources) if allowed_sources else None
-        )
-        self._allowed_networks: Optional[
-            Tuple[Union[ipaddress.IPv4Network, ipaddress.IPv6Network], ...]
-        ] = (
-            self._normalise_allowed_sources(allowed_sources)
-            if allowed_sources
-            else None
-        )
+        if allowed_sources is None:
+            self._allowed_source_strings = None
+            self._allowed_networks = None
+        else:
+            sources_tuple: Tuple[str, ...] = tuple(allowed_sources)
+            self._allowed_source_strings = sources_tuple
+            self._allowed_networks = self._normalise_allowed_sources(sources_tuple)
         self._rate_limit_last_refill: float = time.monotonic()
         if max_packets_per_second is not None:
             if max_packets_per_second <= 0:
