@@ -29,6 +29,24 @@ body {
   background: var(--color-background);
 }
 
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-accent-strong);
+  color: var(--color-surface);
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
 body:focus-within {
   scroll-behavior: smooth;
 }
@@ -39,6 +57,30 @@ footer {
   color: var(--color-surface);
   padding: 2rem 1.5rem;
   text-align: center;
+}
+
+nav {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-elevated);
+  margin: -1.5rem auto 2rem;
+  max-width: 960px;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0 0 0.75rem 0.75rem;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+}
+
+nav a {
+  color: var(--color-heading);
+  font-weight: 600;
 }
 
 main {
@@ -144,6 +186,10 @@ footer p {
 
   main {
     padding: 1.75rem 1.25rem 2.5rem;
+  }
+
+  nav {
+    margin: -1.5rem 1.25rem 2rem;
   }
 
   section {
