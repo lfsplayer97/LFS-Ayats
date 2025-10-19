@@ -117,9 +117,35 @@ def test_buffer_limit_discards_old_bytes(
 
         client._append_to_buffer(b"abcdefghijk")
 
-        assert bytes(client._buffer) == b"defghijk"
+        assert bytes(client._buffer) == b""
         assert caplog.records
-        assert (
-            caplog.records[-1].message
-            == "Discarded 7 bytes from InSim buffer to enforce limit"
-        )
+        messages = [record.message for record in caplog.records]
+        assert "Discarded 7 bytes from InSim buffer to enforce limit" in messages
+        assert any("buffer" in message for message in messages)
+
+
+def test_buffer_limit_preserves_latest_packet_after_overflow(
+    insim_client_factory: Callable[..., InSimClient], caplog
+) -> None:
+    client = insim_client_factory(buffer_limit=7)
+    packets = [
+        bytes([4, 1, 0, 0]),
+        bytes([4, 200, 0, 0]),
+        bytes([4, 2, 0, 0]),
+    ]
+    processed: list[bytes] = []
+
+    def recorder(packet: bytes) -> None:
+        processed.append(packet)
+
+    client._handle_packet = recorder  # type: ignore[method-assign]
+
+    with caplog.at_level(logging.WARNING):
+        client._append_to_buffer(b"".join(packets))
+        client._process_buffer()
+
+    assert processed == [packets[-1]]
+    assert client._buffer == bytearray()
+    messages = [record.message for record in caplog.records]
+    assert "Discarded 5 bytes from InSim buffer to enforce limit" in messages
+    assert any("invalid packet header" in message for message in messages)
