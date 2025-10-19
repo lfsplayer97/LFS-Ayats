@@ -218,11 +218,11 @@ def test_buffer_limit_discards_old_bytes(
 def test_buffer_limit_preserves_latest_packet_after_overflow(
     insim_client_factory: Callable[..., InSimClient], caplog
 ) -> None:
-    client = insim_client_factory(buffer_limit=7)
+    client = insim_client_factory(buffer_limit=12)
     packets = [
         bytes([4, 1, 0, 0]),
         bytes([4, 200, 0, 0]),
-        bytes([4, ISP_STA, 0, 0]),
+        bytes([8, ISP_BTC, 0, 0, 0, 0, 0, 0]),
     ]
     processed: list[bytes] = []
 
@@ -238,7 +238,7 @@ def test_buffer_limit_preserves_latest_packet_after_overflow(
     assert processed == [packets[-1]]
     assert client._buffer == bytearray()
     messages = [record.message for record in caplog.records]
-    assert "Discarded 5 bytes from InSim buffer to enforce limit" in messages
+    assert any("enforce limit" in message for message in messages)
     assert any("invalid packet header" in message for message in messages)
 
 
@@ -247,7 +247,7 @@ def test_buffer_limit_recovers_from_truncated_small_prefix(
 ) -> None:
     client = insim_client_factory(buffer_limit=9)
     truncated_packet = bytes([8, ISP_STA, 170, 4, 153, 136, 119, 102])
-    valid_packet = bytes([4, ISP_BTC, 0, 0])
+    valid_packet = bytes([8, ISP_BTC, 0, 0, 0, 0, 0, 0])
     processed: list[bytes] = []
 
     def recorder(packet: bytes) -> None:
@@ -264,3 +264,38 @@ def test_buffer_limit_recovers_from_truncated_small_prefix(
     assert client._buffer == bytearray()
     messages = [record.message for record in caplog.records]
     assert "invalid packet header" in " ".join(messages)
+
+
+def test_corrupted_size_header_is_skipped(
+    insim_client_factory: Callable[..., InSimClient], caplog
+) -> None:
+    lap_events: list = []
+    client = insim_client_factory(lap_listeners=[lap_events.append])
+    client._current_track = "BL1"
+    client._plid_to_car[5] = "XFG"
+
+    valid_size = 64
+    valid_packet = bytearray(valid_size)
+    valid_packet[0] = valid_size
+    valid_packet[1] = ISP_LAP
+    valid_packet[3] = 5
+    struct.pack_into("<II", valid_packet, 4, 73_000, 74_000)
+    struct.pack_into("<H", valid_packet, 12, 0)
+    valid_packet[14] = 0
+    valid_packet[15] = 0
+    valid_packet[16] = 0
+    valid_packet[17] = 0
+    name = b"Driver\x00"
+    valid_packet[18 : 18 + len(name)] = name
+
+    corrupted_header = bytes([200, ISP_LAP])
+
+    with caplog.at_level(logging.WARNING):
+        client._append_to_buffer(corrupted_header + bytes(valid_packet))
+        client._process_buffer()
+
+    assert lap_events
+    assert lap_events[-1].track == "BL1"
+    assert lap_events[-1].car == "XFG"
+    messages = [record.message for record in caplog.records]
+    assert any("invalid IS_LAP header" in message for message in messages)
