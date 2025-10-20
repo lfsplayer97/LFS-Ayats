@@ -142,8 +142,8 @@ class PacketValidator:
         }
 
     def validate_header(self, size: int, packet_type: int) -> tuple[bool, Optional[str]]:
-        if size < 2:
-            return False, f"size field {size} smaller than header length"
+        if size < 4:
+            return False, f"size field {size} smaller than minimum header length 4"
 
         bounds = self._size_bounds.get(packet_type)
         if bounds is not None:
@@ -627,7 +627,7 @@ class InSimClient:
             if packet_type not in _KNOWN_PACKET_TYPES:
                 continue
 
-            if packet_size < 2:
+            if packet_size < 4:
                 continue
 
             if require_complete and packet_size > remaining:
