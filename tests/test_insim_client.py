@@ -12,6 +12,7 @@ from src.insim_client import (
     ISP_NPL,
     ISP_SPX,
     ISP_STA,
+    ISP_VER,
     InSimClient,
     PacketValidator,
 )
@@ -25,6 +26,27 @@ def _build_sta_packet(view_plid: int, track_code: bytes) -> bytes:
     padded_track = track_code.ljust(6, b"\x00")[:6]
     packet[20:26] = padded_track
     return bytes(packet)
+
+
+def test_process_buffer_accepts_version_handshake(
+    insim_client_factory: Callable[..., InSimClient], caplog
+) -> None:
+    client = insim_client_factory()
+    handshake = bytes(
+        [
+            20,
+            ISP_VER,
+            0,
+            0,
+        ]
+    ) + b"LFS\x00\x00\x000.7D\x00\x00\x00\x00v9"
+
+    with caplog.at_level(logging.DEBUG):
+        client._append_to_buffer(handshake)
+        client._process_buffer()
+
+    assert all(record.levelno < logging.WARNING for record in caplog.records)
+    assert client._buffer == bytearray()
 def test_handle_is_sta_extracts_track_and_resolves_car(
     insim_client_factory: Callable[..., InSimClient],
 ) -> None:
@@ -189,6 +211,16 @@ def test_packet_validator_rejects_split_below_minimum_size() -> None:
 
     assert not is_valid
     assert reason and "smaller than minimum" in reason
+
+
+def test_packet_validator_rejects_truncated_version_packet() -> None:
+    validator = PacketValidator()
+    packet = bytes([20, ISP_VER, 0, 0, 0, 0, 0, 0, 0, 0])
+
+    is_valid, reason = validator.validate(packet)
+
+    assert not is_valid
+    assert reason and "payload shorter" in reason
 
 
 def test_truncated_button_packet_is_rejected(
