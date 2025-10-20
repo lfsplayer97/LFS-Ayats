@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 # enabling multiplayer-safe telemetry are included – additional flags can be
 # added in the future as the prototype grows.
 ISP_ISI = 1
+ISP_VER = 2
 ISP_STA = 5
 ISP_MST = 11
 ISP_NPL = 21
@@ -29,6 +30,7 @@ ISP_BTC = 47
 
 _KNOWN_PACKET_TYPES = {
     ISP_ISI,
+    ISP_VER,
     ISP_STA,
     ISP_MST,
     ISP_NPL,
@@ -41,6 +43,7 @@ _KNOWN_PACKET_TYPES = {
 
 _PACKET_TYPE_NAMES = {
     ISP_ISI: "IS_ISI",
+    ISP_VER: "IS_VER",
     ISP_STA: "IS_STA",
     ISP_MST: "IS_MST",
     ISP_NPL: "IS_NPL",
@@ -75,6 +78,7 @@ class PacketValidator:
         # Conservative packet size bounds (inclusive) that allow the validator to
         # reject obviously corrupted headers before attempting to parse payloads.
         self._size_bounds: dict[int, tuple[int, int]] = {
+            ISP_VER: (20, 20),
             ISP_STA: (28, 28),
             ISP_NPL: (44, 120),
             ISP_LAP: (42, 96),
@@ -82,6 +86,16 @@ class PacketValidator:
             ISP_BTC: (8, 12),
         }
         self._schemas: dict[int, _PacketSchema] = {
+            ISP_VER: _PacketSchema(
+                name="IS_VER",
+                min_size=20,
+                exact_size=20,
+                max_size=20,
+                fields=(
+                    _PacketField(name="header", offset=0, length=4),
+                    _PacketField(name="version_region", offset=4, length=16),
+                ),
+            ),
             ISP_STA: _PacketSchema(
                 name="IS_STA",
                 min_size=28,
@@ -656,7 +670,9 @@ class InSimClient:
             type_name = self._validator.get_type_name(packet_type)
             logger.warning("Rejecting %s packet: %s", type_name, reason)
             return
-        if packet_type == ISP_STA:
+        if packet_type == ISP_VER:
+            self._handle_is_ver(packet)
+        elif packet_type == ISP_STA:
             self._handle_is_sta(packet)
         elif packet_type == ISP_NPL:
             self._handle_is_npl(packet)
@@ -694,6 +710,18 @@ class InSimClient:
                         listener(event)
                     except Exception:  # pragma: no cover - defensive logging
                         logger.exception("Error while handling InSim button listener")
+
+    def _handle_is_ver(self, packet: bytes) -> None:
+        payload = packet[4:20]
+        try:
+            decoded = payload.decode("ascii", errors="ignore").rstrip("\x00")
+        except Exception:
+            decoded = ""
+
+        if decoded:
+            logger.debug("Received IS_VER handshake: %s", decoded)
+        else:
+            logger.debug("Received IS_VER handshake payload: %s", payload)
 
     def _handle_is_sta(self, packet: bytes) -> None:
         # IS_STA packets are 28 bytes long in current protocol versions.
