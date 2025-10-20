@@ -77,8 +77,8 @@ class PacketValidator:
         self._size_bounds: dict[int, tuple[int, int]] = {
             ISP_STA: (28, 28),
             ISP_NPL: (44, 120),
-            ISP_LAP: (18, 96),
-            ISP_SPX: (18, 96),
+            ISP_LAP: (42, 96),
+            ISP_SPX: (42, 96),
             ISP_BTC: (8, 12),
         }
         self._schemas: dict[int, _PacketSchema] = {
@@ -104,7 +104,7 @@ class PacketValidator:
             ),
             ISP_LAP: _PacketSchema(
                 name="IS_LAP",
-                min_size=18,
+                min_size=42,
                 max_size=96,
                 fields=(
                     _PacketField(name="header", offset=0, length=4),
@@ -114,11 +114,12 @@ class PacketValidator:
                     _PacketField(name="penalty", offset=15, length=1),
                     _PacketField(name="num_stops", offset=16, length=1),
                     _PacketField(name="fuel_200", offset=17, length=1),
+                    _PacketField(name="player_name", offset=18, length=24),
                 ),
             ),
             ISP_SPX: _PacketSchema(
                 name="IS_SPX",
-                min_size=18,
+                min_size=42,
                 max_size=96,
                 fields=(
                     _PacketField(name="header", offset=0, length=4),
@@ -128,6 +129,7 @@ class PacketValidator:
                     _PacketField(name="penalty", offset=15, length=1),
                     _PacketField(name="num_stops", offset=16, length=1),
                     _PacketField(name="fuel_200", offset=17, length=1),
+                    _PacketField(name="player_name", offset=18, length=24),
                 ),
             ),
             ISP_BTC: _PacketSchema(
@@ -172,6 +174,9 @@ class PacketValidator:
         schema = self._schemas.get(packet_type)
         if schema is None:
             return True, None
+
+        if size < schema.min_size:
+            return False, f"size field {size} is smaller than minimum {schema.min_size}"
 
         if schema.exact_size is not None and size != schema.exact_size:
             return False, f"expected size {schema.exact_size} but received {size}"

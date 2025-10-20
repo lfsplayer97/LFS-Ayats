@@ -13,6 +13,7 @@ from src.insim_client import (
     ISP_SPX,
     ISP_STA,
     InSimClient,
+    PacketValidator,
 )
 
 def _build_sta_packet(view_plid: int, track_code: bytes) -> bytes:
@@ -127,11 +128,14 @@ def test_lap_packet_with_truncated_name_is_rejected(
     client = insim_client_factory(lap_listeners=[lap_events.append])
     packet = bytearray(_build_lap_packet_with_size(30))
 
-    with caplog.at_level(logging.ERROR):
+    with caplog.at_level(logging.WARNING):
         client._handle_packet(bytes(packet))
 
     assert not lap_events
-    assert any("truncated player name" in record.message for record in caplog.records)
+    assert any(
+        "smaller than minimum" in record.message and "IS_LAP" in record.message
+        for record in caplog.records
+    )
 
 
 def test_split_packet_with_truncated_name_is_rejected(
@@ -151,11 +155,40 @@ def test_split_packet_with_truncated_name_is_rejected(
     packet[16] = 0
     packet[17] = 0
 
-    with caplog.at_level(logging.ERROR):
+    with caplog.at_level(logging.WARNING):
         client._handle_packet(bytes(packet))
 
     assert not split_events
-    assert any("IS_SPX packet contains truncated player name" in record.message for record in caplog.records)
+    assert any(
+        "smaller than minimum" in record.message and "IS_SPX" in record.message
+        for record in caplog.records
+    )
+
+
+def test_packet_validator_rejects_lap_below_minimum_size() -> None:
+    validator = PacketValidator()
+    size = 30
+    packet = bytearray(size)
+    packet[0] = size
+    packet[1] = ISP_LAP
+
+    is_valid, reason = validator.validate(bytes(packet))
+
+    assert not is_valid
+    assert reason and "smaller than minimum" in reason
+
+
+def test_packet_validator_rejects_split_below_minimum_size() -> None:
+    validator = PacketValidator()
+    size = 30
+    packet = bytearray(size)
+    packet[0] = size
+    packet[1] = ISP_SPX
+
+    is_valid, reason = validator.validate(bytes(packet))
+
+    assert not is_valid
+    assert reason and "smaller than minimum" in reason
 
 
 def test_truncated_button_packet_is_rejected(
