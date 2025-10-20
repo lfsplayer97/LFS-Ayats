@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 280" role="img" aria-labelledby="title desc">
+  <title id="title">Logotip modernitzat de LFS-Ayats</title>
+  <desc id="desc">Composició geomètrica amb detalls clàssics i colors de cotxe de carreres.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f2937" />
+      <stop offset="55%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1a1037" />
+    </linearGradient>
+    <linearGradient id="racing" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#dc2626" />
+      <stop offset="45%" stop-color="#f87171" />
+      <stop offset="100%" stop-color="#991b1b" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d0fe" />
+      <stop offset="50%" stop-color="#9333ea" />
+      <stop offset="100%" stop-color="#581c87" />
+    </linearGradient>
+  </defs>
+  <rect width="480" height="280" rx="32" fill="url(#bg)" />
+  <g opacity="0.28" fill="#facc15">
+    <path d="M60 60h80v12H60z" />
+    <path d="M340 208h80v12h-80z" />
+    <path d="M120 220h60v8h-60z" />
+  </g>
+  <g fill="url(#racing)">
+    <path d="M64 180c0-56 44-102 100-102h74l-32 48h-46c-28 0-52 24-52 54z" />
+    <path d="M304 78h68c40 0 72 32 72 72 0 22-10 42-26 56l-52-10c16-6 28-22 28-40 0-24-20-44-44-44h-32z" />
+  </g>
+  <g fill="url(#accent)">
+    <path d="M132 206h120l-28 36H160c-24 0-44-20-44-44s20-44 44-44h112l-28 36h-84c-6 0-12 6-12 12s6 12 12 12z" />
+    <path d="M280 206h128l-28 36H304c-24 0-44-20-44-44s20-44 44-44h118l-26 36H292c-6 0-12 6-12 12s6 12 12 12z" />
+  </g>
+  <g fill="#f8fafc">
+    <path d="M126 96l28-48h64l-28 48z" opacity="0.82" />
+    <path d="M214 96l28-48h62l-28 48z" opacity="0.68" />
+  </g>
+  <g fill="#fef2f2" opacity="0.85">
+    <circle cx="96" cy="198" r="10" />
+    <circle cx="382" cy="198" r="10" />
+  </g>
+  <text x="80" y="150" font-family="'Eurostile', 'Orbitron', 'Segoe UI', sans-serif" font-size="52" font-weight="700" letter-spacing="6" fill="#f8fafc">
+    LFS
+  </text>
+  <text x="82" y="182" font-family="'Playfair Display', 'Times New Roman', serif" font-size="34" font-weight="600" letter-spacing="8" fill="#f5d0fe">
+    AYATS
+  </text>
+</svg>
