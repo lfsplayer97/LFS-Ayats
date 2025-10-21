@@ -13,9 +13,8 @@
       <stop offset="100%" stop-color="#991b1b" />
     </linearGradient>
     <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f5d0fe" />
-      <stop offset="50%" stop-color="#9333ea" />
-      <stop offset="100%" stop-color="#581c87" />
+      <stop offset="0%" stop-color="#4cb6ea" />
+      <stop offset="100%" stop-color="#ecc42e" />
     </linearGradient>
   </defs>
   <rect width="480" height="280" rx="32" fill="url(#bg)" />
@@ -43,7 +42,7 @@
   <text x="80" y="150" font-family="'Eurostile', 'Orbitron', 'Segoe UI', sans-serif" font-size="52" font-weight="700" letter-spacing="6" fill="#f8fafc">
     LFS
   </text>
-  <text x="82" y="182" font-family="'Playfair Display', 'Times New Roman', serif" font-size="34" font-weight="600" letter-spacing="8" fill="#f5d0fe">
+  <text x="82" y="182" font-family="'Playfair Display', 'Times New Roman', serif" font-size="34" font-weight="600" letter-spacing="8" fill="#ecc42e">
     AYATS
   </text>
 </svg>
