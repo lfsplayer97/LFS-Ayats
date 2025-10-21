@@ -34,6 +34,7 @@
   --color-background: #f8fafc;
   --color-background-alt: #e7f6ff;
   --color-surface: #ffffff;
+  --color-hero-text: #ffffff;
   --color-text: #1f2933;
   --color-heading: #0f172a;
   --color-muted: #475569;
@@ -50,6 +51,7 @@ body[data-theme="dark"] {
   --color-background: #0b1120;
   --color-background-alt: #0e1f30;
   --color-surface: #111827;
+  --color-hero-text: #e2e8f0;
   --color-text: #e2e8f0;
   --color-heading: #f8fafc;
   --color-muted: #9dd9f2;
@@ -169,7 +171,7 @@ body[data-theme="dark"] .site-header {
 .hero {
   position: relative;
   background: var(--gradient-hero);
-  color: var(--color-surface);
+  color: var(--color-hero-text);
   padding: var(--space-7) var(--space-4) calc(var(--space-7) + var(--space-2));
   overflow: hidden;
 }
