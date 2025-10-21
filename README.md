@@ -58,6 +58,57 @@ trama OutSim més recent, la informació `IS_MCI` de tots els vehicles i el
 vehicle actualment enfocat. Aquest flux permet a superposicions externes
 obtenir telemetria sense llegir directament els sockets d’LFS.
 
+## Superposició HTML
+
+El directori [`overlay/`](overlay/) conté una superposició HTML transparent amb
+radar de 360°, barra de progrés de volta i indicador de delta que es nodreix del
+flux WebSocket anterior. Els passos bàsics per provar-la són:
+
+1. Assegura’t que `telemetry_ws.enabled` estigui actiu i anota el port (per
+   defecte `30333`).
+2. Des d’una terminal separada, serveix el directori `overlay/` amb qualsevol
+   servidor estàtic. Un exemple ràpid amb Python és:
+
+   ```bash
+   cd overlay
+   python -m http.server 8000
+   ```
+
+3. Obre `http://127.0.0.1:8000/index.html` al navegador i introdueix el port
+   del WebSocket (o afegeix `?port=30333` a la URL per connectar automàticament).
+4. Fes servir els interruptors de la capçalera per amagar o mostrar el radar, la
+   barra de volta o el widget de delta segons les necessitats de la transmissió.
+
+La superposició escala i redibuixa el canvas a la cadència del flux. Quan el
+socket es tanca o hi ha un tall de telemetria, es mostra un missatge de fallback
+perquè el realitzador sàpiga que cal reconnectar.
+
+### Envolupant-la en una finestra sempre visible (opcional)
+
+Per obtenir una finestra flotant sense chrome que mantingui la superposició per
+sobre del joc, s’inclou [`overlay/electron-main.js`](overlay/electron-main.js).
+
+1. Inicia un projecte mínim d’Electron si no en tens cap:
+
+   ```bash
+   npm init -y
+   npm install --save-dev electron
+   ```
+
+2. Afegeix un script a `package.json`, per exemple:
+
+   ```json
+   "scripts": {
+     "overlay": "electron overlay/electron-main.js"
+   }
+   ```
+
+3. Executa’l amb `npm run overlay`. La finestra és sempre visible, admet
+   transparència i pots reposicionar-la damunt de la captura del joc.
+
+El fitxer `preload.js` exposa informació mínima del runtime (`window.electronOverlay`)
+per evitar que el contingut de la pàgina requereixi integració Node.js.
+
 ## Documentació
 
 - [LFS Programming - LFS Manual](docs/LFS%20Programming%20-%20LFS%20Manual.pdf)
