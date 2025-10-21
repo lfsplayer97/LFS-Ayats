@@ -11,6 +11,12 @@
     "allowed_sources": ["127.0.0.1"],
     "max_packets_per_second": 120.0
   },
+  "telemetry_ws": {
+    "enabled": true,
+    "host": "127.0.0.1",
+    "port": 30333,
+    "update_hz": 15.0
+  },
   "sp_radar_enabled": true,
   "sp_beeps_enabled": true,
   "mp_radar_enabled": true,

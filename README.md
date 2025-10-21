@@ -33,6 +33,9 @@ principals:
 | `outsim.port`, `outsim.update_hz` | Port UDP on LFS emet OutSim i freqüència esperada d’actualització. |
 | `outsim.allowed_sources` | Llista d’adreces IP o xarxes CIDR autoritzades a enviar paquets OutSim. Si s’omet, s’accepten totes les fonts. |
 | `outsim.max_packets_per_second` | Límit opcional de paquets OutSim per segon. Els paquets que superen el llindar es descarten i s’enregistra un avís. |
+| `telemetry_ws.enabled` | Activa el servidor WebSocket local que retransmet la combinació d’OutSim i InSim. |
+| `telemetry_ws.host`, `telemetry_ws.port` | Host i port on s’escolta el servidor WebSocket (per defecte `127.0.0.1:30333`). |
+| `telemetry_ws.update_hz` | Cadència d’actualització del flux WebSocket (recomanat entre 10 i 20 Hz per superposicions). |
 | `sp_radar_enabled`, `sp_beeps_enabled` | Activen radar i avisos sonors en sessions d’un sol jugador. |
 | `mp_radar_enabled`, `mp_beeps_enabled` | Equivalents per a partides multijugador quan `ISS_MULTI` està actiu. |
 | `beep_mode` | Estratègia del subsistema d’avisos (actualment marcador). |
@@ -48,6 +51,12 @@ la configuració segons la teva instal·lació de LFS.
 3. Executa el radar des de l’arrel del projecte amb **`python main.py`**.
 4. Mantén la terminal oberta: el client esperarà telemetria OutSim i mostrarà
    el radar ASCII contínuament fins que premis `Ctrl+C`.
+
+Si la clau `telemetry_ws.enabled` està activa, també s’aixeca un servidor a
+`ws://<host>:<port>` que publica instantànies JSON (~15 Hz per defecte) amb la
+trama OutSim més recent, la informació `IS_MCI` de tots els vehicles i el
+vehicle actualment enfocat. Aquest flux permet a superposicions externes
+obtenir telemetria sense llegir directament els sockets d’LFS.
 
 ## Documentació
 
