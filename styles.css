@@ -42,7 +42,7 @@
   --color-accent-strong: #ecc42e;
   --color-accent-soft: rgba(76, 182, 234, 0.18);
   --color-hero-overlay: rgba(17, 24, 39, 0.35);
-  --gradient-hero: linear-gradient(140deg, #4cb6ea, #0f172a 60%, #ecc42e);
+  --gradient-hero: linear-gradient(140deg, #4cb6ea, #ecc42e 55%, #dc2626);
   --gradient-footer: linear-gradient(120deg, #0f172a, #4cb6ea 45%, #ecc42e);
 }
 
@@ -58,7 +58,7 @@ body[data-theme="dark"] {
   --color-accent-strong: #ecc42e;
   --color-accent-soft: rgba(76, 182, 234, 0.28);
   --color-hero-overlay: rgba(15, 23, 42, 0.55);
-  --gradient-hero: linear-gradient(140deg, #0f3a57, #0b1728 60%, #ecc42e);
+  --gradient-hero: linear-gradient(140deg, #4cb6ea, #ecc42e 60%, #dc2626);
   --gradient-footer: linear-gradient(135deg, #030712, #0b2a3d 55%, #ecc42e);
   --shadow-elevated: 0 25px 45px rgba(0, 0, 0, 0.35);
   --shadow-soft: 0 18px 30px rgba(2, 6, 23, 0.4);
