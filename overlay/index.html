@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LFS Overlay</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="overlay">
+      <header class="overlay__header">
+        <div class="overlay__connection">
+          <label for="port">Port</label>
+          <input id="port" name="port" type="number" min="1" max="65535" value="49100" />
+          <button id="connect">Connect</button>
+          <span id="status" role="status">Disconnected</span>
+        </div>
+        <fieldset class="overlay__toggles">
+          <legend>Visible</legend>
+          <label><input type="checkbox" id="toggle-radar" checked /> Radar</label>
+          <label><input type="checkbox" id="toggle-progress" checked /> Lap Bar</label>
+          <label><input type="checkbox" id="toggle-delta" checked /> Δ</label>
+        </fieldset>
+      </header>
+      <canvas id="overlay-canvas" width="640" height="480" aria-label="Race overlay"></canvas>
+    </main>
+    <script src="overlay.js"></script>
+  </body>
+</html>
