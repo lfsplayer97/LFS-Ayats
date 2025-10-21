@@ -60,6 +60,66 @@
     return Math.min(Math.max(value, min), max);
   }
 
+  function resolvePlayer(data) {
+    const base = data && typeof data.player === "object" ? { ...data.player } : {};
+    if (base.position && typeof base.position === "object") {
+      const pos = base.position;
+      if (!Number.isFinite(base.x) && Number.isFinite(pos.x)) base.x = pos.x;
+      if (!Number.isFinite(base.y) && Number.isFinite(pos.y)) base.y = pos.y;
+      if (!Number.isFinite(base.z) && Number.isFinite(pos.z)) base.z = pos.z;
+    }
+    if (Array.isArray(base.position) && base.position.length >= 2) {
+      if (!Number.isFinite(base.x)) base.x = base.position[0];
+      if (!Number.isFinite(base.y)) base.y = base.position[1];
+      if (!Number.isFinite(base.z) && base.position.length >= 3) base.z = base.position[2];
+    }
+
+    const focused = data && (data.focused_car || data.focusedCar);
+    if (focused && typeof focused === "object") {
+      const focusPos = extract2DPosition(focused);
+      if (!Number.isFinite(base.x)) base.x = focusPos.x;
+      if (!Number.isFinite(base.y)) base.y = focusPos.y;
+      if (!Number.isFinite(base.z) && Number.isFinite(focused.z)) base.z = focused.z;
+      if (!Number.isFinite(base.heading)) {
+        const headingCandidate = readNumber(
+          focused,
+          ["heading", "Heading", "yaw", "Yaw", "dir", "direction"],
+          NaN,
+        );
+        if (Number.isFinite(headingCandidate)) {
+          base.heading = headingCandidate;
+        }
+      }
+      if (!Number.isFinite(base.speed)) {
+        const speedCandidate = readNumber(focused, ["speed", "Speed"], NaN);
+        if (Number.isFinite(speedCandidate)) {
+          base.speed = speedCandidate;
+        }
+      }
+    }
+
+    const frame = data && typeof data.outsim === "object" ? data.outsim : null;
+    if (frame) {
+      if (Array.isArray(frame.position) && frame.position.length >= 2) {
+        if (!Number.isFinite(base.x)) base.x = frame.position[0];
+        if (!Number.isFinite(base.y)) base.y = frame.position[1];
+        if (!Number.isFinite(base.z) && frame.position.length >= 3) base.z = frame.position[2];
+      }
+      if (!Number.isFinite(base.heading) && Array.isArray(frame.heading) && frame.heading.length >= 2) {
+        const [hx, hy] = frame.heading;
+        base.heading = Math.atan2(hx, hy);
+      }
+      if (!Number.isFinite(base.speed) && Number.isFinite(frame.speed)) {
+        base.speed = frame.speed;
+      }
+      if (!Number.isFinite(base.lap_time_ms) && Number.isFinite(frame.time_ms)) {
+        base.lap_time_ms = frame.time_ms;
+      }
+    }
+
+    return base;
+  }
+
   function extract2DPosition(entity) {
     if (!entity || typeof entity !== "object") {
       return { x: 0, y: 0 };
@@ -99,6 +159,17 @@
   }
 
   function readLapProgress(player, data) {
+    if (player && typeof player.lap === "object") {
+      const lap = player.lap;
+      const lapCandidate = readNumber(lap, ["progress", "fraction"], NaN);
+      if (Number.isFinite(lapCandidate)) {
+        return clamp(lapCandidate <= 1 ? lapCandidate : lapCandidate / 100, 0, 1);
+      }
+      const lapPercent = readNumber(lap, ["percent", "pct"], NaN);
+      if (Number.isFinite(lapPercent)) {
+        return clamp(lapPercent <= 1 ? lapPercent : lapPercent / 100, 0, 1);
+      }
+    }
     const candidate = readNumber(
       player,
       ["lapProgress", "lap_progress", "lapFraction", "lap_fraction"],
@@ -139,23 +210,30 @@
     if (!data) {
       return null;
     }
-    const player = data.player || data.car || data.local || null;
+    const player = resolvePlayer(data);
     const mci = data.mci || data.cars || data.vehicles || [];
 
     const { x: px, y: py } = extract2DPosition(player || {});
-    const heading = normalizeHeading(
-      readNumber(player, ["heading", "Heading", "yaw", "Yaw", "dir", "direction"], 0),
-    );
+    let headingValue = readNumber(player, ["heading", "Heading", "yaw", "Yaw", "dir", "direction"], NaN);
+    if (!Number.isFinite(headingValue) && data.outsim && Array.isArray(data.outsim.heading)) {
+      const [hx, hy] = data.outsim.heading;
+      headingValue = Math.atan2(hx, hy);
+    }
+    const heading = normalizeHeading(headingValue);
     const lapProgress = readLapProgress(player, data);
     let delta = readNumber(
       player,
-      ["delta", "deltaLap", "deltaCurrent", "lapDelta", "splitDelta"],
+      ["delta", "deltaLap", "deltaCurrent", "lapDelta", "splitDelta", "delta_ms"],
       readNumber(data.delta, ["current", "lap", "value"], NaN),
     );
+    if (!Number.isFinite(delta) && player && typeof player.lap === "object") {
+      delta = readNumber(player.lap, ["delta", "delta_ms", "current", "lap"], NaN);
+    }
     if (Math.abs(delta) > 30 && Math.abs(delta) < 60000) {
       delta = delta / 1000;
     }
 
+    const playerPlid = readNumber(player, ["plid", "PLID"], NaN);
     let entries = [];
     if (Array.isArray(mci)) {
       entries = mci;
@@ -163,6 +241,15 @@
       entries = Object.values(mci);
     }
     const cars = entries
+      .filter((entry) => {
+        if (!Number.isFinite(playerPlid)) {
+          return true;
+        }
+        if (!entry || typeof entry !== "object") {
+          return true;
+        }
+        return entry.plid !== playerPlid && entry.PLID !== playerPlid;
+      })
       .map((entry) => {
         const { x, y } = extract2DPosition(entry);
         const relX = x - px;

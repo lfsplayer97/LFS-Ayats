@@ -696,6 +696,26 @@ def main() -> None:
                     delta_ms = current_lap_ms - reference_time
                 else:
                     delta_ms = None
+
+                lap_progress: Optional[float] = None
+                if reference_time is not None and persistent_best and persistent_best.laptime_ms > 0:
+                    lap_progress = min(
+                        max(reference_time / persistent_best.laptime_ms, 0.0),
+                        1.0,
+                    )
+                elif current_lap_ms is not None:
+                    estimated_total = lap_state.get("latest_estimated_total_ms")
+                    if estimated_total and estimated_total > 0:
+                        lap_progress = min(max(current_lap_ms / estimated_total, 0.0), 1.0)
+
+                server = telemetry_server
+                if server is not None:
+                    server.update_player_lap(
+                        progress=lap_progress,
+                        current_lap_ms=current_lap_ms,
+                        reference_lap_ms=reference_time,
+                        delta_ms=delta_ms,
+                    )
                 delta_display = f"{delta_ms:+7} ms" if delta_ms is not None else "  -- ms"
                 status_line = (
                     "Current lap: "
