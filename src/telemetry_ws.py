@@ -31,6 +31,7 @@ class TelemetrySnapshot:
     focused_car: Optional[dict]
     track: Optional[str]
     car: Optional[str]
+    player: Optional[dict]
 
 
 def _outsim_to_dict(frame: OutSimFrame) -> dict:
@@ -93,6 +94,10 @@ class TelemetryBroadcaster:
         self._focus_plid: Optional[int] = None
         self._track: Optional[str] = None
         self._car: Optional[str] = None
+        self._player_lap_progress: Optional[float] = None
+        self._player_current_lap_ms: Optional[int] = None
+        self._player_reference_lap_ms: Optional[int] = None
+        self._player_delta_ms: Optional[int] = None
         self._lock = threading.Lock()
         self._loop: Optional[asyncio.AbstractEventLoop] = None
         self._thread: Optional[threading.Thread] = None
@@ -146,6 +151,20 @@ class TelemetryBroadcaster:
         with self._lock:
             self._track = track
             self._car = car
+
+    def update_player_lap(
+        self,
+        *,
+        progress: Optional[float],
+        current_lap_ms: Optional[int],
+        reference_lap_ms: Optional[int],
+        delta_ms: Optional[int],
+    ) -> None:
+        with self._lock:
+            self._player_lap_progress = progress
+            self._player_current_lap_ms = current_lap_ms
+            self._player_reference_lap_ms = reference_lap_ms
+            self._player_delta_ms = delta_ms
 
     # -- asyncio internals ---------------------------------------------
     async def _run(self) -> None:
@@ -259,6 +278,10 @@ class TelemetryBroadcaster:
             focus = self._focus_plid
             track = self._track
             car = self._car
+            lap_progress = self._player_lap_progress
+            lap_time_ms = self._player_current_lap_ms
+            lap_reference_ms = self._player_reference_lap_ms
+            lap_delta_ms = self._player_delta_ms
 
         if frame is None and not cars:
             return None
@@ -272,6 +295,87 @@ class TelemetryBroadcaster:
                     focused_payload = _car_to_dict(entry)
                     break
 
+        player_payload: Optional[dict]
+        if (
+            focused_payload is None
+            and frame is None
+            and lap_progress is None
+            and lap_time_ms is None
+            and lap_reference_ms is None
+            and lap_delta_ms is None
+        ):
+            player_payload = None
+        else:
+            player_payload = {}
+            if frame is not None:
+                px, py, pz = frame.position
+                player_payload.update(
+                    {
+                        "x": px,
+                        "y": py,
+                        "z": pz,
+                        "position": {"x": px, "y": py, "z": pz},
+                        "heading_vector": list(frame.heading),
+                        "velocity": list(frame.velocity),
+                        "speed": frame.speed,
+                    }
+                )
+                yaw, pitch, roll = frame.yaw_pitch_roll
+                player_payload["heading"] = yaw
+                player_payload["orientation"] = {
+                    "yaw": yaw,
+                    "pitch": pitch,
+                    "roll": roll,
+                }
+                player_payload["time_ms"] = frame.time_ms
+            if focused_payload is not None:
+                for key in ("plid", "lap", "position"):
+                    value = focused_payload.get(key)
+                    if value is not None:
+                        player_payload[key] = value
+                for coord_key in ("x", "y", "z"):
+                    if coord_key not in player_payload or not isinstance(
+                        player_payload[coord_key], (int, float)
+                    ):
+                        value = focused_payload.get(coord_key)
+                        if value is not None:
+                            player_payload[coord_key] = value
+                if "heading" not in player_payload:
+                    heading_value = focused_payload.get("heading")
+                    if heading_value is not None:
+                        player_payload["heading"] = heading_value
+                fallback_speed = focused_payload.get("speed")
+                if fallback_speed is not None and "speed" not in player_payload:
+                    player_payload["speed"] = fallback_speed
+
+            lap_section: dict[str, object] = {}
+            if focused_payload is not None:
+                lap_value = focused_payload.get("lap")
+                if lap_value is not None:
+                    lap_section["number"] = lap_value
+                race_pos = focused_payload.get("position")
+                if race_pos is not None:
+                    lap_section["race_position"] = race_pos
+            if lap_progress is not None:
+                clamped_progress = max(0.0, min(lap_progress, 1.0))
+                lap_section["progress"] = clamped_progress
+                player_payload["lap_progress"] = clamped_progress
+            if lap_time_ms is not None:
+                lap_section["current_ms"] = lap_time_ms
+                player_payload["lap_time_ms"] = lap_time_ms
+            if lap_reference_ms is not None:
+                lap_section["reference_ms"] = lap_reference_ms
+            if lap_delta_ms is not None:
+                lap_section["delta_ms"] = lap_delta_ms
+                player_payload["delta_ms"] = lap_delta_ms
+                player_payload["delta"] = lap_delta_ms / 1000.0
+
+            if lap_section:
+                player_payload["lap"] = lap_section
+
+            if not player_payload:
+                player_payload = None
+
         return TelemetrySnapshot(
             timestamp=time.time(),
             outsim=outsim_payload,
@@ -279,6 +383,7 @@ class TelemetryBroadcaster:
             focused_car=focused_payload,
             track=track,
             car=car,
+            player=player_payload,
         )
 
     @staticmethod
