@@ -46,7 +46,16 @@ def _outsim_to_dict(frame: OutSimFrame) -> dict:
     }
 
 
+_INSIM_DISTANCE_SCALE = 65_536.0
+_INSIM_SPEED_SCALE = 100.0
+
+
 def _car_to_dict(car: CarInfo) -> dict:
+    x = car.x / _INSIM_DISTANCE_SCALE
+    y = car.y / _INSIM_DISTANCE_SCALE
+    z = car.z / _INSIM_DISTANCE_SCALE
+    speed = car.speed / _INSIM_SPEED_SCALE
+
     return {
         "plid": car.plid,
         "node": car.node,
@@ -54,10 +63,10 @@ def _car_to_dict(car: CarInfo) -> dict:
         "position": car.position,
         "info": car.info,
         "spare": car.spare,
-        "x": car.x,
-        "y": car.y,
-        "z": car.z,
-        "speed": car.speed,
+        "x": x,
+        "y": y,
+        "z": z,
+        "speed": speed,
         "direction": car.direction,
         "heading": car.heading,
         "angular_velocity": car.angular_velocity,
