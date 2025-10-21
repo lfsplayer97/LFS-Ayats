@@ -24,6 +24,7 @@ ISP_MST = 11
 ISP_NPL = 21
 ISP_LAP = 28
 ISP_SPX = 29
+ISP_MCI = 38
 ISP_BTN = 45
 ISP_BFN = 46
 ISP_BTC = 47
@@ -36,6 +37,7 @@ _KNOWN_PACKET_TYPES = {
     ISP_NPL,
     ISP_LAP,
     ISP_SPX,
+    ISP_MCI,
     ISP_BTN,
     ISP_BFN,
     ISP_BTC,
@@ -49,6 +51,7 @@ _PACKET_TYPE_NAMES = {
     ISP_NPL: "IS_NPL",
     ISP_LAP: "IS_LAP",
     ISP_SPX: "IS_SPX",
+    ISP_MCI: "IS_MCI",
     ISP_BTN: "IS_BTN",
     ISP_BFN: "IS_BFN",
     ISP_BTC: "IS_BTC",
@@ -153,6 +156,14 @@ class PacketValidator:
                 fields=(
                     _PacketField(name="header", offset=0, length=4),
                     _PacketField(name="flags", offset=6, length=2),
+                ),
+            ),
+            ISP_MCI: _PacketSchema(
+                name="IS_MCI",
+                min_size=4,
+                max_size=None,
+                fields=(
+                    _PacketField(name="header", offset=0, length=4),
                 ),
             ),
         }
@@ -275,6 +286,34 @@ class StateEvent:
     flags2: int
     track: Optional[str] = None
     car: Optional[str] = None
+    view_plid: Optional[int] = None
+
+
+@dataclass
+class CarInfo:
+    """Summary of a single car entry contained within an ``IS_MCI`` packet."""
+
+    node: int
+    lap: int
+    plid: int
+    position: int
+    info: int
+    x: int
+    y: int
+    z: int
+    speed: int
+    direction: int
+    heading: int
+    angular_velocity: int
+    spare: int = 0
+
+
+@dataclass
+class MultiCarInfoEvent:
+    """Aggregated multi-car information parsed from ``IS_MCI`` packets."""
+
+    cars: List[CarInfo]
+    view_plid: Optional[int] = None
 
 
 @dataclass
@@ -299,6 +338,7 @@ class InSimClient:
         lap_listeners: Optional[List[Callable[["LapEvent"], None]]] = None,
         split_listeners: Optional[List[Callable[["SplitEvent"], None]]] = None,
         button_listeners: Optional[List[Callable[["ButtonClickEvent"], None]]] = None,
+        mci_listeners: Optional[List[Callable[["MultiCarInfoEvent"], None]]] = None,
         buffer_limit: int = 65_536,
     ) -> None:
         self._config = config
@@ -309,6 +349,7 @@ class InSimClient:
         self._lap_listeners: List[Callable[["LapEvent"], None]] = []
         self._split_listeners: List[Callable[["SplitEvent"], None]] = []
         self._button_listeners: List[Callable[["ButtonClickEvent"], None]] = []
+        self._mci_listeners: List[Callable[["MultiCarInfoEvent"], None]] = []
         self._plid_to_car: dict[int, str] = {}
         self._current_track: Optional[str] = None
         self._current_car: Optional[str] = None
@@ -322,6 +363,8 @@ class InSimClient:
             self._split_listeners.extend(split_listeners)
         if button_listeners:
             self._button_listeners.extend(button_listeners)
+        if mci_listeners:
+            self._mci_listeners.extend(mci_listeners)
 
     # -- socket lifecycle --------------------------------------------------
     def connect(self) -> None:
@@ -508,6 +551,11 @@ class InSimClient:
         """Register a callback invoked when an ``IS_BTC`` packet is received."""
 
         self._button_listeners.append(listener)
+
+    def add_mci_listener(self, listener: Callable[["MultiCarInfoEvent"], None]) -> None:
+        """Register a callback invoked when an ``IS_MCI`` packet is received."""
+
+        self._mci_listeners.append(listener)
 
     def poll(self) -> None:
         """Poll the socket for incoming packets and dispatch them."""
@@ -710,6 +758,15 @@ class InSimClient:
                         listener(event)
                     except Exception:  # pragma: no cover - defensive logging
                         logger.exception("Error while handling InSim button listener")
+        elif packet_type == ISP_MCI:
+            event = self._parse_mci_packet(packet)
+            if event and self._mci_listeners:
+                event.view_plid = self._view_plid
+                for listener in list(self._mci_listeners):
+                    try:
+                        listener(event)
+                    except Exception:  # pragma: no cover - defensive logging
+                        logger.exception("Error while handling InSim MCI listener")
 
     def _handle_is_ver(self, packet: bytes) -> None:
         payload = packet[4:20]
@@ -752,7 +809,12 @@ class InSimClient:
         if car:
             self._current_car = car
 
-        event = StateEvent(flags2=flags2, track=self._current_track, car=self._current_car)
+        event = StateEvent(
+            flags2=flags2,
+            track=self._current_track,
+            car=self._current_car,
+            view_plid=self._view_plid,
+        )
         for listener in list(self._state_listeners):
             try:
                 listener(event)
@@ -775,7 +837,12 @@ class InSimClient:
         if self._view_plid is not None and plid == self._view_plid:
             self._current_car = car
 
-        event = StateEvent(flags2=0, track=self._current_track, car=self._current_car)
+        event = StateEvent(
+            flags2=0,
+            track=self._current_track,
+            car=self._current_car,
+            view_plid=self._view_plid,
+        )
         for listener in list(self._state_listeners):
             try:
                 listener(event)
@@ -934,6 +1001,73 @@ class InSimClient:
             flags=flags,
         )
 
+    def _parse_mci_packet(self, packet: bytes) -> Optional["MultiCarInfoEvent"]:
+        if len(packet) < 4:
+            logger.debug("Dropping incomplete IS_MCI packet: %s", packet)
+            return None
+
+        count = packet[3]
+        entry_size = 28
+        required = 4 + count * entry_size
+        if len(packet) < required:
+            logger.debug(
+                "Dropping truncated IS_MCI packet: expected at least %d bytes, got %d",
+                required,
+                len(packet),
+            )
+            return None
+
+        cars: List[CarInfo] = []
+        offset = 4
+        for _ in range(count):
+            if offset + entry_size > len(packet):
+                logger.debug("Stopping IS_MCI parse due to truncated entry")
+                break
+
+            try:
+                (
+                    node,
+                    lap,
+                    plid,
+                    position,
+                    info,
+                    spare,
+                    x,
+                    y,
+                    z,
+                    speed,
+                    direction,
+                    heading,
+                    ang_vel,
+                ) = struct.unpack_from("<HHBBBBiiiHHHh", packet, offset)
+            except struct.error:
+                logger.debug("Failed to unpack IS_MCI entry at offset %d", offset)
+                break
+
+            cars.append(
+                CarInfo(
+                    node=node,
+                    lap=lap,
+                    plid=plid,
+                    position=position,
+                    info=info,
+                    spare=spare,
+                    x=x,
+                    y=y,
+                    z=z,
+                    speed=speed,
+                    direction=direction,
+                    heading=heading,
+                    angular_velocity=ang_vel,
+                )
+            )
+            offset += entry_size
+
+        if not cars:
+            return None
+
+        return MultiCarInfoEvent(cars=cars)
+
     def __enter__(self) -> "InSimClient":
         self.connect()
         return self
@@ -949,6 +1083,8 @@ __all__ = [
     "SplitEvent",
     "StateEvent",
     "ButtonClickEvent",
+    "CarInfo",
+    "MultiCarInfoEvent",
     "PacketValidator",
     "ISS_MULTI",
     "ISP_NPL",
@@ -958,4 +1094,5 @@ __all__ = [
     "ISP_BTN",
     "ISP_BFN",
     "ISP_BTC",
+    "ISP_MCI",
 ]

@@ -15,6 +15,7 @@ from src.insim_client import (
     ButtonClickEvent,
     InSimClient,
     InSimConfig,
+    MultiCarInfoEvent,
     LapEvent,
     SplitEvent,
     StateEvent,
@@ -22,6 +23,7 @@ from src.insim_client import (
 from src.outsim_client import OutSimClient, OutSimFrame
 from src.persistence import PersonalBestRecord, load_personal_best, record_lap
 from src.radar import RadarRenderer
+from src.telemetry_ws import TelemetryBroadcaster
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +65,14 @@ class ModeConfig:
 
 
 @dataclass
+class TelemetryConfig:
+    enabled: bool = True
+    host: str = "127.0.0.1"
+    port: int = 30333
+    update_hz: float = 15.0
+
+
+@dataclass
 class AppConfig:
     insim: InSimConfig
     outsim_port: int
@@ -71,11 +81,13 @@ class AppConfig:
     beep_mode: str
     sp: ModeConfig
     mp: ModeConfig
+    telemetry: TelemetryConfig
 
     @classmethod
     def from_dict(cls, raw: Dict[str, Any]) -> "AppConfig":
         insim_cfg_raw = raw.get("insim", {})
         outsim_cfg_raw = raw.get("outsim", {})
+        telemetry_raw = raw.get("telemetry_ws", {})
 
         insim_cfg = InSimConfig(
             host=insim_cfg_raw.get("host", "127.0.0.1"),
@@ -110,6 +122,23 @@ class AppConfig:
                 )
         beep_mode = str(raw.get("beep_mode", "standard"))
 
+        telemetry_enabled = bool(telemetry_raw.get("enabled", True))
+        telemetry_host = str(telemetry_raw.get("host", "127.0.0.1"))
+        telemetry_port = int(telemetry_raw.get("port", 30333))
+        update_hz_raw = telemetry_raw.get("update_hz", 15.0)
+        try:
+            telemetry_update_hz = float(update_hz_raw)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Telemetry update_hz must be numeric") from exc
+        if telemetry_update_hz <= 0:
+            raise ValueError("Telemetry update_hz must be greater than zero")
+        telemetry_cfg = TelemetryConfig(
+            enabled=telemetry_enabled,
+            host=telemetry_host,
+            port=telemetry_port,
+            update_hz=telemetry_update_hz,
+        )
+
         sp_cfg = ModeConfig(
             radar_enabled=bool(raw.get("sp_radar_enabled", True)),
             beeps_enabled=bool(raw.get("sp_beeps_enabled", True)),
@@ -128,6 +157,7 @@ class AppConfig:
             beep_mode=beep_mode,
             sp=sp_cfg,
             mp=mp_cfg,
+            telemetry=telemetry_cfg,
         )
 
 
@@ -170,6 +200,45 @@ def main() -> None:
 
     radar = RadarRenderer()
     beep_system = BeepSubsystem(config.beep_mode)
+    telemetry_server: Optional[TelemetryBroadcaster] = None
+    active_telemetry_config: Optional[TelemetryConfig] = None
+
+    def apply_telemetry_config(settings: TelemetryConfig) -> None:
+        nonlocal telemetry_server, active_telemetry_config
+
+        if active_telemetry_config == settings and telemetry_server is not None:
+            return
+
+        if telemetry_server is not None:
+            telemetry_server.stop()
+            telemetry_server = None
+
+        if not settings.enabled:
+            active_telemetry_config = settings
+            return
+
+        try:
+            telemetry_server = TelemetryBroadcaster(
+                settings.host, settings.port, update_hz=settings.update_hz
+            )
+        except Exception:  # pragma: no cover - defensive logging
+            logger.exception(
+                "Failed to initialise telemetry broadcaster on %s:%s",
+                settings.host,
+                settings.port,
+            )
+            active_telemetry_config = settings
+            return
+
+        telemetry_server.start()
+        active_telemetry_config = TelemetryConfig(
+            enabled=settings.enabled,
+            host=settings.host,
+            port=settings.port,
+            update_hz=settings.update_hz,
+        )
+
+    apply_telemetry_config(config.telemetry)
 
     lap_state = {
         "current_lap_start_ms": None,  # type: Optional[int]
@@ -279,7 +348,7 @@ def main() -> None:
 
     def update_track_context(track: Optional[str], car: Optional[str]) -> None:
         nonlocal current_track, current_car, persistent_best, tracked_plid, tracked_driver
-        nonlocal pending_lap_start
+        nonlocal pending_lap_start, telemetry_server
 
         normalised_track = track.strip() if track else None
         normalised_car = car.strip() if car else None
@@ -291,6 +360,10 @@ def main() -> None:
             current_track = normalised_track
         if car_changed:
             current_car = normalised_car
+
+        server = telemetry_server
+        if server is not None:
+            server.update_track_context(current_track, current_car)
 
         if track_changed or car_changed:
             tracked_plid = None
@@ -312,9 +385,13 @@ def main() -> None:
                     )
 
     def handle_state(event: StateEvent) -> None:
-        nonlocal current_mode, radar_enabled
+        nonlocal current_mode, radar_enabled, telemetry_server
 
         update_track_context(event.track, event.car)
+
+        server = telemetry_server
+        if server is not None:
+            server.set_focus_plid(event.view_plid)
 
         new_mode = "mp" if event.flags2 & ISS_MULTI else "sp"
         if new_mode == current_mode:
@@ -341,6 +418,7 @@ def main() -> None:
 
     def handle_lap(event: LapEvent) -> None:
         nonlocal tracked_plid, tracked_driver, last_frame_time_ms, pending_lap_start, persistent_best
+        nonlocal telemetry_server
 
         update_track_context(event.track, event.car)
 
@@ -350,6 +428,10 @@ def main() -> None:
             logger.info("Tracking lap data for %s (PLID %s)", tracked_driver, event.plid)
             reset_split_tracking()
             lap_state["last_lap_split_fractions"] = []
+
+        server = telemetry_server
+        if server is not None and tracked_plid is not None:
+            server.set_focus_plid(tracked_plid)
 
         if event.plid != tracked_plid:
             logger.debug(
@@ -429,7 +511,8 @@ def main() -> None:
             lap_state["latest_estimated_total_ms"] = estimate_hint
 
     def watch_config() -> None:
-        nonlocal config, mode_settings, radar_enabled
+        nonlocal config, mode_settings, radar_enabled, telemetry_server, active_telemetry_config
+        nonlocal current_track, current_car
 
         try:
             last_mtime = config_path.stat().st_mtime_ns
@@ -458,6 +541,11 @@ def main() -> None:
             except Exception:  # pragma: no cover - defensive logging
                 logger.exception("Failed to reload configuration from %s", config_path)
                 continue
+
+            apply_telemetry_config(new_config.telemetry)
+            server = telemetry_server
+            if server is not None:
+                server.update_track_context(current_track, current_car)
 
             with config_lock:
                 config = new_config
@@ -535,6 +623,11 @@ def main() -> None:
         if hud is not None:
             hud.update(new_radar, new_beeps)
 
+    def handle_mci(event: MultiCarInfoEvent) -> None:
+        server = telemetry_server
+        if server is not None:
+            server.update_mci(event)
+
     watcher_thread = threading.Thread(target=watch_config, name="config-watcher", daemon=True)
     watcher_thread.start()
 
@@ -545,6 +638,7 @@ def main() -> None:
                 state_listeners=[handle_state],
                 lap_listeners=[handle_lap],
                 split_listeners=[handle_split],
+                mci_listeners=[handle_mci],
             ) as insim,
             OutSimClient(
                 config.outsim_port,
@@ -579,6 +673,10 @@ def main() -> None:
                         radar.draw(frame)
 
                     beep_system.process_frame(frame)
+
+                    server = telemetry_server
+                    if server is not None:
+                        server.update_outsim(frame)
 
                 current_start = lap_state["current_lap_start_ms"]
                 best_lap_ms = lap_state["best_lap_ms"]
@@ -618,6 +716,8 @@ def main() -> None:
     finally:
         stop_event.set()
         watcher_thread.join()
+        if telemetry_server is not None:
+            telemetry_server.stop()
         if last_status_line:
             print()
 
