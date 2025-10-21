@@ -515,7 +515,7 @@
 
   resizeCanvas();
 
-  // Auto-connect if the port is supplied via query string (?port=49100)
+  // Auto-connect if the port is supplied via query string (?port=30333)
   const params = new URLSearchParams(window.location.search);
   if (params.has("port")) {
     const queryPort = params.get("port");
