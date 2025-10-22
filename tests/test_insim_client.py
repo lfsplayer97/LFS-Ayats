@@ -13,16 +13,17 @@ from src.insim_client import (
     ISP_SPX,
     ISP_STA,
     ISP_VER,
+    ISS_MULTI,
     InSimClient,
     PacketValidator,
 )
 
-def _build_sta_packet(view_plid: int, track_code: bytes) -> bytes:
+def _build_sta_packet(view_plid: int, track_code: bytes, *, flags2: int = 0) -> bytes:
     packet = bytearray(28)
     packet[0] = 28
     packet[1] = ISP_STA
     packet[10] = view_plid & 0xFF
-    struct.pack_into("<H", packet, 16, 0)
+    struct.pack_into("<H", packet, 16, flags2 & 0xFFFF)
     padded_track = track_code.ljust(6, b"\x00")[:6]
     packet[20:26] = padded_track
     return bytes(packet)
@@ -82,6 +83,26 @@ def test_handle_is_npl_populates_car_mapping(
     assert events
     # The latest notification should include the resolved car.
     assert events[-1].car == "FXO"
+
+
+def test_handle_is_npl_preserves_multiplayer_flag(
+    insim_client_factory: Callable[..., InSimClient],
+) -> None:
+    events = []
+    client = insim_client_factory(state_listeners=[events.append])
+
+    client._handle_is_sta(_build_sta_packet(12, b"SO1", flags2=ISS_MULTI))
+
+    packet = bytearray(76)
+    packet[0] = 76
+    packet[1] = ISP_NPL
+    packet[3] = 12  # PLID
+    packet[40:44] = b"FXO "
+
+    client._handle_is_npl(bytes(packet))
+
+    assert events
+    assert events[-1].flags2 & ISS_MULTI
 def test_lap_events_inherit_track_and_car_context(
     insim_client_factory: Callable[..., InSimClient],
 ) -> None:
