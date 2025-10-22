@@ -88,6 +88,7 @@ class AppConfig:
     outsim_port: int
     outsim_allowed_sources: Optional[List[str]]
     outsim_rate_limit: Optional[float]
+    outsim_update_hz: Optional[float]
     beep: BeepConfig
     sp: ModeConfig
     mp: ModeConfig
@@ -130,6 +131,16 @@ class AppConfig:
                 raise ValueError(
                     "OutSim max_packets_per_second must be greater than zero"
                 )
+        update_hz_raw = outsim_cfg_raw.get("update_hz")
+        if update_hz_raw is None:
+            outsim_update_hz: Optional[float] = None
+        else:
+            try:
+                outsim_update_hz = float(update_hz_raw)
+            except (TypeError, ValueError) as exc:
+                raise ValueError("OutSim update_hz must be numeric") from exc
+            if outsim_update_hz <= 0:
+                raise ValueError("OutSim update_hz must be greater than zero")
         beep_raw = raw.get("beep", {})
         mode_value = str(beep_raw.get("mode", "standard"))
         volume_raw = beep_raw.get("volume", 0.5)
@@ -201,6 +212,7 @@ class AppConfig:
             outsim_port=outsim_port,
             outsim_allowed_sources=outsim_allowed_sources,
             outsim_rate_limit=outsim_rate_limit,
+            outsim_update_hz=outsim_update_hz,
             beep=beep_cfg,
             sp=sp_cfg,
             mp=mp_cfg,
@@ -777,6 +789,11 @@ def main() -> None:
             ) as insim,
             OutSimClient(
                 config.outsim_port,
+                timeout=(
+                    1.0 / config.outsim_update_hz
+                    if config.outsim_update_hz is not None
+                    else None
+                ),
                 allowed_sources=config.outsim_allowed_sources,
                 max_packets_per_second=config.outsim_rate_limit,
             ) as outsim,
