@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import inspect
 import json
 import logging
 import threading
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from src.audio.beep_driver import BeepDriver, select_beep_driver
 from src.hud import HUDController
 from src.insim_client import (
     ISS_MULTI,
@@ -73,12 +75,20 @@ class TelemetryConfig:
 
 
 @dataclass
+class BeepConfig:
+    mode: str = "standard"
+    volume: float = 0.5
+    base_frequency_hz: float = 880.0
+    intervals_ms: List[int] = field(default_factory=lambda: [400])
+
+
+@dataclass
 class AppConfig:
     insim: InSimConfig
     outsim_port: int
     outsim_allowed_sources: Optional[List[str]]
     outsim_rate_limit: Optional[float]
-    beep_mode: str
+    beep: BeepConfig
     sp: ModeConfig
     mp: ModeConfig
     telemetry: TelemetryConfig
@@ -120,7 +130,44 @@ class AppConfig:
                 raise ValueError(
                     "OutSim max_packets_per_second must be greater than zero"
                 )
-        beep_mode = str(raw.get("beep_mode", "standard"))
+        beep_raw = raw.get("beep", {})
+        mode_value = str(beep_raw.get("mode", "standard"))
+        volume_raw = beep_raw.get("volume", 0.5)
+        try:
+            volume_value = float(volume_raw)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Beep volume must be numeric") from exc
+        if not 0.0 <= volume_value <= 1.0:
+            raise ValueError("Beep volume must be within [0.0, 1.0]")
+
+        base_frequency_raw = beep_raw.get("base_frequency_hz", 880.0)
+        try:
+            base_frequency_value = float(base_frequency_raw)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Beep base_frequency_hz must be numeric") from exc
+        if base_frequency_value <= 0:
+            raise ValueError("Beep base_frequency_hz must be greater than zero")
+
+        intervals_raw = beep_raw.get("intervals_ms", [400])
+        if not isinstance(intervals_raw, (list, tuple)):
+            raise ValueError("Beep intervals_ms must be a list of positive integers")
+        intervals: List[int] = []
+        for entry in intervals_raw:
+            try:
+                interval_value = int(entry)
+            except (TypeError, ValueError) as exc:
+                raise ValueError("Beep intervals_ms must contain integers") from exc
+            if interval_value <= 0:
+                raise ValueError("Beep intervals_ms entries must be greater than zero")
+            intervals.append(interval_value)
+        if not intervals:
+            raise ValueError("Beep intervals_ms must not be empty")
+        beep_cfg = BeepConfig(
+            mode=mode_value,
+            volume=volume_value,
+            base_frequency_hz=base_frequency_value,
+            intervals_ms=intervals,
+        )
 
         telemetry_enabled = bool(telemetry_raw.get("enabled", True))
         telemetry_host = str(telemetry_raw.get("host", "127.0.0.1"))
@@ -154,7 +201,7 @@ class AppConfig:
             outsim_port=outsim_port,
             outsim_allowed_sources=outsim_allowed_sources,
             outsim_rate_limit=outsim_rate_limit,
-            beep_mode=beep_mode,
+            beep=beep_cfg,
             sp=sp_cfg,
             mp=mp_cfg,
             telemetry=telemetry_cfg,
@@ -162,21 +209,69 @@ class AppConfig:
 
 
 class BeepSubsystem:
-    """Tiny placeholder for a configurable beep system."""
+    """Generate audible beeps based on OutSim frames."""
 
-    def __init__(self, mode: str) -> None:
-        self._mode = mode
+    _MODE_SCALE = {"standard": 1.0, "calm": 0.75, "aggressive": 1.3}
+    _DEFAULT_SCALE = 1.0
+
+    def __init__(self, config: BeepConfig, driver: Optional[BeepDriver] = None) -> None:
+        self._driver = driver or select_beep_driver()
+        intervals = list(config.intervals_ms) or [400]
+        self._config = BeepConfig(
+            mode=config.mode,
+            volume=config.volume,
+            base_frequency_hz=config.base_frequency_hz,
+            intervals_ms=list(intervals),
+        )
+        self._mode = config.mode
         self._enabled = False
+        self._interval_pattern: List[int] = list(intervals)
+        self._next_interval_index = 0
+        self._next_beep_time_ms: Optional[int] = None
+        try:
+            self._driver.set_volume(self._config.volume)
+            self._driver.set_enabled(False)
+        except Exception:  # pragma: no cover - defensive logging
+            logger.exception("Failed to initialise beep driver state")
 
     @property
     def enabled(self) -> bool:
         return self._enabled
+
+    @property
+    def mode(self) -> str:
+        return self._mode
+
+    def update_config(self, config: BeepConfig) -> None:
+        if config == self._config:
+            return
+
+        intervals = list(config.intervals_ms) or [400]
+        self._config = BeepConfig(
+            mode=config.mode,
+            volume=config.volume,
+            base_frequency_hz=config.base_frequency_hz,
+            intervals_ms=list(intervals),
+        )
+        self._interval_pattern = list(intervals)
+        self._next_interval_index = 0
+        self._next_beep_time_ms = None
+        self.set_mode(config.mode)
+        try:
+            self._driver.set_volume(self._config.volume)
+        except Exception:  # pragma: no cover - defensive logging
+            logger.exception("Failed to apply beep configuration volume")
 
     def set_mode(self, mode: str) -> None:
         if mode == self._mode:
             return
         logger.info("Updating beep mode to %s", mode)
         self._mode = mode
+        self._config.mode = mode
+        try:
+            self._driver.set_volume(self._config.volume)
+        except Exception:  # pragma: no cover - defensive logging
+            logger.exception("Failed to refresh beep driver volume when changing mode")
 
     def set_enabled(self, enabled: bool) -> None:
         if self._enabled == enabled:
@@ -185,11 +280,45 @@ class BeepSubsystem:
         self._enabled = enabled
         state = "enabled" if enabled else "disabled"
         logger.info("Beep subsystem %s (mode=%s)", state, self._mode)
+        if not enabled:
+            self._next_beep_time_ms = None
+            self._next_interval_index = 0
+        try:
+            self._driver.set_enabled(enabled)
+        except Exception:  # pragma: no cover - defensive logging
+            logger.exception("Failed to update beep driver enabled state")
 
-    def process_frame(self, frame: OutSimFrame) -> None:  # pragma: no cover - placeholder
+    def process_frame(self, frame: OutSimFrame) -> None:
         if not self._enabled:
             return
-        logger.debug("Processing OutSim frame for beep subsystem at %sms", frame.time_ms)
+        if not self._interval_pattern:
+            return
+
+        current_time = frame.time_ms
+        if self._next_beep_time_ms is None:
+            self._next_beep_time_ms = current_time + self._interval_pattern[self._next_interval_index]
+            return
+
+        if current_time < self._next_beep_time_ms:
+            return
+
+        interval = self._interval_pattern[self._next_interval_index]
+        duration = max(30, min(interval // 2, 250))
+        frequency = self._calculate_frequency(frame)
+        try:
+            self._driver.play_beep(frequency, duration)
+        except Exception:  # pragma: no cover - defensive logging
+            logger.exception("Beep driver raised an error during playback")
+
+        self._next_interval_index = (self._next_interval_index + 1) % len(self._interval_pattern)
+        next_interval = self._interval_pattern[self._next_interval_index]
+        self._next_beep_time_ms = current_time + next_interval
+
+    def _calculate_frequency(self, frame: OutSimFrame) -> float:
+        speed = frame.speed
+        scale = self._MODE_SCALE.get(self._mode, self._DEFAULT_SCALE)
+        speed_factor = 1.0 + min(max(speed, 0.0) / 50.0, 2.0)
+        return self._config.base_frequency_hz * scale * speed_factor
 
 
 def main() -> None:
@@ -199,7 +328,7 @@ def main() -> None:
     config = AppConfig.from_dict(load_config(config_path))
 
     radar = RadarRenderer()
-    beep_system = BeepSubsystem(config.beep_mode)
+    beep_system = BeepSubsystem(config.beep)
     telemetry_server: Optional[TelemetryBroadcaster] = None
     active_telemetry_config: Optional[TelemetryConfig] = None
 
@@ -550,14 +679,14 @@ def main() -> None:
             with config_lock:
                 config = new_config
                 mode_settings = {"sp": config.sp, "mp": config.mp}
-                beep_system.set_mode(config.beep_mode)
+                beep_system.update_config(config.beep)
                 mode_name = current_mode
                 settings = mode_settings[mode_name]
                 radar_enabled = settings.radar_enabled
                 beep_system.set_enabled(settings.beeps_enabled)
                 radar_state = radar_enabled
                 beeps_state = beep_system.enabled
-                beep_mode_state = config.beep_mode
+                beep_mode_state = beep_system.mode
 
             logger.info(
                 "Reloaded configuration (mode=%s, radar=%s, beeps=%s, beep_mode=%s)",
@@ -632,13 +761,19 @@ def main() -> None:
     watcher_thread.start()
 
     try:
+        insim_kwargs = {
+            "state_listeners": [handle_state],
+            "lap_listeners": [handle_lap],
+            "split_listeners": [handle_split],
+        }
+        insim_signature = inspect.signature(InSimClient)
+        if "mci_listeners" in insim_signature.parameters:
+            insim_kwargs["mci_listeners"] = [handle_mci]
+
         with (
             InSimClient(
                 config.insim,
-                state_listeners=[handle_state],
-                lap_listeners=[handle_lap],
-                split_listeners=[handle_split],
-                mci_listeners=[handle_mci],
+                **insim_kwargs,
             ) as insim,
             OutSimClient(
                 config.outsim_port,
