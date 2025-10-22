@@ -4,11 +4,137 @@ import re
 import sys
 from datetime import datetime, timezone
 
+import pytest
+
 from main import clear_session_timing, update_session_best
 
 from src.insim_client import LapEvent, StateEvent
 from src.outsim_client import OutSimFrame
 from src.persistence import PersonalBestRecord
+
+
+def test_outsim_client_timeout_uses_update_rate(monkeypatch: pytest.MonkeyPatch) -> None:
+    main_module = sys.modules["main"]
+    captured_timeout: list[float | None] = []
+
+    class FakeInSimClient:
+        def __init__(self, *_args, **_kwargs) -> None:
+            self.connected = True
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):  # type: ignore[override]
+            return False
+
+        def poll(self) -> None:
+            return None
+
+        def add_button_listener(self, _callback) -> None:
+            pass
+
+    class FakeOutSimClient:
+        def __init__(
+            self,
+            port,
+            host="0.0.0.0",
+            buffer_size: int = 256,
+            timeout=None,
+            allowed_sources=None,
+            max_packets_per_second=None,
+        ) -> None:
+            captured_timeout.append(timeout)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):  # type: ignore[override]
+            return False
+
+        def frames(self):
+            return iter(())
+
+    class DummyHUD:
+        def __init__(self, *_args, **_kwargs) -> None:
+            pass
+
+        def show(self, *_args, **_kwargs) -> None:
+            pass
+
+        def update(self, *_args, **_kwargs) -> None:
+            pass
+
+        def remove(self) -> None:
+            pass
+
+    class DummyRadar:
+        def draw(self, *_args, **_kwargs) -> None:
+            pass
+
+    class DummyTelemetry:
+        def __init__(self, *_args, **_kwargs) -> None:
+            pass
+
+        def start(self) -> None:
+            pass
+
+        def stop(self) -> None:
+            pass
+
+        def update_mci(self, *_args, **_kwargs) -> None:
+            pass
+
+        def update_outsim(self, *_args, **_kwargs) -> None:
+            pass
+
+        def update_track_context(self, *_args, **_kwargs) -> None:
+            pass
+
+        def update_player_lap(self, *_args, **_kwargs) -> None:
+            pass
+
+    class DummyBeepSubsystem:
+        def __init__(self, config) -> None:
+            self._enabled = False
+            self._mode = config.mode
+
+        @property
+        def enabled(self) -> bool:
+            return self._enabled
+
+        @property
+        def mode(self) -> str:
+            return self._mode
+
+        def set_enabled(self, enabled: bool) -> None:
+            self._enabled = enabled
+
+        def update_config(self, config) -> None:
+            self._mode = config.mode
+
+        def process_frame(self, _frame) -> None:
+            pass
+
+    fake_config = {
+        "insim": {},
+        "outsim": {"port": 31000, "update_hz": 20},
+        "telemetry_ws": {"enabled": False},
+    }
+
+    monkeypatch.setattr(main_module, "InSimClient", FakeInSimClient)
+    monkeypatch.setattr(main_module, "OutSimClient", FakeOutSimClient)
+    monkeypatch.setattr(main_module, "HUDController", DummyHUD)
+    monkeypatch.setattr(main_module, "RadarRenderer", lambda: DummyRadar())
+    monkeypatch.setattr(main_module, "TelemetryBroadcaster", DummyTelemetry)
+    monkeypatch.setattr(main_module, "BeepSubsystem", DummyBeepSubsystem)
+    monkeypatch.setattr(main_module, "load_config", lambda _path: fake_config)
+    monkeypatch.setattr(main_module, "load_personal_best", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(main_module, "record_lap", lambda *_args, **_kwargs: (None, False))
+
+    main_module.main()
+
+    assert captured_timeout and captured_timeout[0] == pytest.approx(0.05)
+
 
 
 def test_session_best_resets_with_context_change_and_rebuilds() -> None:

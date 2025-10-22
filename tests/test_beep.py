@@ -68,6 +68,15 @@ def test_app_config_parses_beep_section() -> None:
     )
 
 
+def test_app_config_surfaces_outsim_update_hz() -> None:
+    raw = _base_config_dict()
+    raw["outsim"]["update_hz"] = 25
+
+    config = AppConfig.from_dict(raw)
+
+    assert config.outsim_update_hz == pytest.approx(25.0)
+
+
 def test_app_config_validates_beep_fields() -> None:
     raw = _base_config_dict()
     raw["beep"] = {"volume": 1.5}
