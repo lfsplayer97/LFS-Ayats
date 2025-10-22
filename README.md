@@ -16,7 +16,9 @@ Prototype telemetry radar for Live for Speed (LFS).
 ## Requisits
 
 - Python 3.10 o superior.
-- No calen dependències externes; s’utilitza exclusivament la llibreria estàndard.
+- Dependència opcional: [`simpleaudio`](https://simpleaudio.readthedocs.io/) per reproduir
+  els avisos sonors. Si no està disponible, el controlador d’àudio passa a un mode
+  silenciós i només registra els esdeveniments.
 - Dependències de desenvolupament opcionals per a analitzadors estàtics: consulteu
   `requirements-dev.txt`.
 
@@ -38,10 +40,17 @@ principals:
 | `telemetry_ws.update_hz` | Cadència d’actualització del flux WebSocket (recomanat entre 10 i 20 Hz per superposicions). |
 | `sp_radar_enabled`, `sp_beeps_enabled` | Activen radar i avisos sonors en sessions d’un sol jugador. |
 | `mp_radar_enabled`, `mp_beeps_enabled` | Equivalents per a partides multijugador quan `ISS_MULTI` està actiu. |
-| `beep_mode` | Estratègia del subsistema d’avisos (actualment marcador). |
+| `beep.mode` | Estratègia del subsistema d’avisos sonors (`standard`, `calm`, `aggressive`). |
+| `beep.volume` | Volum normalitzat del to (0.0–1.0). |
+| `beep.base_frequency_hz` | Freqüència base del to; es multiplica en funció de la velocitat instantània. |
+| `beep.intervals_ms` | Patró cíclic amb els intervals (en mil·lisegons) entre beeps successius. |
 
 Els canvis al fitxer es detecten i s’apliquen sense reiniciar, permetent ajustar
 la configuració segons la teva instal·lació de LFS.
+
+> Nota: el subsistema d’avisos sonors intenta carregar `simpleaudio` en temps
+> d’execució. Quan no està disponible, continua funcionant en mode silenciós i
+> registra els batecs que s’haurien reproduït.
 
 ## Quick start
 

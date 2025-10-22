@@ -21,5 +21,10 @@
   "sp_beeps_enabled": true,
   "mp_radar_enabled": true,
   "mp_beeps_enabled": false,
-  "beep_mode": "standard"
+  "beep": {
+    "mode": "standard",
+    "volume": 0.6,
+    "base_frequency_hz": 880.0,
+    "intervals_ms": [400, 600]
+  }
 }
