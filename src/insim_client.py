@@ -354,6 +354,7 @@ class InSimClient:
         self._current_track: Optional[str] = None
         self._current_car: Optional[str] = None
         self._view_plid: Optional[int] = None
+        self._last_flags2: int = 0
         self._validator = PacketValidator()
         if state_listeners:
             self._state_listeners.extend(state_listeners)
@@ -384,6 +385,7 @@ class InSimClient:
         self._current_track = None
         self._current_car = None
         self._view_plid = None
+        self._last_flags2 = 0
         sock.setblocking(False)
 
         size = 44
@@ -788,6 +790,7 @@ class InSimClient:
 
         # Flags2 is stored as a 16-bit little endian value starting at offset 16.
         flags2 = struct.unpack_from("<H", packet, 16)[0]
+        self._last_flags2 = flags2
 
         view_plid = packet[10] if len(packet) > 10 else 0
         self._view_plid = view_plid or None
@@ -838,7 +841,7 @@ class InSimClient:
             self._current_car = car
 
         event = StateEvent(
-            flags2=0,
+            flags2=self._last_flags2,
             track=self._current_track,
             car=self._current_car,
             view_plid=self._view_plid,
