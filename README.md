@@ -16,9 +16,9 @@ Prototype telemetry radar for Live for Speed (LFS).
 ## Requisits
 
 - Python 3.10 o superior.
-- Dependència opcional: [`simpleaudio`](https://simpleaudio.readthedocs.io/) per reproduir
-  els avisos sonors. Si no està disponible, el controlador d’àudio passa a un mode
-  silenciós i només registra els esdeveniments.
+- Dependència d’execució: [`simpleaudio`](https://simpleaudio.readthedocs.io/) (>=1.0) per
+  reproduir els avisos sonors. S’instal·la automàticament amb `pip install -e .` i
+  garanteix que el subsistema d’àudio disposi dels beeps esperats.
 - Dependències de desenvolupament opcionals per a analitzadors estàtics: consulteu
   `requirements-dev.txt`.
 
@@ -49,8 +49,9 @@ Els canvis al fitxer es detecten i s’apliquen sense reiniciar, permetent ajust
 la configuració segons la teva instal·lació de LFS.
 
 > Nota: el subsistema d’avisos sonors intenta carregar `simpleaudio` en temps
-> d’execució. Quan no està disponible, continua funcionant en mode silenciós i
-> registra els batecs que s’haurien reproduït.
+> d’execució. En entorns on la dependència no es pugui inicialitzar (per exemple,
+> sessions remotes sense dispositius d’àudio), canvia automàticament a mode
+> silenciós i registra els batecs que s’haurien reproduït.
 
 ## Quick start
 

@@ -14,7 +14,9 @@ requires-python = ">=3.10"
 authors = [
     { name = "LFS-Ayats" }
 ]
-dependencies = []
+dependencies = [
+    "simpleaudio>=1.0",
+]
 
 [tool.setuptools]
 packages = ["src"]
