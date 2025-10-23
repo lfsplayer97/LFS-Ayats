@@ -1010,6 +1010,8 @@ class InSimClient:
             return None
 
         count = packet[3]
+        if count == 0:
+            return MultiCarInfoEvent(cars=[])
         entry_size = 28
         required = 4 + count * entry_size
         if len(packet) < required:
