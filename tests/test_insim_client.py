@@ -9,12 +9,14 @@ from src.insim_client import (
     ISB_CLICK,
     ISP_BTC,
     ISP_LAP,
+    ISP_MCI,
     ISP_NPL,
     ISP_SPX,
     ISP_STA,
     ISP_VER,
     ISS_MULTI,
     InSimClient,
+    MultiCarInfoEvent,
     PacketValidator,
 )
 
@@ -420,3 +422,15 @@ def test_corrupted_short_header_is_skipped_without_consuming_payload(
     assert lap_events[-1].car == "XFG"
     messages = [record.message for record in caplog.records]
     assert any("invalid packet header" in message for message in messages)
+
+
+def test_parse_mci_packet_returns_empty_event_when_no_cars(
+    insim_client_factory: Callable[..., InSimClient]
+) -> None:
+    client = insim_client_factory()
+    packet = bytes([4, ISP_MCI, 0, 0])
+
+    event = client._parse_mci_packet(packet)
+
+    assert isinstance(event, MultiCarInfoEvent)
+    assert event.cars == []
