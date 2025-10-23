@@ -627,11 +627,23 @@ class InSimClient:
                 self._buffer.clear()
                 return
 
-            if packet_size > len(self._buffer):
+            packet_type = self._buffer[1]
+            required_size = packet_size
+
+            if packet_type == ISP_MCI:
+                if len(self._buffer) < 4:
+                    return
+                count = self._buffer[3]
+                entry_size = 28
+                computed_size = 4 + count * entry_size
+                if computed_size > required_size:
+                    required_size = computed_size
+
+            if required_size > len(self._buffer):
                 return
 
-            packet = bytes(self._buffer[:packet_size])
-            del self._buffer[:packet_size]
+            packet = bytes(self._buffer[:required_size])
+            del self._buffer[:required_size]
             self._handle_packet(packet)
 
     def _discard_until_valid_header(self, *, require_complete: bool) -> bool:
@@ -1021,6 +1033,10 @@ class InSimClient:
                 len(packet),
             )
             return None
+
+        if count > 32:
+            logger.debug("Capping IS_MCI car count from %d to protocol maximum", count)
+            count = 32
 
         cars: List[CarInfo] = []
         offset = 4
