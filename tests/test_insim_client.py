@@ -480,3 +480,49 @@ def test_parse_mci_packet_handles_large_car_count(
     assert last_car.lap == count - 1 + 10
     assert last_car.plid == count
     assert last_car.position == (count - 1) % 255
+
+
+def test_parse_mci_packet_handles_wrapped_size_field(
+    insim_client_factory: Callable[..., InSimClient]
+) -> None:
+    client = insim_client_factory()
+    count = 9
+    entry_size = 28
+    packet_length = 4 + count * entry_size
+    assert packet_length == 256
+    packet = bytearray(packet_length)
+    packet[0] = packet_length & 0xFF
+    packet[1] = ISP_MCI
+    packet[2] = 0
+    packet[3] = count
+
+    for index in range(count):
+        offset = 4 + index * entry_size
+        struct.pack_into(
+            "<HHBBBBiiiHHHh",
+            packet,
+            offset,
+            index,
+            index + 5,
+            index + 1,
+            index % 32,
+            0,
+            0,
+            index * 100,
+            -index * 200,
+            index * 50,
+            index + 10,
+            index + 20,
+            index + 30,
+            index - 5,
+        )
+
+    event = client._parse_mci_packet(bytes(packet))
+
+    assert isinstance(event, MultiCarInfoEvent)
+    assert event.cars
+    assert len(event.cars) == count
+    first_car = event.cars[0]
+    last_car = event.cars[-1]
+    assert first_car.plid == 1
+    assert last_car.plid == count
