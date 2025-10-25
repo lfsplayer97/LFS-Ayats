@@ -4,6 +4,8 @@ import logging
 import struct
 from typing import Callable
 
+from main import update_session_best
+
 from src.hud import HUDController
 from src.insim_client import (
     ISB_CLICK,
@@ -136,6 +138,47 @@ def test_lap_events_inherit_track_and_car_context(
     assert event.car == "XFG"
 
 
+def test_lap_packet_preserves_negative_times(
+    insim_client_factory: Callable[..., InSimClient],
+) -> None:
+    lap_events = []
+    client = insim_client_factory(lap_listeners=[lap_events.append])
+    client._current_track = "BL1"
+    client._plid_to_car[5] = "XFG"
+
+    size = 64
+    packet = bytearray(size)
+    packet[0] = size
+    packet[1] = ISP_LAP
+    packet[3] = 5  # PLID
+    struct.pack_into("<ii", packet, 4, -1, -1)
+    struct.pack_into("<H", packet, 12, 0)
+    packet[14] = 0
+    packet[15] = 0
+    packet[16] = 0
+    packet[17] = 0
+    name = b"Driver\x00"
+    packet[18 : 18 + len(name)] = name
+
+    client._handle_packet(bytes(packet))
+
+    assert lap_events
+    event = lap_events[-1]
+    assert event.track == "BL1"
+    assert event.car == "XFG"
+    assert event.lap_time_ms == -1
+    assert event.estimate_time_ms == -1
+
+    lap_state = {"best_lap_ms": None, "latest_estimated_total_ms": 74_000}
+    assert update_session_best(lap_state, event.lap_time_ms) is False
+    assert lap_state["best_lap_ms"] is None
+
+    estimate_before = lap_state["latest_estimated_total_ms"]
+    if event.estimate_time_ms > 0:
+        lap_state["latest_estimated_total_ms"] = event.estimate_time_ms
+    assert lap_state["latest_estimated_total_ms"] == estimate_before
+
+
 def test_handle_packet_rejects_truncated_lap_packet(
     insim_client_factory: Callable[..., InSimClient], caplog
 ) -> None:
@@ -209,6 +252,44 @@ def test_split_packet_with_truncated_name_is_rejected(
         "smaller than minimum" in record.message and "IS_SPX" in record.message
         for record in caplog.records
     )
+
+
+def test_split_packet_preserves_negative_times(
+    insim_client_factory: Callable[..., InSimClient],
+) -> None:
+    split_events = []
+    client = insim_client_factory(split_listeners=[split_events.append])
+    client._current_track = "BL1"
+    client._plid_to_car[5] = "XFG"
+
+    size = 64
+    packet = bytearray(size)
+    packet[0] = size
+    packet[1] = ISP_SPX
+    packet[3] = 5  # PLID
+    struct.pack_into("<ii", packet, 4, -1, -1)
+    struct.pack_into("<H", packet, 12, 0)
+    packet[14] = 1
+    packet[15] = 0
+    packet[16] = 0
+    packet[17] = 0
+    name = b"Driver\x00"
+    packet[18 : 18 + len(name)] = name
+
+    client._handle_packet(bytes(packet))
+
+    assert split_events
+    event = split_events[-1]
+    assert event.track == "BL1"
+    assert event.car == "XFG"
+    assert event.split_time_ms == -1
+    assert event.estimate_time_ms == -1
+
+    lap_state = {"latest_estimated_total_ms": 82_000}
+    estimate_before = lap_state["latest_estimated_total_ms"]
+    if event.estimate_time_ms > 0:
+        lap_state["latest_estimated_total_ms"] = event.estimate_time_ms
+    assert lap_state["latest_estimated_total_ms"] == estimate_before
 
 
 def test_packet_validator_rejects_lap_below_minimum_size() -> None:

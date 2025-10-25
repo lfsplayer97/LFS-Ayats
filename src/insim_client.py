@@ -918,7 +918,7 @@ class InSimClient:
             return None
 
         _, _, _, plid = struct.unpack_from("<BBBB", packet)
-        lap_time, est_time = struct.unpack_from("<II", packet, 4)
+        lap_time, est_time = struct.unpack_from("<ii", packet, 4)
         flags = struct.unpack_from("<H", packet, 12)[0]
 
         offset = 14
@@ -982,7 +982,7 @@ class InSimClient:
             return None
 
         _, _, _, plid = struct.unpack_from("<BBBB", packet)
-        split_time, est_time = struct.unpack_from("<II", packet, 4)
+        split_time, est_time = struct.unpack_from("<ii", packet, 4)
         flags = struct.unpack_from("<H", packet, 12)[0]
 
         offset = 14
