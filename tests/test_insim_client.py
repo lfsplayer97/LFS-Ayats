@@ -15,6 +15,7 @@ from src.insim_client import (
     ISP_STA,
     ISP_VER,
     ISS_MULTI,
+    MCI_ENTRY_SIZE,
     InSimClient,
     MultiCarInfoEvent,
     PacketValidator,
@@ -526,3 +527,40 @@ def test_parse_mci_packet_handles_wrapped_size_field(
     last_car = event.cars[-1]
     assert first_car.plid == 1
     assert last_car.plid == count
+
+
+def test_handle_packet_accepts_mci_with_wrapped_header(
+    insim_client_factory: Callable[..., InSimClient],
+) -> None:
+    events: list[MultiCarInfoEvent] = []
+    client = insim_client_factory(mci_listeners=[events.append])
+
+    packet = bytearray(4 + MCI_ENTRY_SIZE)
+    packet[0] = 0
+    packet[1] = ISP_MCI
+    packet[2] = 0
+    packet[3] = 1
+    struct.pack_into(
+        "<HHBBBBiiiHHHh",
+        packet,
+        4,
+        12,
+        3,
+        7,
+        1,
+        0,
+        0,
+        100,
+        200,
+        -300,
+        400,
+        500,
+        600,
+        -50,
+    )
+
+    client._handle_packet(bytes(packet))
+
+    assert events
+    assert events[-1].cars
+    assert events[-1].cars[0].plid == 7

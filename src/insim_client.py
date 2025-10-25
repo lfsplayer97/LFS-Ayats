@@ -192,6 +192,23 @@ class PacketValidator:
         size = packet[0]
         packet_type = packet[1]
 
+        schema = self._schemas.get(packet_type)
+
+        if (
+            packet_type == ISP_MCI
+            and schema is not None
+            and size < schema.min_size
+        ):
+            if len(packet) < 4:
+                return False, "packet shorter than minimum header"
+            computed_size = 4 + packet[3] * MCI_ENTRY_SIZE
+            if computed_size > len(packet):
+                return False, (
+                    "computed IS_MCI size "
+                    f"{computed_size} exceeds packet length {len(packet)}"
+                )
+            size = computed_size
+
         header_valid, header_reason = self.validate_header(size, packet_type)
         if not header_valid:
             return False, header_reason
@@ -199,7 +216,6 @@ class PacketValidator:
         if len(packet) < size:
             return False, f"packet payload shorter than declared size (len={len(packet)}, size={size})"
 
-        schema = self._schemas.get(packet_type)
         if schema is None:
             return True, None
 
