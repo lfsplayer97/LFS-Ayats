@@ -22,12 +22,14 @@ def test_compute_radar_targets_filters_and_sorts() -> None:
         (50.0, 0.0),
         (-1.0, -1.0),
         (0.0, 500.0),
+        (0.03, 0.04),
     ]
 
     targets = compute_radar_targets(player, heading, others, max_range=140.0)
 
     assert extract_distances(targets) == sorted(extract_distances(targets))
     assert len(targets) == 3
+    assert all(distance > 0.5 for distance in extract_distances(targets))
     assert math.isclose(targets[0].distance, math.sqrt(2), rel_tol=1e-9)
     assert math.isclose(targets[-1].distance, 50.0)
 
