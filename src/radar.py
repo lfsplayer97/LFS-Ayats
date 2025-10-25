@@ -10,6 +10,9 @@ from typing import Iterable, List, Sequence, TextIO
 from .outsim_client import OutSimFrame
 
 
+NEAR_CONTACT_TOLERANCE = 0.5
+
+
 @dataclass(frozen=True)
 class RadarTarget:
     """Representation of a single radar contact relative to the player."""
@@ -49,6 +52,8 @@ def compute_radar_targets(
     max_range:
         Maximum detection distance in metres. Contacts beyond this radius are
         discarded. Defaults to ``140.0`` which matches the overlay renderer.
+        Contacts closer than ``NEAR_CONTACT_TOLERANCE`` metres are ignored to
+        avoid rendering jitter from overlapping with the player's position.
     """
 
     if max_range <= 0:
@@ -77,7 +82,7 @@ def compute_radar_targets(
         offset_y = other_y - player_y
         distance = math.hypot(offset_x, offset_y)
 
-        if distance > max_range or distance <= 1e-6:
+        if distance > max_range or distance <= NEAR_CONTACT_TOLERANCE:
             continue
 
         bearing_world = math.atan2(offset_x, offset_y)
