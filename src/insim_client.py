@@ -87,8 +87,8 @@ class PacketValidator:
             ISP_VER: (20, 20),
             ISP_STA: (28, 28),
             ISP_NPL: (44, 120),
-            ISP_LAP: (42, 96),
-            ISP_SPX: (42, 96),
+            ISP_LAP: (44, 96),
+            ISP_SPX: (44, 96),
             ISP_BTC: (8, 12),
         }
         self._schemas: dict[int, _PacketSchema] = {
@@ -124,7 +124,7 @@ class PacketValidator:
             ),
             ISP_LAP: _PacketSchema(
                 name="IS_LAP",
-                min_size=42,
+                min_size=44,
                 max_size=96,
                 fields=(
                     _PacketField(name="header", offset=0, length=4),
@@ -134,12 +134,14 @@ class PacketValidator:
                     _PacketField(name="penalty", offset=15, length=1),
                     _PacketField(name="num_stops", offset=16, length=1),
                     _PacketField(name="fuel_200", offset=17, length=1),
-                    _PacketField(name="player_name", offset=18, length=24),
+                    _PacketField(name="spare1", offset=18, length=1),
+                    _PacketField(name="spare2", offset=19, length=1),
+                    _PacketField(name="player_name", offset=20, length=24),
                 ),
             ),
             ISP_SPX: _PacketSchema(
                 name="IS_SPX",
-                min_size=42,
+                min_size=44,
                 max_size=96,
                 fields=(
                     _PacketField(name="header", offset=0, length=4),
@@ -149,7 +151,9 @@ class PacketValidator:
                     _PacketField(name="penalty", offset=15, length=1),
                     _PacketField(name="num_stops", offset=16, length=1),
                     _PacketField(name="fuel_200", offset=17, length=1),
-                    _PacketField(name="player_name", offset=18, length=24),
+                    _PacketField(name="spare1", offset=18, length=1),
+                    _PacketField(name="spare2", offset=19, length=1),
+                    _PacketField(name="player_name", offset=20, length=24),
                 ),
             ),
             ISP_BTC: _PacketSchema(
@@ -274,7 +278,8 @@ class LapEvent:
     num_pit_stops: int
     fuel_percent: int
     player_name: str
-    spare: int = 0
+    spare1: int = 0
+    spare2: int = 0
     raw_sp0: int = 0
     track: Optional[str] = None
     car: Optional[str] = None
@@ -293,7 +298,8 @@ class SplitEvent:
     num_pit_stops: int
     fuel_percent: int
     player_name: str
-    spare: int = 0
+    spare1: int = 0
+    spare2: int = 0
     track: Optional[str] = None
     car: Optional[str] = None
 
@@ -932,28 +938,29 @@ class InSimClient:
         offset += 1
 
         remaining = size - offset
+        if remaining < 2:
+            logger.error(
+                "IS_LAP packet missing spare bytes before player name (remaining=%d)",
+                remaining,
+            )
+            return None
+
+        spare1 = packet[offset]
+        offset += 1
+        spare2 = packet[offset]
+        offset += 1
+
+        remaining = size - offset
         if remaining <= 0:
             logger.error("IS_LAP packet missing player name segment")
             return None
 
-        spare = 0
         if remaining < 24:
             logger.error(
                 "IS_LAP packet contains truncated player name segment (%d bytes)",
                 remaining,
             )
             return None
-
-        if remaining > 24:
-            spare = packet[offset]
-            offset += 1
-            remaining -= 1
-            if remaining < 24:
-                logger.error(
-                    "IS_LAP packet missing player name after spare byte (remaining=%d)",
-                    remaining,
-                )
-                return None
 
         name_bytes = packet[offset : offset + 24]
         player_name = name_bytes.split(b"\x00", 1)[0].decode("latin-1", errors="ignore").strip()
@@ -967,7 +974,8 @@ class InSimClient:
             num_pit_stops=num_stops,
             fuel_percent=fuel_200,
             player_name=player_name,
-            spare=spare,
+            spare1=spare1,
+            spare2=spare2,
             raw_sp0=sp0,
         )
 
@@ -996,28 +1004,29 @@ class InSimClient:
         offset += 1
 
         remaining = size - offset
+        if remaining < 2:
+            logger.error(
+                "IS_SPX packet missing spare bytes before player name (remaining=%d)",
+                remaining,
+            )
+            return None
+
+        spare1 = packet[offset]
+        offset += 1
+        spare2 = packet[offset]
+        offset += 1
+
+        remaining = size - offset
         if remaining <= 0:
             logger.error("IS_SPX packet missing player name segment")
             return None
 
-        spare = 0
         if remaining < 24:
             logger.error(
                 "IS_SPX packet contains truncated player name segment (%d bytes)",
                 remaining,
             )
             return None
-
-        if remaining > 24:
-            spare = packet[offset]
-            offset += 1
-            remaining -= 1
-            if remaining < 24:
-                logger.error(
-                    "IS_SPX packet missing player name after spare byte (remaining=%d)",
-                    remaining,
-                )
-                return None
 
         name_bytes = packet[offset : offset + 24]
         player_name = name_bytes.split(b"\x00", 1)[0].decode("latin-1", errors="ignore").strip()
@@ -1032,7 +1041,8 @@ class InSimClient:
             num_pit_stops=num_stops,
             fuel_percent=fuel_200,
             player_name=player_name,
-            spare=spare,
+            spare1=spare1,
+            spare2=spare2,
         )
 
     def _parse_button_click_packet(self, packet: bytes) -> Optional["ButtonClickEvent"]:

@@ -127,8 +127,10 @@ def test_lap_events_inherit_track_and_car_context(
     packet[15] = 0
     packet[16] = 0
     packet[17] = 0
+    packet[18] = 0xAA
+    packet[19] = 0xBB
     name = b"Driver\x00"
-    packet[18 : 18 + len(name)] = name
+    packet[20 : 20 + len(name)] = name
 
     client._handle_packet(bytes(packet))
 
@@ -136,6 +138,9 @@ def test_lap_events_inherit_track_and_car_context(
     event = lap_events[-1]
     assert event.track == "BL1"
     assert event.car == "XFG"
+    assert event.player_name == "Driver"
+    assert event.spare1 == 0xAA
+    assert event.spare2 == 0xBB
 
 
 def test_lap_packet_preserves_negative_times(
@@ -157,8 +162,10 @@ def test_lap_packet_preserves_negative_times(
     packet[15] = 0
     packet[16] = 0
     packet[17] = 0
+    packet[18] = 0
+    packet[19] = 0
     name = b"Driver\x00"
-    packet[18 : 18 + len(name)] = name
+    packet[20 : 20 + len(name)] = name
 
     client._handle_packet(bytes(packet))
 
@@ -273,8 +280,10 @@ def test_split_packet_preserves_negative_times(
     packet[15] = 0
     packet[16] = 0
     packet[17] = 0
+    packet[18] = 0
+    packet[19] = 0
     name = b"Driver\x00"
-    packet[18 : 18 + len(name)] = name
+    packet[20 : 20 + len(name)] = name
 
     client._handle_packet(bytes(packet))
 
@@ -455,8 +464,10 @@ def test_corrupted_size_header_is_skipped(
     valid_packet[15] = 0
     valid_packet[16] = 0
     valid_packet[17] = 0
+    valid_packet[18] = 0
+    valid_packet[19] = 0
     name = b"Driver\x00"
-    valid_packet[18 : 18 + len(name)] = name
+    valid_packet[20 : 20 + len(name)] = name
 
     corrupted_header = bytes([200, ISP_LAP])
 
@@ -490,8 +501,10 @@ def test_corrupted_short_header_is_skipped_without_consuming_payload(
     valid_packet[15] = 0
     valid_packet[16] = 0
     valid_packet[17] = 0
+    valid_packet[18] = 0
+    valid_packet[19] = 0
     name = b"Driver\x00"
-    valid_packet[18 : 18 + len(name)] = name
+    valid_packet[20 : 20 + len(name)] = name
 
     corrupted_header = bytes([3, ISP_LAP])
 
