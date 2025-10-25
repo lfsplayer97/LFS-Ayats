@@ -3,9 +3,96 @@
 from __future__ import annotations
 
 import sys
-from typing import List, TextIO
+import math
+from dataclasses import dataclass
+from typing import Iterable, List, Sequence, TextIO
 
 from .outsim_client import OutSimFrame
+
+
+@dataclass(frozen=True)
+class RadarTarget:
+    """Representation of a single radar contact relative to the player."""
+
+    distance: float
+    bearing: float
+    offset_x: float
+    offset_y: float
+
+
+def _normalise_angle(angle: float) -> float:
+    wrapped = math.fmod(angle + math.pi, 2 * math.pi)
+    if wrapped < 0:
+        wrapped += 2 * math.pi
+    return wrapped - math.pi
+
+
+def compute_radar_targets(
+    player_position: Sequence[float],
+    heading: float,
+    other_positions: Iterable[Sequence[float]],
+    *,
+    max_range: float = 140.0,
+) -> List[RadarTarget]:
+    """Compute radar contacts ordered by increasing distance.
+
+    Parameters
+    ----------
+    player_position:
+        Iterable containing the player's ``x`` and ``y`` coordinates in metres.
+    heading:
+        Player heading expressed in radians, using the same convention as
+        :meth:`OutSimFrame.yaw_pitch_roll`.
+    other_positions:
+        Iterable of iterable pairs describing the ``x`` and ``y`` coordinates of
+        other vehicles.
+    max_range:
+        Maximum detection distance in metres. Contacts beyond this radius are
+        discarded. Defaults to ``140.0`` which matches the overlay renderer.
+    """
+
+    if max_range <= 0:
+        raise ValueError("max_range must be positive")
+
+    try:
+        player_x, player_y = float(player_position[0]), float(player_position[1])
+    except (IndexError, TypeError, ValueError) as exc:  # pragma: no cover - defensive
+        raise ValueError("player_position must contain at least two numeric entries") from exc
+
+    if not (math.isfinite(player_x) and math.isfinite(player_y)):
+        raise ValueError("player_position must contain finite coordinates")
+
+    targets: List[RadarTarget] = []
+
+    for pos in other_positions:
+        try:
+            other_x, other_y = float(pos[0]), float(pos[1])
+        except (IndexError, TypeError, ValueError):
+            continue
+
+        if not (math.isfinite(other_x) and math.isfinite(other_y)):
+            continue
+
+        offset_x = other_x - player_x
+        offset_y = other_y - player_y
+        distance = math.hypot(offset_x, offset_y)
+
+        if distance > max_range or distance <= 1e-6:
+            continue
+
+        bearing_world = math.atan2(offset_x, offset_y)
+        relative_bearing = _normalise_angle(bearing_world - heading)
+        targets.append(
+            RadarTarget(
+                distance=distance,
+                bearing=relative_bearing,
+                offset_x=offset_x,
+                offset_y=offset_y,
+            )
+        )
+
+    targets.sort(key=lambda entry: entry.distance)
+    return targets
 
 
 class RadarRenderer:
@@ -49,4 +136,4 @@ class RadarRenderer:
         stream.flush()
 
 
-__all__ = ["RadarRenderer"]
+__all__ = ["RadarRenderer", "RadarTarget", "compute_radar_targets"]

@@ -10,11 +10,12 @@ import json
 import logging
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 from .insim_client import CarInfo, MultiCarInfoEvent
 from .outsim_client import OutSimFrame
+from .radar import RadarTarget, compute_radar_targets
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ class TelemetrySnapshot:
     track: Optional[str]
     car: Optional[str]
     player: Optional[dict]
+    radar_targets: List[dict] = field(default_factory=list)
 
 
 def _outsim_to_dict(frame: OutSimFrame) -> dict:
@@ -305,6 +307,7 @@ class TelemetryBroadcaster:
                     break
 
         player_payload: Optional[dict]
+        radar_targets_payload: List[dict] = []
         if (
             focused_payload is None
             and frame is None
@@ -318,6 +321,7 @@ class TelemetryBroadcaster:
             player_payload = {}
             if frame is not None:
                 px, py, pz = frame.position
+                yaw, pitch, roll = frame.yaw_pitch_roll
                 player_payload.update(
                     {
                         "x": px,
@@ -329,7 +333,6 @@ class TelemetryBroadcaster:
                         "speed": frame.speed,
                     }
                 )
-                yaw, pitch, roll = frame.yaw_pitch_roll
                 player_payload["heading"] = yaw
                 player_payload["orientation"] = {
                     "yaw": yaw,
@@ -337,6 +340,33 @@ class TelemetryBroadcaster:
                     "roll": roll,
                 }
                 player_payload["time_ms"] = frame.time_ms
+
+                other_positions: List[tuple[float, float]] = []
+                for entry in cars:
+                    if focus is not None and entry.plid == focus:
+                        continue
+                    other_positions.append(
+                        (
+                            entry.x / _INSIM_DISTANCE_SCALE,
+                            entry.y / _INSIM_DISTANCE_SCALE,
+                        )
+                    )
+                if other_positions:
+                    targets: List[RadarTarget] = compute_radar_targets(
+                        (px, py),
+                        yaw,
+                        other_positions,
+                    )
+                    radar_targets_payload = [
+                        {
+                            "distance": target.distance,
+                            "bearing": target.bearing,
+                            "offset": {"x": target.offset_x, "y": target.offset_y},
+                        }
+                        for target in targets
+                    ]
+                    if radar_targets_payload:
+                        player_payload["radar_targets"] = radar_targets_payload
             if focused_payload is not None:
                 for key in ("plid", "lap", "position"):
                     value = focused_payload.get(key)
@@ -393,6 +423,7 @@ class TelemetryBroadcaster:
             track=track,
             car=car,
             player=player_payload,
+            radar_targets=radar_targets_payload,
         )
 
     @staticmethod
