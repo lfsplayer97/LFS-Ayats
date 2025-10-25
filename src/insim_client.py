@@ -58,6 +58,9 @@ _PACKET_TYPE_NAMES = {
 }
 
 
+MCI_ENTRY_SIZE = 28
+
+
 @dataclass(frozen=True)
 class _PacketField:
     name: str
@@ -583,6 +586,16 @@ class InSimClient:
         self._process_buffer()
 
     # -- internal helpers ------------------------------------------------
+    def _compute_mci_packet_length_from_buffer(
+        self, buffer: bytearray, offset: int
+    ) -> Optional[int]:
+        remaining = len(buffer) - offset
+        if remaining < 4:
+            return None
+
+        count = buffer[offset + 3]
+        return 4 + count * MCI_ENTRY_SIZE
+
     def _append_to_buffer(self, data: bytes) -> None:
         if self._buffer_limit <= 0:
             self._buffer.clear()
@@ -622,22 +635,20 @@ class InSimClient:
                 return
 
             packet_size = self._buffer[0]
-            if packet_size == 0:
-                logger.warning("Encountered zero-length packet in InSim buffer")
-                self._buffer.clear()
-                return
-
             packet_type = self._buffer[1]
+
             required_size = packet_size
 
             if packet_type == ISP_MCI:
-                if len(self._buffer) < 4:
+                computed_size = self._compute_mci_packet_length_from_buffer(self._buffer, 0)
+                if computed_size is None:
                     return
-                count = self._buffer[3]
-                entry_size = 28
-                computed_size = 4 + count * entry_size
-                if computed_size > required_size:
+                if packet_size == 0 or computed_size > required_size:
                     required_size = computed_size
+            elif packet_size == 0:
+                logger.warning("Encountered zero-length packet in InSim buffer")
+                self._buffer.clear()
+                return
 
             if required_size > len(self._buffer):
                 return
@@ -672,7 +683,17 @@ class InSimClient:
 
             packet_size = self._buffer[0]
             packet_type = self._buffer[1]
-            header_valid, reason = self._validator.validate_header(packet_size, packet_type)
+            effective_size = packet_size
+            reason: Optional[str] = None
+            if packet_type == ISP_MCI and packet_size == 0:
+                computed_size = self._compute_mci_packet_length_from_buffer(self._buffer, 0)
+                if computed_size is None:
+                    return False
+                effective_size = computed_size
+                header_valid = True
+            else:
+                header_valid, reason = self._validator.validate_header(packet_size, packet_type)
+                effective_size = packet_size
             if not header_valid:
                 discard = 2 if len(self._buffer) >= 2 else 1
                 type_name = self._validator.get_type_name(packet_type)
@@ -685,7 +706,7 @@ class InSimClient:
                 del self._buffer[:discard]
                 continue
 
-            if require_complete and packet_size > len(self._buffer):
+            if require_complete and effective_size > len(self._buffer):
                 # No complete packet is available yet.
                 return False
 
@@ -697,9 +718,6 @@ class InSimClient:
         buffer_len = len(self._buffer)
         for offset in range(buffer_len):
             packet_size = self._buffer[offset]
-            if packet_size == 0:
-                continue
-
             remaining = buffer_len - offset
             if remaining < 2:
                 break
@@ -708,13 +726,22 @@ class InSimClient:
             if packet_type not in _KNOWN_PACKET_TYPES:
                 continue
 
-            if packet_size < 4:
+            effective_size = packet_size
+            if packet_type == ISP_MCI and packet_size == 0:
+                computed_size = self._compute_mci_packet_length_from_buffer(self._buffer, offset)
+                if computed_size is None:
+                    break
+                effective_size = computed_size
+            elif packet_size == 0:
                 continue
 
-            if require_complete and packet_size > remaining:
+            if effective_size < 4:
                 continue
 
-            if not require_complete and packet_size > self._buffer_limit:
+            if require_complete and effective_size > remaining:
+                continue
+
+            if not require_complete and effective_size > self._buffer_limit:
                 continue
 
             return offset
@@ -1024,7 +1051,7 @@ class InSimClient:
         count = packet[3]
         if count == 0:
             return MultiCarInfoEvent(cars=[])
-        entry_size = 28
+        entry_size = MCI_ENTRY_SIZE
         required = 4 + count * entry_size
         if len(packet) < required:
             logger.debug(
