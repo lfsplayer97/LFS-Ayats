@@ -164,6 +164,22 @@ per evitar que el contingut de la pàgina requereixi integració Node.js.
 - [`src/outsim_client.py`](src/outsim_client.py): receptor i parser de trames OutSim.
 - [`src/radar.py`](src/radar.py): renderitza el radar ASCII.
 
+### Migracions de base de dades
+
+- Les migracions SQL es guarden a [`data/migrations/`](data/migrations/). Cada arxiu ha
+  de començar amb un prefix numèric ascendent (`0002_...`, `0003_...`, etc.) per definir
+  l'ordre d'aplicació.
+- En obrir una connexió mitjançant les utilitats de persistència (`load_personal_best`,
+  `record_lap`, `delete_personal_best`), `_initialise` crea automàticament la taula
+  `schema_migrations` i executa qualsevol migració pendent utilitzant SQLite.
+- Per crear una nova migració:
+  1. Afegiu un nou fitxer `.sql` al directori de migracions amb el següent número
+     disponible.
+  2. Escriu les instruccions SQL idempotents (utilitzeu `IF NOT EXISTS` quan sigui
+     possible) perquè puguin executar-se tant en bases de dades noves com existents.
+  3. Executeu `pytest` per validar que les migracions s'apliquen correctament en els
+     escenaris coberts pels tests.
+
 ### Extensió
 
 - Afegiu camps addicionals a `radar.py` segons les necessitats del prototip.

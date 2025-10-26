@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -14,6 +15,18 @@ from src.persistence import (
 def test_load_returns_none_when_missing(tmp_path: Path) -> None:
     db_path = tmp_path / "telemetry.db"
     assert load_personal_best("BL1", "XFG", db_path=db_path) is None
+
+    with sqlite3.connect(db_path) as conn:
+        table = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'pb'"
+        ).fetchone()
+        assert table is not None
+
+        versions = {
+            row[0]
+            for row in conn.execute("SELECT version FROM schema_migrations").fetchall()
+        }
+        assert "0001_initial" in versions
 
 
 def test_record_lap_creates_and_updates_pb(tmp_path: Path) -> None:
@@ -64,3 +77,39 @@ def test_delete_personal_best_missing_record(tmp_path: Path) -> None:
 
     deleted = delete_personal_best("BL1", "XFG", db_path=db_path)
     assert deleted is False
+
+
+def test_migrations_apply_to_existing_database(tmp_path: Path) -> None:
+    db_path = tmp_path / "telemetry.db"
+
+    with sqlite3.connect(db_path) as conn:
+        conn.execute(
+            """
+            CREATE TABLE pb (
+                track TEXT NOT NULL,
+                car TEXT NOT NULL,
+                laptime_ms INTEGER NOT NULL,
+                date TEXT NOT NULL
+            )
+            """
+        )
+        conn.execute(
+            "CREATE UNIQUE INDEX idx_pb_track_car ON pb(track, car)"
+        )
+        conn.commit()
+
+    timestamp = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    record_lap("BL1", "XFG", 75000, timestamp=timestamp, db_path=db_path)
+
+    with sqlite3.connect(db_path) as conn:
+        versions = {
+            row[0]
+            for row in conn.execute("SELECT version FROM schema_migrations").fetchall()
+        }
+        assert "0001_initial" in versions
+
+        count = conn.execute(
+            "SELECT COUNT(*) FROM pb WHERE track = ? AND car = ?",
+            ("BL1", "XFG"),
+        ).fetchone()[0]
+        assert count == 1
