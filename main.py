@@ -5,6 +5,7 @@ from __future__ import annotations
 import inspect
 import json
 import logging
+import math
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -24,7 +25,7 @@ from src.insim_client import (
 )
 from src.outsim_client import OutSimClient, OutSimFrame
 from src.persistence import PersonalBestRecord, load_personal_best, record_lap
-from src.radar import RadarRenderer
+from src.radar import RadarRenderer, compute_radar_targets
 from src.telemetry_ws import TelemetryBroadcaster
 
 logger = logging.getLogger(__name__)
@@ -403,6 +404,13 @@ def main() -> None:
 
     config_lock = threading.RLock()
     hud_controller: Optional[HUDController] = None
+    latest_outsim_frame: Optional[OutSimFrame] = None
+    latest_mci_event: Optional[MultiCarInfoEvent] = None
+    hud_radar_state: Optional[bool] = None
+    hud_beeps_state: Optional[bool] = None
+    hud_radar_summary: Optional[str] = None
+
+    INSIM_DISTANCE_SCALE = 65_536.0
 
     def normalise_fractions(values: List[float]) -> List[float]:
         cleaned: List[float] = []
@@ -488,6 +496,58 @@ def main() -> None:
         lap_state["current_split_times"] = {}
         lap_state["latest_estimated_total_ms"] = None
 
+    def summarise_radar(enabled: bool) -> Optional[str]:
+        nonlocal latest_outsim_frame, latest_mci_event
+
+        if not enabled:
+            return None
+
+        frame = latest_outsim_frame
+        mci = latest_mci_event
+        if frame is None or mci is None or not mci.cars:
+            return None
+
+        player_x, player_y, _ = frame.position
+        yaw, _, _ = frame.yaw_pitch_roll
+        other_positions: List[tuple[float, float]] = []
+        skip_plid = mci.view_plid
+        for car in mci.cars:
+            if skip_plid is not None and car.plid == skip_plid:
+                continue
+
+            other_x = car.x / INSIM_DISTANCE_SCALE
+            other_y = car.y / INSIM_DISTANCE_SCALE
+            if math.hypot(other_x - player_x, other_y - player_y) <= 0.5:
+                continue
+
+            other_positions.append((other_x, other_y))
+
+        if not other_positions:
+            return "clear"
+
+        try:
+            targets = compute_radar_targets((player_x, player_y), yaw, other_positions)
+        except ValueError:
+            return None
+
+        if not targets:
+            return "clear"
+
+        nearest = targets[0]
+        distance = nearest.distance
+        bearing_deg = math.degrees(nearest.bearing)
+        abs_bearing = abs(bearing_deg)
+        if abs_bearing < 2.5:
+            bearing_text = "F0°"
+        else:
+            direction = "R" if bearing_deg > 0 else "L"
+            bearing_text = f"{direction}{abs_bearing:0.0f}°"
+
+        distance_text = f"{distance:0.0f}m" if distance >= 10.0 else f"{distance:0.1f}m"
+        extras = len(targets) - 1
+        suffix = f" +{extras}" if extras > 0 else ""
+        return f"{distance_text} {bearing_text}{suffix}"
+
     with config_lock:
         radar_enabled = mode_settings[current_mode].radar_enabled
         beep_system.set_enabled(mode_settings[current_mode].beeps_enabled)
@@ -534,6 +594,7 @@ def main() -> None:
 
     def handle_state(event: StateEvent) -> None:
         nonlocal current_mode, radar_enabled, telemetry_server
+        nonlocal hud_radar_state, hud_beeps_state, hud_radar_summary
 
         update_track_context(event.track, event.car)
 
@@ -562,7 +623,11 @@ def main() -> None:
 
         hud = hud_controller
         if hud is not None:
-            hud.update(radar_state, beeps_state)
+            summary = summarise_radar(radar_state)
+            hud.update(radar_state, beeps_state, summary)
+            hud_radar_state = radar_state
+            hud_beeps_state = beeps_state
+            hud_radar_summary = summary
 
     def handle_lap(event: LapEvent) -> None:
         nonlocal tracked_plid, tracked_driver, last_frame_time_ms, pending_lap_start, persistent_best
@@ -660,7 +725,7 @@ def main() -> None:
 
     def watch_config() -> None:
         nonlocal config, mode_settings, radar_enabled, telemetry_server, active_telemetry_config
-        nonlocal current_track, current_car
+        nonlocal current_track, current_car, hud_radar_state, hud_beeps_state, hud_radar_summary
 
         try:
             last_mtime = config_path.stat().st_mtime_ns
@@ -717,7 +782,11 @@ def main() -> None:
 
             hud = hud_controller
             if hud is not None:
-                hud.update(radar_state, beeps_state)
+                summary = summarise_radar(radar_state)
+                hud.update(radar_state, beeps_state, summary)
+                hud_radar_state = radar_state
+                hud_beeps_state = beeps_state
+                hud_radar_summary = summary
 
     def handle_split(event: SplitEvent) -> None:
         nonlocal tracked_plid, tracked_driver
@@ -738,7 +807,7 @@ def main() -> None:
             lap_state["latest_estimated_total_ms"] = event.estimate_time_ms
 
     def handle_button(event: ButtonClickEvent) -> None:
-        nonlocal radar_enabled
+        nonlocal radar_enabled, hud_radar_state, hud_beeps_state, hud_radar_summary
 
         if not (event.flags & 0x01):
             return
@@ -769,9 +838,17 @@ def main() -> None:
 
         hud = hud_controller
         if hud is not None:
-            hud.update(new_radar, new_beeps)
+            summary = summarise_radar(new_radar)
+            hud.update(new_radar, new_beeps, summary)
+            hud_radar_state = new_radar
+            hud_beeps_state = new_beeps
+            hud_radar_summary = summary
 
     def handle_mci(event: MultiCarInfoEvent) -> None:
+        nonlocal latest_mci_event
+
+        latest_mci_event = MultiCarInfoEvent(cars=list(event.cars), view_plid=event.view_plid)
+
         server = telemetry_server
         if server is not None:
             server.update_mci(event)
@@ -812,11 +889,16 @@ def main() -> None:
             with config_lock:
                 initial_radar = radar_enabled
                 initial_beeps = beep_system.enabled
-            hud_controller.show(initial_radar, initial_beeps)
+            initial_summary = summarise_radar(initial_radar)
+            hud_controller.show(initial_radar, initial_beeps, initial_summary)
+            hud_radar_state = initial_radar
+            hud_beeps_state = initial_beeps
+            hud_radar_summary = initial_summary
 
             logger.info("Telemetry clients initialised; awaiting OutSim frames")
             try:
                 for frame in outsim.frames():
+                    latest_outsim_frame = frame
                     last_frame_time_ms = frame.time_ms
                     if pending_lap_start:
                         lap_state["current_lap_start_ms"] = frame.time_ms
@@ -827,6 +909,8 @@ def main() -> None:
                         break
                     with config_lock:
                         render_radar = radar_enabled
+
+                    summary_text = summarise_radar(render_radar)
 
                     if render_radar:
                         radar.draw(frame)
@@ -859,6 +943,20 @@ def main() -> None:
                         delta_ms = current_lap_ms - reference_time
                     else:
                         delta_ms = None
+
+                    new_beeps = beep_system.enabled
+
+                    hud = hud_controller
+                    if hud is not None:
+                        if (
+                            hud_radar_state != render_radar
+                            or hud_beeps_state != new_beeps
+                            or hud_radar_summary != summary_text
+                        ):
+                            hud.update(render_radar, new_beeps, summary_text)
+                            hud_radar_state = render_radar
+                            hud_beeps_state = new_beeps
+                            hud_radar_summary = summary_text
 
                     lap_progress: Optional[float] = None
                     if (
