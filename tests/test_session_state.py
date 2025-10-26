@@ -3,14 +3,153 @@ from __future__ import annotations
 import re
 import sys
 from datetime import datetime, timezone
+from typing import Callable, Iterable, Optional
 
 import pytest
 
 from main import clear_session_timing, update_session_best
 
-from src.insim_client import LapEvent, StateEvent
+from src.insim_client import LapEvent, SplitEvent, StateEvent
 from src.outsim_client import OutSimFrame
 from src.persistence import PersonalBestRecord
+
+
+class ReferenceDeltaHarness:
+    def __init__(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        self._monkeypatch = monkeypatch
+        self.main_module = sys.modules["main"]
+        self.printed_lines: list[str] = []
+
+        def fake_print(*args, **kwargs):
+            text = "".join(str(arg) for arg in args)
+            self.printed_lines.append(text)
+
+        class FakeInSimClient:
+            events: list[tuple[str, object]] = []
+
+            def __init__(
+                self,
+                config,
+                *,
+                state_listeners=None,
+                lap_listeners=None,
+                split_listeners=None,
+            ) -> None:
+                self._state_listeners = list(state_listeners or [])
+                self._lap_listeners = list(lap_listeners or [])
+                self._split_listeners = list(split_listeners or [])
+                self._event_queue = list(self.events)
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):  # type: ignore[override]
+                return False
+
+            def poll(self) -> None:
+                if not self._event_queue:
+                    return
+
+                kind, payload = self._event_queue.pop(0)
+                if kind == "state":
+                    for callback in self._state_listeners:
+                        callback(payload)
+                elif kind == "lap":
+                    for callback in self._lap_listeners:
+                        callback(payload)
+                elif kind == "split":
+                    for callback in self._split_listeners:
+                        callback(payload)
+
+        class FakeOutSimClient:
+            frames_to_yield: list[OutSimFrame] = []
+
+            def __init__(
+                self,
+                port,
+                host="0.0.0.0",
+                buffer_size: int = 256,
+                timeout=None,
+                *,
+                allowed_sources=None,
+                max_packets_per_second=None,
+            ) -> None:
+                self._frames = list(self.frames_to_yield)
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):  # type: ignore[override]
+                return False
+
+            def frames(self):
+                yield from self._frames
+
+        class DummyRadar:
+            def draw(self, frame):
+                pass
+
+        monkeypatch.setattr(self.main_module, "InSimClient", FakeInSimClient)
+        monkeypatch.setattr(self.main_module, "OutSimClient", FakeOutSimClient)
+        monkeypatch.setattr(self.main_module, "RadarRenderer", lambda: DummyRadar())
+        monkeypatch.setattr("builtins.print", fake_print)
+
+        self._fake_insim = FakeInSimClient
+        self._fake_outsim = FakeOutSimClient
+
+    def run_session(
+        self,
+        *,
+        events: Iterable[tuple[str, object]],
+        frame_times: Iterable[int],
+        initial_pb_record: Optional[PersonalBestRecord],
+        record_lap_callable: Optional[
+            Callable[..., tuple[Optional[PersonalBestRecord], bool]]
+        ] = None,
+    ) -> list[int]:
+        self.printed_lines.clear()
+        self._fake_insim.events = list(events)
+
+        base_frame_kwargs = dict(
+            ang_vel=(0.0, 0.0, 0.0),
+            heading=(0.0, 1.0, 0.0),
+            acceleration=(0.0, 0.0, 0.0),
+            velocity=(0.0, 0.0, 0.0),
+            position=(0.0, 0.0, 0.0),
+        )
+        self._fake_outsim.frames_to_yield = [
+            OutSimFrame(time_ms=time, **base_frame_kwargs) for time in frame_times
+        ]
+
+        loader = (
+            (lambda track, car: initial_pb_record)
+            if initial_pb_record is not None
+            else (lambda track, car: None)
+        )
+        self._monkeypatch.setattr(self.main_module, "load_personal_best", loader)
+
+        record_stub: Callable[..., tuple[Optional[PersonalBestRecord], bool]]
+        if record_lap_callable is not None:
+            record_stub = record_lap_callable
+        else:
+            record_stub = lambda *args, **kwargs: (None, False)
+        self._monkeypatch.setattr(self.main_module, "record_lap", record_stub)
+
+        try:
+            self.main_module.main()
+        finally:
+            self._fake_insim.events = []
+            self._fake_outsim.frames_to_yield = []
+
+        deltas: list[int] = []
+        for line in self.printed_lines:
+            match = re.search(r"Δ vs PB:\s*([+-]\s*\d+)\s*ms", line)
+            if not match:
+                continue
+            value = int(match.group(1).replace(" ", ""))
+            deltas.append(value)
+
+        return deltas
 
 
 def test_outsim_client_timeout_uses_update_rate(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -473,79 +612,17 @@ def test_track_change_resets_pending_lap_start(monkeypatch) -> None:
 
 
 def test_reference_delta_without_pb_splits_uses_estimates(monkeypatch) -> None:
-    main_module = sys.modules["main"]
+    harness = ReferenceDeltaHarness(monkeypatch)
 
-    printed_lines: list[str] = []
+    pb_record = PersonalBestRecord(
+        track="SO1",
+        car="UF1",
+        laptime_ms=90000,
+        recorded_at=datetime.now(timezone.utc),
+    )
 
-    def fake_print(*args, **kwargs):
-        text = "".join(str(arg) for arg in args)
-        printed_lines.append(text)
-
-    class FakeInSimClient:
-        events: list[tuple[str, object]] = []
-
-        def __init__(
-            self,
-            config,
-            *,
-            state_listeners=None,
-            lap_listeners=None,
-            split_listeners=None,
-        ) -> None:
-            self._state_listeners = list(state_listeners or [])
-            self._lap_listeners = list(lap_listeners or [])
-            self._event_queue = list(self.events)
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc, tb):  # type: ignore[override]
-            return False
-
-        def poll(self) -> None:
-            if not self._event_queue:
-                return
-
-            kind, payload = self._event_queue.pop(0)
-            if kind == "state":
-                for callback in self._state_listeners:
-                    callback(payload)
-            elif kind == "lap":
-                for callback in self._lap_listeners:
-                    callback(payload)
-
-    class FakeOutSimClient:
-        frames_to_yield: list[OutSimFrame] = []
-
-        def __init__(
-            self,
-            port,
-            host="0.0.0.0",
-            buffer_size: int = 256,
-            timeout=None,
-            *,
-            allowed_sources=None,
-            max_packets_per_second=None,
-        ) -> None:
-            self._frames = list(self.frames_to_yield)
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc, tb):  # type: ignore[override]
-            return False
-
-        def frames(self):
-            yield from self._frames
-
-    class DummyRadar:
-        def draw(self, frame):
-            pass
-
-    def run_session(estimate_total: int) -> list[int]:
-        printed_lines.clear()
-
-        FakeInSimClient.events = [
+    def build_events(estimate_total: int) -> list[tuple[str, object]]:
+        return [
             ("state", StateEvent(flags2=0, track="SO1", car="UF1")),
             (
                 "lap",
@@ -564,54 +641,148 @@ def test_reference_delta_without_pb_splits_uses_estimates(monkeypatch) -> None:
             ),
         ]
 
-        base_frame_kwargs = dict(
-            ang_vel=(0.0, 0.0, 0.0),
-            heading=(0.0, 1.0, 0.0),
-            acceleration=(0.0, 0.0, 0.0),
-            velocity=(0.0, 0.0, 0.0),
-            position=(0.0, 0.0, 0.0),
-        )
+    frame_times = [idx * 1000 for idx in range(1, 7)]
 
-        FakeOutSimClient.frames_to_yield = [
-            OutSimFrame(time_ms=idx * 1000, **base_frame_kwargs) for idx in range(1, 7)
-        ]
-
-        try:
-            main_module.main()
-        finally:
-            FakeInSimClient.events = []
-            FakeOutSimClient.frames_to_yield = []
-
-        deltas: list[int] = []
-        for line in printed_lines:
-            if "Δ vs PB:" not in line:
-                continue
-            match = re.search(r"Δ vs PB:\s*([+-]\s*\d+)\s*ms", line)
-            if not match:
-                continue
-            value = int(match.group(1).replace(" ", ""))
-            deltas.append(value)
-
-        return deltas
-
-    monkeypatch.setattr(main_module, "InSimClient", FakeInSimClient)
-    monkeypatch.setattr(main_module, "OutSimClient", FakeOutSimClient)
-    monkeypatch.setattr(main_module, "RadarRenderer", lambda: DummyRadar())
-    monkeypatch.setattr(main_module, "record_lap", lambda *args, **kwargs: (None, False))
-    monkeypatch.setattr(
-        main_module,
-        "load_personal_best",
-        lambda track, car: PersonalBestRecord(
-            track=track,
-            car=car,
-            laptime_ms=90000,
-            recorded_at=datetime.now(timezone.utc),
-        ),
+    ahead_deltas = harness.run_session(
+        events=build_events(estimate_total=85000),
+        frame_times=frame_times,
+        initial_pb_record=pb_record,
     )
-    monkeypatch.setattr("builtins.print", fake_print)
-
-    ahead_deltas = run_session(estimate_total=85000)
-    behind_deltas = run_session(estimate_total=95000)
+    behind_deltas = harness.run_session(
+        events=build_events(estimate_total=95000),
+        frame_times=frame_times,
+        initial_pb_record=pb_record,
+    )
 
     assert ahead_deltas and ahead_deltas[-1] < 0
     assert behind_deltas and behind_deltas[-1] > 0
+
+
+def test_reference_delta_with_pb_splits_before_first_split(monkeypatch) -> None:
+    harness = ReferenceDeltaHarness(monkeypatch)
+
+    pb_total = 90000
+
+    def make_record_lap_stub() -> Callable[..., tuple[Optional[PersonalBestRecord], bool]]:
+        def record_lap(
+            track: str,
+            car: str,
+            laptime_ms: int,
+            *,
+            timestamp=None,
+            db_path=None,
+        ) -> tuple[PersonalBestRecord, bool]:
+            return (
+                PersonalBestRecord(
+                    track=track,
+                    car=car,
+                    laptime_ms=pb_total,
+                    recorded_at=datetime.now(timezone.utc),
+                ),
+                True,
+            )
+
+        return record_lap
+
+    def build_events(estimate_total: int) -> list[tuple[str, object]]:
+        return [
+            ("state", StateEvent(flags2=0, track="SO1", car="UF1")),
+            (
+                "lap",
+                LapEvent(
+                    plid=7,
+                    lap_time_ms=0,
+                    estimate_time_ms=pb_total,
+                    flags=0,
+                    penalty=0,
+                    num_pit_stops=0,
+                    fuel_percent=0,
+                    player_name="Driver",
+                    track="SO1",
+                    car="UF1",
+                ),
+            ),
+            (
+                "split",
+                SplitEvent(
+                    plid=7,
+                    split_time_ms=int(pb_total * 0.3),
+                    estimate_time_ms=pb_total,
+                    split_index=1,
+                    flags=0,
+                    penalty=0,
+                    num_pit_stops=0,
+                    fuel_percent=0,
+                    player_name="Driver",
+                    track="SO1",
+                    car="UF1",
+                ),
+            ),
+            (
+                "split",
+                SplitEvent(
+                    plid=7,
+                    split_time_ms=int(pb_total * 0.65),
+                    estimate_time_ms=pb_total,
+                    split_index=2,
+                    flags=0,
+                    penalty=0,
+                    num_pit_stops=0,
+                    fuel_percent=0,
+                    player_name="Driver",
+                    track="SO1",
+                    car="UF1",
+                ),
+            ),
+            (
+                "lap",
+                LapEvent(
+                    plid=7,
+                    lap_time_ms=pb_total,
+                    estimate_time_ms=0,
+                    flags=0,
+                    penalty=0,
+                    num_pit_stops=0,
+                    fuel_percent=0,
+                    player_name="Driver",
+                    track="SO1",
+                    car="UF1",
+                ),
+            ),
+            (
+                "lap",
+                LapEvent(
+                    plid=7,
+                    lap_time_ms=0,
+                    estimate_time_ms=estimate_total,
+                    flags=0,
+                    penalty=0,
+                    num_pit_stops=0,
+                    fuel_percent=0,
+                    player_name="Driver",
+                    track="SO1",
+                    car="UF1",
+                ),
+            ),
+        ]
+
+    frame_times = [idx * 1000 for idx in range(1, 20)]
+
+    slower_deltas = harness.run_session(
+        events=build_events(estimate_total=95000),
+        frame_times=frame_times,
+        initial_pb_record=None,
+        record_lap_callable=make_record_lap_stub(),
+    )
+    faster_deltas = harness.run_session(
+        events=build_events(estimate_total=85000),
+        frame_times=frame_times,
+        initial_pb_record=None,
+        record_lap_callable=make_record_lap_stub(),
+    )
+
+    slower_first = next((value for value in slower_deltas if value != 0), None)
+    faster_first = next((value for value in faster_deltas if value != 0), None)
+
+    assert slower_first is not None and slower_first > 0
+    assert faster_first is not None and faster_first < 0
