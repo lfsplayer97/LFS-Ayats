@@ -443,8 +443,8 @@ def main() -> None:
             return None
 
         pb_total = persistent_best.laptime_ms
-        fractions = resolve_reference_fractions()
-        if not fractions:
+
+        def estimate_from_progress() -> Optional[int]:
             estimate_total = lap_state.get("latest_estimated_total_ms")
             if not estimate_total or estimate_total <= 0:
                 return None
@@ -453,11 +453,18 @@ def main() -> None:
             reference_time = int(round(pb_total * progress))
             return min(reference_time, pb_total)
 
+        fractions = resolve_reference_fractions()
+        if not fractions:
+            return estimate_from_progress()
+
         boundaries = fractions + [1.0]
 
         current_splits: Dict[int, int] = lap_state.get("current_split_times", {})
         sorted_split_times = [current_splits[idx] for idx in sorted(current_splits)]
         passed_split_times = [t for t in sorted_split_times if t <= current_ms]
+
+        if not passed_split_times:
+            return estimate_from_progress()
 
         segment_index = min(len(passed_split_times), len(boundaries) - 1)
         start_fraction = boundaries[segment_index - 1] if segment_index > 0 else 0.0
