@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterator, Optional, Tuple
+from typing import Iterable, Iterator, Optional, Set, Tuple
 
 __all__ = [
     "PersonalBestRecord",
@@ -18,6 +18,7 @@ __all__ = [
 
 _DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 _DEFAULT_DB_PATH = _DATA_DIR / "telemetry.db"
+_MIGRATIONS_DIR = _DATA_DIR / "migrations"
 
 
 @dataclass(frozen=True)
@@ -30,24 +31,40 @@ class PersonalBestRecord:
     recorded_at: datetime
 
 
-def _initialise(conn: sqlite3.Connection) -> None:
+def _load_migration_versions() -> Iterable[Path]:
+    if not _MIGRATIONS_DIR.exists():
+        return []
+    return sorted(_MIGRATIONS_DIR.glob("*.sql"))
+
+
+def _apply_migrations(conn: sqlite3.Connection) -> None:
     conn.execute(
         """
-        CREATE TABLE IF NOT EXISTS pb (
-            track TEXT NOT NULL,
-            car TEXT NOT NULL,
-            laptime_ms INTEGER NOT NULL,
-            date TEXT NOT NULL
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+            version TEXT PRIMARY KEY
         )
         """
     )
-    conn.execute(
-        """
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_pb_track_car
-            ON pb(track, car)
-        """
-    )
-    conn.commit()
+
+    cur = conn.execute("SELECT version FROM schema_migrations")
+    applied: Set[str] = {row[0] for row in cur.fetchall()}
+
+    for migration_path in _load_migration_versions():
+        version = migration_path.stem
+        if version in applied:
+            continue
+
+        sql = migration_path.read_text(encoding="utf-8")
+        conn.executescript(sql)
+        conn.execute(
+            "INSERT INTO schema_migrations(version) VALUES (?)",
+            (version,),
+        )
+        conn.commit()
+
+
+def _initialise(conn: sqlite3.Connection) -> None:
+    _apply_migrations(conn)
 
 
 @contextmanager
