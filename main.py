@@ -830,56 +830,67 @@ def main() -> None:
                     if server is not None:
                         server.update_outsim(frame)
 
-                current_start = lap_state["current_lap_start_ms"]
-                best_lap_ms = lap_state["best_lap_ms"]
-                current_lap_ms: Optional[int]
-                if current_start is None:
-                    current_lap_ms = None
-                else:
-                    current_lap_ms = max(0, frame.time_ms - current_start)
+                    current_start = lap_state["current_lap_start_ms"]
+                    best_lap_ms = lap_state["best_lap_ms"]
+                    current_lap_ms: Optional[int]
+                    if current_start is None:
+                        current_lap_ms = None
+                    else:
+                        current_lap_ms = max(0, frame.time_ms - current_start)
 
-                current_display = (
-                    f"{current_lap_ms:>7} ms" if current_lap_ms is not None else "-- ms"
-                )
-                best_display = f"{best_lap_ms:>7} ms" if best_lap_ms is not None else "-- ms"
-                pb_display = f"{persistent_best.laptime_ms:>7} ms" if persistent_best else "-- ms"
-                reference_time = estimate_reference_time(current_lap_ms)
-                if reference_time is not None and current_lap_ms is not None:
-                    delta_ms = current_lap_ms - reference_time
-                else:
-                    delta_ms = None
-
-                lap_progress: Optional[float] = None
-                if reference_time is not None and persistent_best and persistent_best.laptime_ms > 0:
-                    lap_progress = min(
-                        max(reference_time / persistent_best.laptime_ms, 0.0),
-                        1.0,
+                    current_display = (
+                        f"{current_lap_ms:>7} ms" if current_lap_ms is not None else "-- ms"
                     )
-                elif current_lap_ms is not None:
-                    estimated_total = lap_state.get("latest_estimated_total_ms")
-                    if estimated_total and estimated_total > 0:
-                        lap_progress = min(max(current_lap_ms / estimated_total, 0.0), 1.0)
-
-                server = telemetry_server
-                if server is not None:
-                    server.update_player_lap(
-                        progress=lap_progress,
-                        current_lap_ms=current_lap_ms,
-                        reference_lap_ms=reference_time,
-                        delta_ms=delta_ms,
+                    best_display = (
+                        f"{best_lap_ms:>7} ms" if best_lap_ms is not None else "-- ms"
                     )
-                delta_display = f"{delta_ms:+7} ms" if delta_ms is not None else "  -- ms"
-                status_line = (
-                    "Current lap: "
-                    f"{current_display} | Session best: {best_display} | Personal best: {pb_display}"
-                    f" | Δ vs PB: {delta_display}"
-                )
-                if status_line != last_status_line:
-                    padded_line = status_line
-                    if len(last_status_line) > len(status_line):
-                        padded_line = status_line.ljust(len(last_status_line))
-                    print(padded_line, end="\r", flush=True)
-                    last_status_line = status_line
+                    pb_display = (
+                        f"{persistent_best.laptime_ms:>7} ms" if persistent_best else "-- ms"
+                    )
+                    reference_time = estimate_reference_time(current_lap_ms)
+                    if reference_time is not None and current_lap_ms is not None:
+                        delta_ms = current_lap_ms - reference_time
+                    else:
+                        delta_ms = None
+
+                    lap_progress: Optional[float] = None
+                    if (
+                        reference_time is not None
+                        and persistent_best
+                        and persistent_best.laptime_ms > 0
+                    ):
+                        lap_progress = min(
+                            max(reference_time / persistent_best.laptime_ms, 0.0),
+                            1.0,
+                        )
+                    elif current_lap_ms is not None:
+                        estimated_total = lap_state.get("latest_estimated_total_ms")
+                        if estimated_total and estimated_total > 0:
+                            lap_progress = min(
+                                max(current_lap_ms / estimated_total, 0.0), 1.0
+                            )
+
+                    if server is not None:
+                        server.update_player_lap(
+                            progress=lap_progress,
+                            current_lap_ms=current_lap_ms,
+                            reference_lap_ms=reference_time,
+                            delta_ms=delta_ms,
+                        )
+                    delta_display = (
+                        f"{delta_ms:+7} ms" if delta_ms is not None else "  -- ms"
+                    )
+                    status_line = (
+                        "Current lap: "
+                        f"{current_display} | Session best: {best_display} | Personal best: {pb_display}"
+                        f" | Δ vs PB: {delta_display}"
+                    )
+                    if status_line != last_status_line:
+                        padded_line = status_line
+                        if len(last_status_line) > len(status_line):
+                            padded_line = status_line.ljust(len(last_status_line))
+                        print(padded_line, end="\r", flush=True)
+                        last_status_line = status_line
             finally:
                 hud_controller.remove()
                 hud_controller = None
