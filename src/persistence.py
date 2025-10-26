@@ -9,6 +9,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator, Optional, Tuple
 
+__all__ = [
+    "PersonalBestRecord",
+    "load_personal_best",
+    "record_lap",
+    "delete_personal_best",
+]
+
 _DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 _DEFAULT_DB_PATH = _DATA_DIR / "telemetry.db"
 
@@ -133,3 +140,17 @@ def record_lap(
             )
 
         return _parse_row(existing), False
+
+
+def delete_personal_best(
+    track: str, car: str, *, db_path: Optional[Path] = None
+) -> bool:
+    """Delete a stored PB and return ``True`` if a record was removed."""
+
+    with _connect(db_path) as conn:
+        cur = conn.execute(
+            "DELETE FROM pb WHERE track = ? AND car = ?",
+            (track, car),
+        )
+        conn.commit()
+        return cur.rowcount > 0

@@ -3,7 +3,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
-from src.persistence import PersonalBestRecord, load_personal_best, record_lap
+from src.persistence import (
+    PersonalBestRecord,
+    delete_personal_best,
+    load_personal_best,
+    record_lap,
+)
 
 
 def test_load_returns_none_when_missing(tmp_path: Path) -> None:
@@ -42,3 +47,20 @@ def test_record_lap_creates_and_updates_pb(tmp_path: Path) -> None:
 
     loaded = load_personal_best("BL1", "XFG", db_path=db_path)
     assert loaded == faster_record
+
+
+def test_delete_personal_best_existing_record(tmp_path: Path) -> None:
+    db_path = tmp_path / "telemetry.db"
+    timestamp = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    record_lap("BL1", "XFG", 75000, timestamp=timestamp, db_path=db_path)
+
+    deleted = delete_personal_best("BL1", "XFG", db_path=db_path)
+    assert deleted is True
+    assert load_personal_best("BL1", "XFG", db_path=db_path) is None
+
+
+def test_delete_personal_best_missing_record(tmp_path: Path) -> None:
+    db_path = tmp_path / "telemetry.db"
+
+    deleted = delete_personal_best("BL1", "XFG", db_path=db_path)
+    assert deleted is False
