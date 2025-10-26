@@ -16,6 +16,26 @@ from src.persistence import PersonalBestRecord
 def test_outsim_client_timeout_uses_update_rate(monkeypatch: pytest.MonkeyPatch) -> None:
     main_module = sys.modules["main"]
     captured_timeout: list[float | None] = []
+    player_lap_updates: list[dict[str, object]] = []
+
+    fake_frames = [
+        OutSimFrame(
+            time_ms=1000,
+            ang_vel=(0.0, 0.0, 0.0),
+            heading=(0.0, 0.0, 0.0),
+            acceleration=(0.0, 0.0, 0.0),
+            velocity=(0.0, 0.0, 0.0),
+            position=(0.0, 0.0, 0.0),
+        ),
+        OutSimFrame(
+            time_ms=1100,
+            ang_vel=(0.0, 0.0, 0.0),
+            heading=(0.0, 0.0, 0.0),
+            acceleration=(0.0, 0.0, 0.0),
+            velocity=(0.0, 0.0, 0.0),
+            position=(0.0, 0.0, 0.0),
+        ),
+    ]
 
     class FakeInSimClient:
         def __init__(self, *_args, **_kwargs) -> None:
@@ -52,7 +72,7 @@ def test_outsim_client_timeout_uses_update_rate(monkeypatch: pytest.MonkeyPatch)
             return False
 
         def frames(self):
-            return iter(())
+            return iter(fake_frames)
 
     class DummyHUD:
         def __init__(self, *_args, **_kwargs) -> None:
@@ -90,8 +110,22 @@ def test_outsim_client_timeout_uses_update_rate(monkeypatch: pytest.MonkeyPatch)
         def update_track_context(self, *_args, **_kwargs) -> None:
             pass
 
-        def update_player_lap(self, *_args, **_kwargs) -> None:
-            pass
+        def update_player_lap(
+            self,
+            *,
+            progress,
+            current_lap_ms,
+            reference_lap_ms,
+            delta_ms,
+        ) -> None:
+            player_lap_updates.append(
+                {
+                    "progress": progress,
+                    "current_lap_ms": current_lap_ms,
+                    "reference_lap_ms": reference_lap_ms,
+                    "delta_ms": delta_ms,
+                }
+            )
 
     class DummyBeepSubsystem:
         def __init__(self, config) -> None:
@@ -118,7 +152,7 @@ def test_outsim_client_timeout_uses_update_rate(monkeypatch: pytest.MonkeyPatch)
     fake_config = {
         "insim": {},
         "outsim": {"port": 31000, "update_hz": 20},
-        "telemetry_ws": {"enabled": False},
+        "telemetry_ws": {"enabled": True, "update_hz": 15.0},
     }
 
     monkeypatch.setattr(main_module, "InSimClient", FakeInSimClient)
@@ -134,6 +168,7 @@ def test_outsim_client_timeout_uses_update_rate(monkeypatch: pytest.MonkeyPatch)
     main_module.main()
 
     assert captured_timeout and captured_timeout[0] == pytest.approx(0.05)
+    assert len(player_lap_updates) == len(fake_frames)
 
 
 
