@@ -198,7 +198,7 @@
     if (!Number.isFinite(deltaSeconds)) {
       return "--";
     }
-    const sign = deltaSeconds > 0 ? "+" : "";
+    const sign = deltaSeconds > 0 ? "+" : deltaSeconds < 0 ? "-" : "";
     const abs = Math.abs(deltaSeconds);
     const minutes = Math.floor(abs / 60);
     const seconds = abs % 60;
@@ -221,16 +221,28 @@
     }
     const heading = normalizeHeading(headingValue);
     const lapProgress = readLapProgress(player, data);
+    const deltaSecondsCandidates = ["delta", "deltaLap", "deltaCurrent", "lapDelta", "splitDelta"];
     let delta = readNumber(
       player,
-      ["delta", "deltaLap", "deltaCurrent", "lapDelta", "splitDelta", "delta_ms"],
+      [...deltaSecondsCandidates],
       readNumber(data.delta, ["current", "lap", "value"], NaN),
     );
     if (!Number.isFinite(delta) && player && typeof player.lap === "object") {
-      delta = readNumber(player.lap, ["delta", "delta_ms", "current", "lap"], NaN);
+      delta = readNumber(player.lap, ["delta", "current", "lap"], NaN);
     }
-    if (Math.abs(delta) > 30 && Math.abs(delta) < 60000) {
-      delta = delta / 1000;
+
+    const deltaMsSources = [
+      () => readNumber(player, ["delta_ms"], NaN),
+      () => (player && typeof player.lap === "object" ? readNumber(player.lap, ["delta_ms"], NaN) : NaN),
+      () => readNumber(data.lap, ["delta_ms"], NaN),
+      () => readNumber(data.delta, ["current_ms", "lap_ms", "value_ms", "ms"], NaN),
+    ];
+    for (const read of deltaMsSources) {
+      const candidate = read();
+      if (Number.isFinite(candidate)) {
+        delta = candidate / 1000;
+        break;
+      }
     }
 
     const playerPlid = readNumber(player, ["plid", "PLID"], NaN);
@@ -514,6 +526,12 @@
   window.addEventListener("beforeunload", teardownSocket);
 
   resizeCanvas();
+
+  if (typeof window !== "undefined") {
+    window.__overlayTest = window.__overlayTest || {};
+    window.__overlayTest.parseIncoming = parseIncoming;
+    window.__overlayTest.formatDelta = formatDelta;
+  }
 
   // Auto-connect if the port is supplied via query string (?port=30333)
   const params = new URLSearchParams(window.location.search);
