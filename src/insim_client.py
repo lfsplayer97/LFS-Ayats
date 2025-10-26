@@ -937,6 +937,9 @@ class InSimClient:
         fuel_200 = packet[offset]
         offset += 1
 
+        fuel_percent = int(round(fuel_200 / 2))
+        fuel_percent = max(0, min(100, fuel_percent))
+
         remaining = size - offset
         if remaining < 2:
             logger.error(
@@ -972,7 +975,7 @@ class InSimClient:
             flags=flags,
             penalty=penalty,
             num_pit_stops=num_stops,
-            fuel_percent=fuel_200,
+            fuel_percent=fuel_percent,
             player_name=player_name,
             spare1=spare1,
             spare2=spare2,
@@ -1002,6 +1005,9 @@ class InSimClient:
         offset += 1
         fuel_200 = packet[offset]
         offset += 1
+
+        fuel_percent = int(round(fuel_200 / 2))
+        fuel_percent = max(0, min(100, fuel_percent))
 
         remaining = size - offset
         if remaining < 2:
@@ -1039,7 +1045,7 @@ class InSimClient:
             flags=flags,
             penalty=penalty,
             num_pit_stops=num_stops,
-            fuel_percent=fuel_200,
+            fuel_percent=fuel_percent,
             player_name=player_name,
             spare1=spare1,
             spare2=spare2,
