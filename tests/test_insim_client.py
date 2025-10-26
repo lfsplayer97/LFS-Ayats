@@ -126,7 +126,7 @@ def test_lap_events_inherit_track_and_car_context(
     packet[14] = 0
     packet[15] = 0
     packet[16] = 0
-    packet[17] = 0
+    packet[17] = 200
     packet[18] = 0xAA
     packet[19] = 0xBB
     name = b"Driver\x00"
@@ -141,6 +141,7 @@ def test_lap_events_inherit_track_and_car_context(
     assert event.player_name == "Driver"
     assert event.spare1 == 0xAA
     assert event.spare2 == 0xBB
+    assert event.fuel_percent == 100
 
 
 def test_lap_packet_preserves_negative_times(
@@ -279,7 +280,7 @@ def test_split_packet_preserves_negative_times(
     packet[14] = 1
     packet[15] = 0
     packet[16] = 0
-    packet[17] = 0
+    packet[17] = 200
     packet[18] = 0
     packet[19] = 0
     name = b"Driver\x00"
@@ -293,6 +294,7 @@ def test_split_packet_preserves_negative_times(
     assert event.car == "XFG"
     assert event.split_time_ms == -1
     assert event.estimate_time_ms == -1
+    assert event.fuel_percent == 100
 
     lap_state = {"latest_estimated_total_ms": 82_000}
     estimate_before = lap_state["latest_estimated_total_ms"]
