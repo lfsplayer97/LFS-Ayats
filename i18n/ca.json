@@ -1,31 +1,31 @@
-{
-  "app": {
-    "name": "LFS Ayats",
-    "tagline": "Eines i documentació per a telemetria i fluxos de LFS"
-  },
-  "common": {
-    "ok": "D'acord",
-    "cancel": "Cancel·la",
-    "save": "Desa",
-    "loading": "Carregant…"
-  },
-  "menu": {
-    "file": {
-      "open": "Obre…",
-      "exit": "Surt"
-    }
-  },
-  "greeting": {
-    "withName": "Hola, {name}!"
-  },
-  "units": {
-    "mphToKmhNotice": "S’ha convertit {value} mph → {kmh} km/h."
-  },
-  "laps": {
-    "count": "{count, plural, one {# volta} other {# voltes}}"
-  },
-  "errors": {
-    "generic": "Alguna cosa no ha anat bé. Torna-ho a provar.",
-    "networkTimeout": "Temps d’espera excedit. Torna-ho a intentar."
-  }
+﻿{
+    "app":  {
+                "name":  "LFS Ayats",
+                "tagline":  "Eines i documentació per a telemetria i fluxos de LFS"
+            },
+    "common":  {
+                   "ok":  "D\u0027acord",
+                   "cancel":  "Cancel·la",
+                   "save":  "Desa",
+                   "loading":  "Carregant…"
+               },
+    "menu":  {
+                 "file":  {
+                              "open":  "Obre…",
+                              "exit":  "Surt"
+                          }
+             },
+    "greeting":  {
+                     "withName":  "Hola, {name}!"
+                 },
+    "units":  {
+                  "mphToKmhNotice":  "S’ha convertit {value} mph → {kmh} km/h."
+              },
+    "laps":  {
+                 "count":  "{count, plural, one {# volta} other {# voltes}}"
+             },
+    "errors":  {
+                   "generic":  "Alguna cosa no ha anat bé. Torna-ho a provar.",
+                   "networkTimeout":  "Temps d’espera excedit. Torna-ho a intentar."
+               }
 }
