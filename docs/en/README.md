@@ -1,8 +1,13 @@
-# Documentation (EN)
+# LFS Ayats Documentation (EN)
 
-Start here for README, Quick Start, and Installation guides in English.
+Welcome! This is the entry point for the user and admin documentation.  
+Use the links below to navigate.
 
-- Keep titles in Title Case.
-- Prefer examples with UTC timestamps and SI units.
+- **[Quick Start](./QuickStart.md)** — get up and running in minutes
+- **[Installation](./Installation.md)** — detailed install for Windows/Linux
+- **[Configuration](./Configuration.md)** — settings, units, and locales
+- **[CLI Reference](./CLI.md)** — commands, flags, and examples
+- **[Troubleshooting](./Troubleshooting.md)** — common issues and fixes
+- **[Telemetry & LFS Protocols](./Telemetry.md)** — InSim/OutSim/OutGauge basics
 
-Push CI test: 2025-11-02T09:49:28.2654200+01:00
+> Conventions: dates use ISO 8601 (`2025-11-02`), SI units (km/h, °C), and `en-US` punctuation.
