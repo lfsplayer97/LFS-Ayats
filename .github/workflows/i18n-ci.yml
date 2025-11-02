@@ -1,4 +1,4 @@
-name: i18n & docs CI
+﻿name: i18n & docs CI
 
 on:
   pull_request:
@@ -9,7 +9,15 @@ on:
       - 'scripts/**'
       - 'TRANSLATION_STYLE_GUIDE.md'
       - 'GLOSSARY.md'
-
+  push:
+    branches: [ main ]
+    paths:
+      - 'i18n/**'
+      - 'docs/**'
+      - '.github/**'
+      - 'scripts/**'
+      - 'TRANSLATION_STYLE_GUIDE.md'
+      - 'GLOSSARY.md'
 jobs:
   lint-and-validate:
     runs-on: ubuntu-latest
@@ -65,3 +73,4 @@ jobs:
         with:
           name: pseudo-locale
           path: i18n/en-US__pseudo.json
+
