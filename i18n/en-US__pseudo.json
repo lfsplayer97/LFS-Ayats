@@ -1,0 +1,31 @@
+{
+  "app": {
+    "name": "⟦ĿḞŠ Åÿáťš⟧",
+    "tagline": "⟦Ťõõľš áñď ďõčš ƒõř ĿḞŠ ťēľēṁēťřÿ áñď ŵõřķƒľõŵš⟧"
+  },
+  "common": {
+    "ok": "⟦ØĶ⟧",
+    "cancel": "⟦Ćáñčēľ⟧",
+    "save": "⟦Šáṿē⟧",
+    "loading": "⟦Ŀõáďïñğ…⟧"
+  },
+  "menu": {
+    "file": {
+      "open": "⟦Øƥēñ…⟧",
+      "exit": "⟦Ėẍïť⟧"
+    }
+  },
+  "greeting": {
+    "withName": "⟦Ħï, {name}!⟧"
+  },
+  "units": {
+    "mphToKmhNotice": "⟦Ćõñṿēřťēď {value} ṁƥħ → {kmh} ķṁ/ħ.⟧"
+  },
+  "laps": {
+    "count": "⟦{count, plural, one {# lap} õťħēř {# laps}}⟧"
+  },
+  "errors": {
+    "generic": "⟦Šõṁēťħïñğ ŵēñť ŵřõñğ. Ťřÿ áğáïñ.⟧",
+    "networkTimeout": "⟦Ńēťŵõřķ ťïṁēõüť. Ṗľēášē řēťřÿ.⟧"
+  }
+}
