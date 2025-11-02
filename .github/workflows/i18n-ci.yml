@@ -1,0 +1,67 @@
+name: i18n & docs CI
+
+on:
+  pull_request:
+    paths:
+      - 'i18n/**'
+      - 'docs/**'
+      - '.github/**'
+      - 'scripts/**'
+      - 'TRANSLATION_STYLE_GUIDE.md'
+      - 'GLOSSARY.md'
+
+jobs:
+  lint-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install python deps (none required)
+        run: python -c "print('ok')"
+
+      - name: Markdownlint
+        run: npx -y markdownlint-cli2 "**/*.md" "#node_modules"
+
+      - name: alex (llenguatge inclusiu)
+        run: npx -y alex docs . || true
+
+      - name: Link checker
+        uses: lycheeverse/lychee-action@v1
+        with:
+          args: --verbose --no-progress --accept 200,206,429 --exclude-mail --timeout 20s 'docs/**/*.md' 'README.md'
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      - name: Vale (estil)
+        uses: errata-ai/vale-action@reviewdog
+        with:
+          reporter: github-pr-review
+          files: docs/ TRANSLATION_STYLE_GUIDE.md
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      - name: i18n - comprovar claus
+        run: python scripts/i18n_check_keys.py i18n/en-US.json i18n/ca.json
+
+      - name: i18n - validar ICU
+        run: python scripts/i18n_validate_icu.py i18n/en-US.json i18n/ca.json
+
+      - name: i18n - pseudo-localització (artefacte)
+        run: python scripts/pseudo_localize.py i18n/en-US.json i18n/en-US__pseudo.json
+
+      - name: Upload pseudo locale
+        uses: actions/upload-artifact@v4
+        with:
+          name: pseudo-locale
+          path: i18n/en-US__pseudo.json

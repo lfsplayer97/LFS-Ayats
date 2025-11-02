@@ -1,15 +1,11 @@
-.PHONY: lint lint-flake8 lint-pylint lint-mypy lint-bandit
+# Helpers locals (opcionals)
+.PHONY: i18n-check i18n-icu i18n-pseudo
 
-lint: lint-flake8 lint-pylint lint-mypy lint-bandit
+i18n-check:
+	python scripts/i18n_check_keys.py i18n/en-US.json i18n/ca.json
 
-lint-flake8:
-	flake8 src tests
+i18n-icu:
+	python scripts/i18n_validate_icu.py i18n/en-US.json i18n/ca.json
 
-lint-pylint:
-	pylint src
-
-lint-mypy:
-	mypy src
-
-lint-bandit:
-	bandit -c bandit.yaml -r src
+i18n-pseudo:
+	python scripts/pseudo_localize.py i18n/en-US.json i18n/en-US__pseudo.json
