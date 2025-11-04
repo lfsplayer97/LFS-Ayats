@@ -1,0 +1,134 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality-checks:
+    name: Quality checks (${{ matrix.python-version }} @ ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.10", "3.11"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements-dev.txt
+            pyproject.toml
+
+      - name: Determine pip cache directory
+        id: pip-cache-dir
+        run: echo "dir=$(python -m pip cache dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pip directory
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pip-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements-dev.txt', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install -r requirements-dev.txt
+          python -m pip install black isort pytest
+
+      - name: Run black
+        run: black --check src tests main.py
+
+      - name: Run isort
+        run: isort --check-only src tests main.py
+
+      - name: Run flake8
+        run: flake8 src tests
+
+      - name: Run pylint
+        run: pylint src
+
+      - name: Run mypy
+        run: mypy src
+
+      - name: Run bandit
+        run: bandit -c bandit.yaml -r src
+
+      - name: Run pytest
+        run: pytest
+
+  static-analysis-report:
+    name: Static analysis artifact
+    runs-on: ubuntu-latest
+    needs: quality-checks
+    if: ${{ always() }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements-dev.txt
+            pyproject.toml
+
+      - name: Determine pip cache directory
+        id: pip-cache-dir
+        run: echo "dir=$(python -m pip cache dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pip directory
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pip-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-pip-report-${{ hashFiles('requirements-dev.txt', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-report-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install -r requirements-dev.txt
+          python -m pip install black isort pytest
+
+      - name: Generate static analysis report
+        run: |
+          set -euo pipefail
+          REPORT="static-analysis-report.txt"
+          : > "$REPORT"
+
+          run_and_log() {
+            local cmd="$1"
+            {
+              printf '\n$ %s\n' "$cmd"
+              eval "$cmd"
+            } 2>&1 | tee -a "$REPORT"
+          }
+
+          run_and_log "black --check src tests main.py"
+          run_and_log "isort --check-only src tests main.py"
+          run_and_log "flake8 src tests"
+          run_and_log "pylint src"
+          run_and_log "mypy src"
+          run_and_log "bandit -c bandit.yaml -r src"
+          run_and_log "pytest"
+
+      - name: Upload static analysis report
+        uses: actions/upload-artifact@v3
+        with:
+          name: static-analysis-report
+          path: static-analysis-report.txt
+          if-no-files-found: error

@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>LFS Ayats - Simple</title>
+    <style>
+        body { background: #1a1a2e; color: #00ff88; font-family: Arial; padding: 20px; text-align: center; }
+        h1 { font-size: 3em; margin-bottom: 30px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        button { padding: 15px 30px; background: #00ff88; color: #1a1a2e; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin: 10px; font-weight: bold; }
+        button:hover { background: #00cc6a; transform: scale(1.05); }
+        button:disabled { background: #666; color: #999; transform: none; }
+        .status { padding: 20px; margin: 20px 0; border-radius: 10px; font-size: 20px; font-weight: bold; }
+        .ready { background: #003d1a; border: 2px solid #00ff88; }
+        .connecting { background: #4d3300; color: #ffaa00; border: 2px solid #ffaa00; }
+        .connected { background: #001a0d; border: 2px solid #00ff88; }
+        .data-grid { display: flex; gap: 20px; justify-content: center; margin: 30px 0; }
+        .data-card { background: #00ff88; color: #1a1a2e; padding: 20px; border-radius: 10px; min-width: 120px; }
+        .data-value { font-size: 2em; font-weight: bold; }
+        .data-label { font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏎️ LFS AYATS</h1>
+        <button onclick="connect()">🚀 CONNECTAR</button>
+        <button onclick="disconnect()" id="disconnectBtn" disabled>🔌 DESCONNECTAR</button>
+        
+        <div id="status" class="status ready">✅ PREPARAT PER CONNECTAR</div>
+        
+        <div class="data-grid">
+            <div class="data-card">
+                <div class="data-value" id="speed">0</div>
+                <div class="data-label">🏎️ KM/H</div>
+            </div>
+            <div class="data-card">
+                <div class="data-value" id="rpm">0</div>
+                <div class="data-label">⚡ RPM</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var isConnected = false;
+        var timer;
+
+        function connect() {
+            document.getElementById('status').innerHTML = '🔄 CONNECTANT...';
+            document.getElementById('status').className = 'status connecting';
+            
+            setTimeout(function() {
+                isConnected = true;
+                document.getElementById('status').innerHTML = '✅ CONNECTAT!';
+                document.getElementById('status').className = 'status connected';
+                document.getElementById('disconnectBtn').disabled = false;
+                startData();
+            }, 2000);
+        }
+
+        function disconnect() {
+            isConnected = false;
+            stopData();
+            document.getElementById('status').innerHTML = '✅ PREPARAT PER CONNECTAR';
+            document.getElementById('status').className = 'status ready';
+            document.getElementById('disconnectBtn').disabled = true;
+        }
+
+        function startData() {
+            timer = setInterval(function() {
+                if (isConnected) {
+                    document.getElementById('speed').textContent = Math.floor(Math.random() * 300);
+                    document.getElementById('rpm').textContent = Math.floor(Math.random() * 8000);
+                }
+            }, 800);
+        }
+
+        function stopData() {
+            if (timer) {
+                clearInterval(timer);
+                document.getElementById('speed').textContent = '0';
+                document.getElementById('rpm').textContent = '0';
+            }
+        }
+    </script>
+</body>
+</html>

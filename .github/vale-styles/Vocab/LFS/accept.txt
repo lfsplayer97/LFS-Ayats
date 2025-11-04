@@ -1,0 +1,12 @@
+# Paraules acceptades específiques del domini
+InSim
+OutSim
+OutGauge
+Hotlap
+Split
+Telemetry
+Force
+Feedback
+km/h
+° C
+LFS

@@ -1,0 +1,28 @@
+{
+  "connection": {
+    "title": "InSim Connection",
+    "host": "Host",
+    "port": "Port", 
+    "status": {
+      "connecting": "Connecting to {{host}}:{{port}}...",
+      "connected": "Successfully connected to LFS",
+      "failed": "Connection failed",
+      "timeout": "Connection timeout"
+    }
+  },
+  "racing": {
+    "driver": "Driver",
+    "car": "Car",
+    "track": "Track", 
+    "lap": "Lap",
+    "sector": "Sector",
+    "speed": "Speed",
+    "rpm": "RPM"
+  },
+  "data": {
+    "recording": "Recording telemetry",
+    "stopped": "Telemetry stopped", 
+    "export": "Export data",
+    "channels": "Active channels: {{count}}"
+  }
+}

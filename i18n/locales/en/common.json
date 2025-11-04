@@ -1,0 +1,22 @@
+{
+  "app": {
+    "name": "LFS Ayats",
+    "description": "Telemetry system for Live for Speed", 
+    "version": "Version {{version}}"
+  },
+  "actions": {
+    "start": "Start",
+    "stop": "Stop",
+    "connect": "Connect", 
+    "disconnect": "Disconnect",
+    "save": "Save",
+    "load": "Load"
+  },
+  "status": {
+    "connected": "Connected",
+    "disconnected": "Disconnected", 
+    "loading": "Loading...",
+    "ready": "Ready"
+  }
+}
+

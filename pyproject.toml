@@ -1,0 +1,58 @@
+[build-system]
+requires = [
+    "setuptools",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lfs-ayats"
+version = "0.1.0"
+description = "Prototype telemetry radar for Live for Speed (LFS)."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "LFS-Ayats" }
+]
+dependencies = [
+    "simpleaudio>=1.0",
+]
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.setuptools.package-dir]
+src = "src"
+
+[tool.flake8]
+max-line-length = 100
+extend-ignore = ["E203"]
+exclude = ["docs", "tests/data"]
+
+[tool.mypy]
+python_version = "3.10"
+mypy_path = ["src"]
+files = ["src"]
+warn_unused_configs = true
+warn_return_any = true
+ignore_missing_imports = true
+
+[tool.bandit]
+targets = ["src"]
+exclude_dirs = ["tests", "docs"]
+severity = "LOW"
+confidence = "HIGH"
+skip = ["B101"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+src_paths = ["src", "tests", "main.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
