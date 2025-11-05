@@ -158,6 +158,35 @@ per evitar que el contingut de la pàgina requereixi integració Node.js.
 - `main.py` orquestra el bucle principal i gestiona la recàrrega de configuració.
 - Els clients InSim i OutSim encapsulen la comunicació TCP/UDP.
 
+### Estructura del projecte
+
+El projecte està organitzat en dos components principals:
+
+#### Backend Python (`src/`)
+- **`src/insim_client.py`**: Client InSim per comunicació TCP amb LFS
+- **`src/outsim_client.py`**: Receptor i parser de trames OutSim (UDP)
+- **`src/radar.py`**: Renderització del radar ASCII
+- **`src/hud.py`**: Controlador del HUD
+- **`src/telemetry_ws.py`**: Servidor WebSocket per retransmissió de telemetria
+- **`src/persistence.py`**: Gestió de millors temps personals (SQLite)
+- **`src/audio/`**: Subsistema d'avisos sonors
+
+#### Frontend JavaScript
+- **`i18n/`**: Sistema d'internacionalització amb traduccions Català/English
+  - `i18n/utils/translator.js`: Motor de traduccions
+  - `i18n/components/LanguageSelector.js`: Selector d'idioma
+  - `i18n/locales/`: Fitxers JSON de traduccions per idioma
+- **`overlay/`**: Superposició HTML amb radar, barra de volta i delta
+  - `overlay/index.html`: Interfície principal
+  - `overlay/overlay.js`: Lògica de visualització
+  - `overlay/electron-main.js`: Integració Electron opcional
+- **Interfícies HTML**:
+  - `index.html`: Portal principal amb accés a totes les aplicacions
+  - `demo.html`: Demo del sistema i18n
+  - `lfs-app.html`: Aplicació completa amb controls
+  - `lfs-simple.html`: Interfície minimalista
+  - `lfs-pro.html`: Dashboard professional avançat
+
 ### Fitxers clau
 
 - [`src/insim_client.py`](src/insim_client.py): client mínim per a InSim.
