@@ -44,7 +44,7 @@ def main():
     time.sleep(1)
     
     # Load config
-    config_path = Path(__file__).parent / "config.json"
+    config_path = Path(__file__).parent.parent.parent / "config.json"
     try:
         with open(config_path) as f:
             config = json.load(f)
