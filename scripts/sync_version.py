@@ -43,9 +43,7 @@ def update_package_json_version(package_json_path: Path, version: str) -> None:
 
 def main() -> int:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Synchronize version across project files"
-    )
+    parser = argparse.ArgumentParser(description="Synchronize version across project files")
     parser.add_argument(
         "--check",
         action="store_true",
