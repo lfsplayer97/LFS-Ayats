@@ -36,6 +36,15 @@ def clear_screen_smooth():
     # Mover cursor a l'inici sense borrar
     print('\033[H', end='')
 
+def find_config_file():
+    """Find config.json by searching upward from current file."""
+    current = Path(__file__).resolve()
+    for parent in [current.parent] + list(current.parents):
+        config_path = parent / "config.json"
+        if config_path.exists():
+            return config_path
+    return Path("config.json")  # Fallback to current directory
+
 def main():
     # Enable colors in Windows PowerShell
     os.system('color')
@@ -44,7 +53,7 @@ def main():
     time.sleep(1)
     
     # Load config
-    config_path = Path(__file__).parent / "config.json"
+    config_path = find_config_file()
     try:
         with open(config_path) as f:
             config = json.load(f)

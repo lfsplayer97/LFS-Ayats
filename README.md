@@ -14,6 +14,11 @@ Choose your language / Escull el teu idioma:
 Open `demo.html` in your browser to test the i18n system.
 Obre `demo.html` al navegador per provar el sistema d'internacionalització.
 
+## Examples / Exemples
+
+- **Radar Variants**: Experimental radar implementations → [`examples/radar/`](examples/radar/)
+- **Variants del Radar**: Implementacions experimentals del radar → [`examples/radar/`](examples/radar/)
+
 ---
 
 **LFS Ayats** - Telemetry system for Live for Speed racing simulator  
