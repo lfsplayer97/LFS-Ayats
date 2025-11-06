@@ -4,6 +4,29 @@
 
 Prototype telemetry radar for Live for Speed (LFS).
 
+## Version Management
+
+This project follows [Semantic Versioning](https://semver.org/). The single source of truth for the version is `pyproject.toml`.
+
+To synchronize versions across all configuration files:
+
+```bash
+make version-sync
+```
+
+To check if versions are synchronized:
+
+```bash
+make version-check
+```
+
+Alternatively, you can run the script directly:
+
+```bash
+python scripts/sync_version.py          # Synchronize versions
+python scripts/sync_version.py --check  # Check only
+```
+
 ## Quick Start
 
 ### Initial Configuration

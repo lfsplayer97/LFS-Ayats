@@ -9,6 +9,24 @@ Choose your language / Escull el teu idioma:
 - **Català**: [Documentació completa en català](docs/ca/README.md)
 - **English**: [Full documentation in English](docs/en/README.md)
 
+## Version Management / Gestió de Versions
+
+This project follows [Semantic Versioning](https://semver.org/). The single source of truth for the version is `pyproject.toml`.
+
+Aquest projecte segueix [Versionat Semàntic](https://semver.org/). La font única de veritat per a la versió és `pyproject.toml`.
+
+To synchronize versions across all configuration files / Per sincronitzar versions en tots els fitxers de configuració:
+
+```bash
+make version-sync
+```
+
+To check if versions are synchronized / Per comprovar si les versions estan sincronitzades:
+
+```bash
+make version-check
+```
+
 ### Configuration / Configuració
 
 Before running the application, copy the example configuration:
