@@ -18,7 +18,12 @@ from pathlib import Path
 
 
 def get_version_from_pyproject(pyproject_path: Path) -> str:
-    """Extract version from pyproject.toml file."""
+    """Extract version from pyproject.toml file.
+
+    Uses a simple regex for version extraction to avoid adding dependencies.
+    This is sufficient for the project's needs as we only read the version field.
+    The regex matches double-quoted strings which is the standard TOML format.
+    """
     content = pyproject_path.read_text(encoding="utf-8")
     match = re.search(r'^version\s*=\s*"([^"]+)"', content, re.MULTILINE)
     if not match:
