@@ -1,7 +1,7 @@
 {
   "insim": {
     "host": "127.0.0.1",
-    "port": 12345,
+    "port": 29999,
     "admin_password": "",
     "interval_ms": 100,
     "timeout": 0.1

@@ -55,6 +55,28 @@ la configuració segons la teva instal·lació de LFS.
 
 ## Quick start
 
+### Configuració inicial
+
+Abans de la primera execució, copia el fitxer d'exemple de configuració:
+
+```bash
+cp config.example.json config.json
+```
+
+> **Nota de seguretat:** El fitxer `config.json` està a `.gitignore` i no es 
+> comparteix al repositori. Això evita exposar configuracions locals com ports 
+> personalitzats o contrasenyes. Utilitza sempre `config.example.json` com a 
+> referència per crear la teva configuració local.
+
+### Configuració d'InSim
+
+- **Port estàndard:** El port per defecte d'InSim és `29999`. El fitxer `config.example.json` 
+  utilitza aquest port. Si LFS està configurat amb un port diferent, ajusta'l a `config.json`.
+- **Contrasenya d'admin:** Deixa `insim.admin_password` buida si no necessites privilegis 
+  d'administrador. Si necessites accés administratiu, estableix una contrasenya segura.
+
+### Execució
+
 1. Activa OutSim i InSim a LFS, apuntant OutSim al port definit a `config.json`.
 2. Revisa i adapta els valors de `config.json` perquè coincideixin amb la teva
    configuració local.

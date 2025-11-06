@@ -7,3 +7,8 @@ Thumbs.db
 dist/
 build/
 *-backup*
+config.json
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
