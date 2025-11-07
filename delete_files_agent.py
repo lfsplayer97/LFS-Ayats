@@ -83,7 +83,7 @@ class FileDeletionAgent:
         for root, dirs, files in os.walk(self.repo_path, topdown=False):
             for dir_name in dirs:
                 dir_path = Path(root) / dir_name
-                # Skip excluded directories
+                # Skip excluded directories (e.g., .git at any level, including submodules)
                 if dir_name in self.excluded_paths:
                     continue
                 try:
