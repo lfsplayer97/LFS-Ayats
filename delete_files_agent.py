@@ -68,7 +68,7 @@ class FileDeletionAgent:
                 os.remove(file_path)
                 print(f"Deleted: {file_path.relative_to(self.repo_path)}")
                 return True
-        except Exception as e:
+        except (OSError, PermissionError, FileNotFoundError) as e:
             print(f"Error deleting {file_path}: {e}", file=sys.stderr)
             return False
     
@@ -83,18 +83,19 @@ class FileDeletionAgent:
         for root, dirs, files in os.walk(self.repo_path, topdown=False):
             for dir_name in dirs:
                 dir_path = Path(root) / dir_name
-                # Skip .git directory
-                if dir_name == '.git':
+                # Skip excluded directories
+                if dir_name in self.excluded_paths:
                     continue
                 try:
-                    if not any(dir_path.iterdir()):
+                    # Check if directory is empty (more efficient than any())
+                    if next(dir_path.iterdir(), None) is None:
                         if self.dry_run:
                             print(f"[DRY RUN] Would remove empty directory: {dir_path.relative_to(self.repo_path)}")
                         else:
                             dir_path.rmdir()
                             print(f"Removed empty directory: {dir_path.relative_to(self.repo_path)}")
                         count += 1
-                except Exception as e:
+                except (OSError, PermissionError) as e:
                     print(f"Error removing directory {dir_path}: {e}", file=sys.stderr)
         
         return count
