@@ -4,6 +4,72 @@
 
 Prototype telemetry radar for Live for Speed (LFS).
 
+## Requirements
+
+- **Python**: 3.10 or higher
+- **System dependencies** (Linux): ALSA development libraries for audio support
+  - Ubuntu/Debian: `sudo apt-get install libasound2-dev`
+  - Fedora/RHEL: `sudo dnf install alsa-lib-devel`
+- **Python dependencies**: 
+  - Runtime: `simpleaudio>=1.0` (installed automatically with pip)
+  - Development: See `requirements-dev.txt`
+
+All standard library modules (`threading`, `pathlib`, `dataclasses`, `json`, etc.) are included with Python 3.10+ and require no additional installation.
+
+## Installation
+
+### For End Users
+
+1. **Install system dependencies** (Linux only):
+   ```bash
+   # Ubuntu/Debian
+   sudo apt-get install libasound2-dev
+   
+   # Fedora/RHEL
+   sudo dnf install alsa-lib-devel
+   ```
+
+2. **Install the package**:
+   ```bash
+   pip install -e .
+   ```
+   
+   This will automatically install `simpleaudio` and make the project available.
+
+### For Developers
+
+1. **Install system dependencies** (Linux only - see above)
+
+2. **Install the package with development dependencies**:
+   ```bash
+   pip install -e .
+   pip install -r requirements-dev.txt
+   ```
+
+   This installs the project along with development tools:
+   - `bandit` - Security linter
+   - `black` - Code formatter
+   - `flake8` - Style checker
+   - `isort` - Import sorter
+   - `mypy` - Type checker
+   - `pylint` - Code linter
+   - `pytest` - Testing framework
+
+3. **Run tests**:
+   ```bash
+   pytest
+   ```
+
+4. **Run linters**:
+   ```bash
+   black --check src tests main.py
+   isort --check-only src tests main.py
+   flake8 src tests
+   pylint src
+   mypy src
+   bandit -c bandit.yaml -r src
+   ```
+
 ## Version Management
 
 This project follows [Semantic Versioning](https://semver.org/). The single source of truth for the version is `pyproject.toml`.

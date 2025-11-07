@@ -2,6 +2,25 @@
 
 **[🏴󠁥󠁳󠁣󠁴󠁿 Català](docs/ca/README.md)** | **[🇺🇸 English](docs/en/README.md)**
 
+## Requirements / Requisits
+
+- **Python 3.10+** is required / Es requereix **Python 3.10+**
+- For complete installation instructions, see the full documentation:
+  - [English Installation Guide](docs/en/README.md#installation)
+  - [Guia d'Instal·lació en Català](docs/ca/README.md#instal·lació)
+
+### Quick Install / Instal·lació Ràpida
+
+```bash
+# Install system dependencies (Linux only)
+# Instal·lar dependències del sistema (només Linux)
+sudo apt-get install libasound2-dev  # Ubuntu/Debian
+
+# Install the package
+# Instal·lar el paquet
+pip install -e .
+```
+
 ## Quick Start / Inici Ràpid
 
 Choose your language / Escull el teu idioma:
