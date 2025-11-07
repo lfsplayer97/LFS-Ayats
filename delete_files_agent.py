@@ -29,7 +29,7 @@ class FileDeletionAgent:
         """
         self.repo_path = Path(repo_path).resolve()
         self.dry_run = dry_run
-        self.excluded_paths = {'.git', '.gitignore'}
+        self.excluded_paths = {'.git'}  # Only exclude .git directory
         
     def get_all_files(self) -> List[Path]:
         """
@@ -41,14 +41,12 @@ class FileDeletionAgent:
         all_files = []
         
         for root, dirs, files in os.walk(self.repo_path):
-            # Remove excluded directories from search
+            # Remove excluded directories from search (e.g., .git)
             dirs[:] = [d for d in dirs if d not in self.excluded_paths]
             
             for file in files:
                 file_path = Path(root) / file
-                # Skip excluded files
-                if file not in self.excluded_paths:
-                    all_files.append(file_path)
+                all_files.append(file_path)
         
         return all_files
     
