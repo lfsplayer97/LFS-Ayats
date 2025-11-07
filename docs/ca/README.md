@@ -4,6 +4,29 @@
 
 Prototype telemetry radar for Live for Speed (LFS).
 
+## Gestió de versions
+
+Aquest projecte segueix el [Versionat Semàntic](https://semver.org/). La font única de veritat per a la versió és `pyproject.toml`.
+
+Per sincronitzar versions en tots els fitxers de configuració:
+
+```bash
+make version-sync
+```
+
+Per comprovar si les versions estan sincronitzades:
+
+```bash
+make version-check
+```
+
+Alternativament, podeu executar l'script directament:
+
+```bash
+python scripts/sync_version.py          # Sincronitzar versions
+python scripts/sync_version.py --check  # Només comprovar
+```
+
 ## Resum executiu
 
 - **Objectiu:** Visualitzar en temps real un radar ASCII que replica el

@@ -1,6 +1,6 @@
 {
     "name":  "lfs-ayats",
-    "version":  "1.0.0",
+    "version":  "0.1.0",
     "description":  "[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)",
     "main":  "index.js",
     "directories":  {
