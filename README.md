@@ -95,7 +95,6 @@ python delete_files_agent.py . --execute --force
 
 L'agent **NO** esborra:
 - El directori `.git` (per mantenir l'historial de git)
-- Arxius `.gitignore` (opcional, es pot configurar)
 
 ## Característiques de seguretat
 

@@ -2,10 +2,9 @@
 """
 File Deletion Agent for GitHub Repository
 
-This script serves as an automated agent to delete files from a GitHub repository.
-It can operate in two modes:
-1. Local mode: Deletes files from the local repository
-2. GitHub API mode: Deletes files directly from GitHub (requires authentication)
+This script serves as an automated agent to delete files from a local repository.
+It operates by scanning the repository directory and deleting all files except
+the .git directory, which preserves the repository history.
 
 WARNING: This is a destructive operation. Use with caution!
 """
@@ -13,9 +12,8 @@ WARNING: This is a destructive operation. Use with caution!
 import os
 import sys
 import argparse
-import json
 from pathlib import Path
-from typing import List, Set
+from typing import List
 
 
 class FileDeletionAgent:
@@ -134,12 +132,9 @@ class FileDeletionAgent:
         print(f"\nDeleted {deleted_count} file(s).")
         
         # Clean up empty directories
-        if not self.dry_run or deleted_count > 0:
-            print("\nCleaning up empty directories...")
-            dirs_removed = self.delete_empty_directories()
-            print(f"Removed {dirs_removed} empty directory(ies).")
-        else:
-            dirs_removed = 0
+        print("\nCleaning up empty directories...")
+        dirs_removed = self.delete_empty_directories()
+        print(f"Removed {dirs_removed} empty directory(ies).")
         
         return {
             "files_deleted": deleted_count,
