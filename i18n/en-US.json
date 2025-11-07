@@ -1,13 +1,20 @@
 {
   "app": {
     "name": "LFS Ayats",
-    "tagline": "Tools and docs for LFS telemetry and workflows"
+    "tagline": "Tools and docs for LFS telemetry and workflows",
+    "description": "Real-time telemetry system for Live for Speed"
   },
   "common": {
     "ok": "OK",
     "cancel": "Cancel",
     "save": "Save",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "start": "Start",
+    "stop": "Stop",
+    "enabled": "Enabled",
+    "disabled": "Disabled"
   },
   "menu": {
     "file": {
@@ -27,5 +34,59 @@
   "errors": {
     "generic": "Something went wrong. Try again.",
     "networkTimeout": "Network timeout. Please retry."
+  },
+  "dashboard": {
+    "title": "Real-Time Telemetry Dashboard",
+    "connection": "Connection",
+    "telemetry": "Telemetry",
+    "radar": "Radar",
+    "settings": "Settings"
+  },
+  "connection": {
+    "status": {
+      "ready": "Ready to connect",
+      "connecting": "Connecting...",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "error": "Connection error"
+    },
+    "host": "Host",
+    "port": "Port",
+    "wsUrl": "WebSocket URL"
+  },
+  "telemetry": {
+    "speed": "Speed",
+    "rpm": "RPM",
+    "gear": "Gear",
+    "lap": "Lap",
+    "lapTime": "Lap Time",
+    "bestLap": "Best Lap",
+    "delta": "Delta",
+    "position": "Position",
+    "track": "Track",
+    "car": "Car"
+  },
+  "radar": {
+    "title": "Proximity Radar",
+    "enabled": "Radar Enabled",
+    "disabled": "Radar Disabled",
+    "noTargets": "No nearby vehicles",
+    "targets": "Nearby vehicles"
+  },
+  "config": {
+    "title": "Configuration",
+    "radarSettings": "Radar Settings",
+    "beepSettings": "Beep Settings",
+    "enableRadar": "Enable Radar",
+    "enableBeeps": "Enable Beeps",
+    "beepMode": "Beep Mode",
+    "volume": "Volume",
+    "frequency": "Base Frequency (Hz)",
+    "intervals": "Intervals (ms)",
+    "modes": {
+      "standard": "Standard",
+      "calm": "Calm",
+      "aggressive": "Aggressive"
+    }
   }
 }

@@ -1,13 +1,20 @@
 {
   "app": {
     "name": "LFS Ayats",
-    "tagline": "Eines i documentació per a telemetria i fluxos de LFS"
+    "tagline": "Eines i documentació per a telemetria i fluxos de LFS",
+    "description": "Sistema de telemetria en temps real per a Live for Speed"
   },
   "common": {
     "ok": "D'acord",
     "cancel": "Cancel·la",
     "save": "Desa",
-    "loading": "Carregant…"
+    "loading": "Carregant…",
+    "connect": "Connectar",
+    "disconnect": "Desconnectar",
+    "start": "Iniciar",
+    "stop": "Aturar",
+    "enabled": "Activat",
+    "disabled": "Desactivat"
   },
   "menu": {
     "file": {
@@ -19,13 +26,67 @@
     "withName": "Hola, {name}!"
   },
   "units": {
-    "mphToKmhNotice": "S’ha convertit {value} mph → {kmh} km/h."
+    "mphToKmhNotice": "S'ha convertit {value} mph → {kmh} km/h."
   },
   "laps": {
     "count": "{count, plural, one {# volta} other {# voltes}}"
   },
   "errors": {
     "generic": "Alguna cosa no ha anat bé. Torna-ho a provar.",
-    "networkTimeout": "Temps d’espera excedit. Torna-ho a intentar."
+    "networkTimeout": "Temps d'espera excedit. Torna-ho a intentar."
+  },
+  "dashboard": {
+    "title": "Tauler de Telemetria en Temps Real",
+    "connection": "Connexió",
+    "telemetry": "Telemetria",
+    "radar": "Radar",
+    "settings": "Configuració"
+  },
+  "connection": {
+    "status": {
+      "ready": "Llest per connectar",
+      "connecting": "Connectant...",
+      "connected": "Connectat",
+      "disconnected": "Desconnectat",
+      "error": "Error de connexió"
+    },
+    "host": "Servidor",
+    "port": "Port",
+    "wsUrl": "URL WebSocket"
+  },
+  "telemetry": {
+    "speed": "Velocitat",
+    "rpm": "RPM",
+    "gear": "Marxa",
+    "lap": "Volta",
+    "lapTime": "Temps de Volta",
+    "bestLap": "Millor Volta",
+    "delta": "Delta",
+    "position": "Posició",
+    "track": "Circuit",
+    "car": "Cotxe"
+  },
+  "radar": {
+    "title": "Radar de Proximitat",
+    "enabled": "Radar Activat",
+    "disabled": "Radar Desactivat",
+    "noTargets": "No hi ha vehicles propers",
+    "targets": "Vehicles propers"
+  },
+  "config": {
+    "title": "Configuració",
+    "radarSettings": "Configuració del Radar",
+    "beepSettings": "Configuració dels Beeps",
+    "enableRadar": "Activar Radar",
+    "enableBeeps": "Activar Beeps",
+    "beepMode": "Mode de Beep",
+    "volume": "Volum",
+    "frequency": "Freqüència Base (Hz)",
+    "intervals": "Intervals (ms)",
+    "modes": {
+      "standard": "Estàndard",
+      "calm": "Tranquil",
+      "aggressive": "Agressiu"
+    }
   }
 }

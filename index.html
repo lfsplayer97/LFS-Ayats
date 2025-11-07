@@ -6,7 +6,7 @@
     <title>LFS Ayats - Portal Principal</title>
     <style>
         body { margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: system-ui, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .portal { background: rgba(255,255,255,0.95); padding: 50px; border-radius: 20px; text-align: center; max-width: 600px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .portal { background: rgba(255,255,255,0.95); padding: 50px; border-radius: 20px; text-align: center; max-width: 700px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
         h1 { color: #007cba; font-size: 3em; margin-bottom: 20px; }
         .subtitle { color: #666; font-size: 1.2em; margin-bottom: 40px; }
         .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
@@ -24,6 +24,24 @@
         <div class="subtitle">Sistema de Telemetria per a Live for Speed</div>
         
         <div class="app-grid">
+            <div class="app-card" onclick="openApp('dashboard.html')">
+                <div class="app-icon">📊</div>
+                <div class="app-title">Dashboard Telemetria</div>
+                <div class="app-desc">Dashboard complet amb WebSocket i radar en temps real</div>
+            </div>
+
+            <div class="app-card" onclick="openApp('config.html')">
+                <div class="app-icon">⚙️</div>
+                <div class="app-title">Configuració</div>
+                <div class="app-desc">Editor visual per radar, beeps i connexions</div>
+            </div>
+            
+            <div class="app-card" onclick="openApp('simple.html')">
+                <div class="app-icon">⚡</div>
+                <div class="app-title">Versió Simple</div>
+                <div class="app-desc">Interfície minimalista amb WebSocket</div>
+            </div>
+            
             <div class="app-card" onclick="openApp('demo.html')">
                 <div class="app-icon">🌍</div>
                 <div class="app-title">Demo i18n</div>
@@ -32,14 +50,8 @@
             
             <div class="app-card" onclick="openApp('lfs-app.html')">
                 <div class="app-icon">🚀</div>
-                <div class="app-title">Aplicació Principal</div>
-                <div class="app-desc">Interfície completa amb controls</div>
-            </div>
-            
-            <div class="app-card" onclick="openApp('lfs-simple.html')">
-                <div class="app-icon">⚡</div>
-                <div class="app-title">Versió Simple</div>
-                <div class="app-desc">Interfície minimalista</div>
+                <div class="app-title">Aplicació Clàssica</div>
+                <div class="app-desc">Interfície tradicional amb simulació</div>
             </div>
             
             <div class="app-card" onclick="openApp('lfs-pro.html')">
@@ -50,8 +62,8 @@
         </div>
         
         <div class="footer">
-            Selecciona l'aplicació que vols utilitzar<br>
-            <strong>Recomanat:</strong> Comença amb la versió Simple
+            <strong>Nou:</strong> Dashboard amb WebSocket i Configurador Visual<br>
+            <strong>Recomanat:</strong> Comença amb el Dashboard Telemetria
         </div>
     </div>
 

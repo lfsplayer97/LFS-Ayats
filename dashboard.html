@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LFS Ayats - Real-Time Telemetry Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .logo {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .lang-selector select {
+            padding: 8px 15px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .connection-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .connection-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .connection-controls input {
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .connection-controls input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .status-ready {
+            background: #e9ecef;
+            color: #495057;
+        }
+        
+        .status-connecting {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .radar-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        
+        .radar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .radar-canvas {
+            display: block;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border-radius: 8px;
+        }
+        
+        .lap-history {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        
+        .lap-history h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .lap-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .lap-entry.best {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .delta-positive {
+            color: #dc3545;
+        }
+        
+        .delta-negative {
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🏎️ <span data-i18n="app.name">LFS Ayats</span></div>
+            <div class="lang-selector">
+                <select id="languageSelect">
+                    <option value="en">🇬🇧 English</option>
+                    <option value="ca">🏴 Català</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="connection-panel">
+            <h3 data-i18n="dashboard.connection">Connection</h3>
+            <div class="connection-controls">
+                <input type="text" id="wsHost" value="127.0.0.1" data-i18n-placeholder="connection.host">
+                <input type="number" id="wsPort" value="30333" data-i18n-placeholder="connection.port">
+                <button class="btn btn-primary" id="connectBtn" data-i18n="common.connect">Connect</button>
+                <button class="btn btn-danger" id="disconnectBtn" disabled data-i18n="common.disconnect">Disconnect</button>
+                <span class="status-indicator status-ready" id="statusIndicator">
+                    <span data-i18n="connection.status.ready">Ready to connect</span>
+                </span>
+            </div>
+        </div>
+        
+        <div class="telemetry-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="speedValue">0</div>
+                <div class="metric-label" data-i18n="telemetry.speed">Speed</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="rpmValue">0</div>
+                <div class="metric-label" data-i18n="telemetry.rpm">RPM</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="gearValue">N</div>
+                <div class="metric-label" data-i18n="telemetry.gear">Gear</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="lapValue">-</div>
+                <div class="metric-label" data-i18n="telemetry.lap">Lap</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="lapTimeValue">0:00.000</div>
+                <div class="metric-label" data-i18n="telemetry.lapTime">Lap Time</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="deltaValue">+0.000</div>
+                <div class="metric-label" data-i18n="telemetry.delta">Delta vs Best</div>
+            </div>
+        </div>
+        
+        <div class="radar-container">
+            <div class="radar-header">
+                <h3 data-i18n="radar.title">Proximity Radar</h3>
+                <span id="radarStatus" data-i18n="radar.noTargets">No nearby vehicles</span>
+            </div>
+            <canvas id="radarCanvas" width="400" height="400" class="radar-canvas"></canvas>
+        </div>
+        
+        <div class="lap-history">
+            <h3 data-i18n="telemetry.bestLap">Best Laps</h3>
+            <div id="lapHistoryList">
+                <p style="color: #6c757d; text-align: center; padding: 20px;">
+                    <span data-i18n="common.loading">Loading...</span>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Simple i18n implementation
+        const translations = {
+            en: {
+                "app.name": "LFS Ayats",
+                "dashboard.connection": "Connection",
+                "dashboard.telemetry": "Telemetry",
+                "common.connect": "Connect",
+                "common.disconnect": "Disconnect",
+                "common.loading": "Loading...",
+                "connection.status.ready": "Ready to connect",
+                "connection.status.connecting": "Connecting...",
+                "connection.status.connected": "Connected",
+                "connection.status.error": "Connection error",
+                "connection.host": "Host",
+                "connection.port": "Port",
+                "telemetry.speed": "Speed (km/h)",
+                "telemetry.rpm": "RPM",
+                "telemetry.gear": "Gear",
+                "telemetry.lap": "Lap",
+                "telemetry.lapTime": "Lap Time",
+                "telemetry.bestLap": "Best Laps",
+                "telemetry.delta": "Delta vs Best",
+                "radar.title": "Proximity Radar",
+                "radar.noTargets": "No nearby vehicles"
+            },
+            ca: {
+                "app.name": "LFS Ayats",
+                "dashboard.connection": "Connexió",
+                "dashboard.telemetry": "Telemetria",
+                "common.connect": "Connectar",
+                "common.disconnect": "Desconnectar",
+                "common.loading": "Carregant...",
+                "connection.status.ready": "Llest per connectar",
+                "connection.status.connecting": "Connectant...",
+                "connection.status.connected": "Connectat",
+                "connection.status.error": "Error de connexió",
+                "connection.host": "Servidor",
+                "connection.port": "Port",
+                "telemetry.speed": "Velocitat (km/h)",
+                "telemetry.rpm": "RPM",
+                "telemetry.gear": "Marxa",
+                "telemetry.lap": "Volta",
+                "telemetry.lapTime": "Temps de Volta",
+                "telemetry.bestLap": "Millors Voltes",
+                "telemetry.delta": "Delta vs Millor",
+                "radar.title": "Radar de Proximitat",
+                "radar.noTargets": "No hi ha vehicles propers"
+            }
+        };
+        
+        let currentLang = localStorage.getItem('lfs-lang') || 'en';
+        let ws = null;
+        let isConnected = false;
+        let lapHistory = [];
+        
+        function t(key) {
+            return translations[currentLang]?.[key] || key;
+        }
+        
+        function updateUI() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                    el.placeholder = t(key);
+                } else {
+                    el.textContent = t(key);
+                }
+            });
+            document.title = t('app.name') + ' - ' + t('dashboard.telemetry');
+        }
+        
+        function setStatus(status) {
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = indicator.querySelector('[data-i18n]');
+            
+            indicator.className = 'status-indicator status-' + status;
+            statusText.setAttribute('data-i18n', 'connection.status.' + status);
+            statusText.textContent = t('connection.status.' + status);
+        }
+        
+        function connect() {
+            const host = document.getElementById('wsHost').value;
+            const port = document.getElementById('wsPort').value;
+            const wsUrl = `ws://${host}:${port}`;
+            
+            setStatus('connecting');
+            document.getElementById('connectBtn').disabled = true;
+            
+            try {
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = () => {
+                    isConnected = true;
+                    setStatus('connected');
+                    document.getElementById('disconnectBtn').disabled = false;
+                    console.log('WebSocket connected to', wsUrl);
+                };
+                
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        updateTelemetry(data);
+                    } catch (e) {
+                        console.error('Failed to parse telemetry data:', e);
+                    }
+                };
+                
+                ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    setStatus('error');
+                };
+                
+                ws.onclose = () => {
+                    isConnected = false;
+                    setStatus('ready');
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('disconnectBtn').disabled = true;
+                    console.log('WebSocket disconnected');
+                };
+            } catch (error) {
+                console.error('Failed to connect:', error);
+                setStatus('error');
+                document.getElementById('connectBtn').disabled = false;
+            }
+        }
+        
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+        
+        function updateTelemetry(data) {
+            // Update player telemetry
+            if (data.player) {
+                const player = data.player;
+                
+                // Speed
+                if (player.speed !== undefined) {
+                    const speedKmh = Math.round(player.speed * 3.6);
+                    document.getElementById('speedValue').textContent = speedKmh;
+                }
+                
+                // Lap info
+                if (player.lap && player.lap.number !== undefined) {
+                    document.getElementById('lapValue').textContent = player.lap.number;
+                }
+                
+                // Lap time
+                if (player.lap_time_ms !== undefined) {
+                    const ms = player.lap_time_ms;
+                    const minutes = Math.floor(ms / 60000);
+                    const seconds = Math.floor((ms % 60000) / 1000);
+                    const milliseconds = ms % 1000;
+                    document.getElementById('lapTimeValue').textContent = 
+                        `${minutes}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
+                }
+                
+                // Delta
+                if (player.delta_ms !== undefined) {
+                    const delta = player.delta_ms / 1000;
+                    const deltaEl = document.getElementById('deltaValue');
+                    deltaEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(3);
+                    deltaEl.className = 'metric-value ' + (delta >= 0 ? 'delta-positive' : 'delta-negative');
+                }
+                
+                // Radar targets
+                if (player.radar_targets) {
+                    drawRadar(player.radar_targets);
+                    const count = player.radar_targets.length;
+                    document.getElementById('radarStatus').textContent = 
+                        count > 0 ? `${count} ${t('radar.targets')}` : t('radar.noTargets');
+                }
+            }
+            
+            // Update OutSim data if available
+            if (data.outsim) {
+                // This would include additional physics data
+                // For now, we'll use the player data which already includes speed
+            }
+        }
+        
+        function drawRadar(targets) {
+            const canvas = document.getElementById('radarCanvas');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const maxRadius = Math.min(centerX, centerY) - 20;
+            
+            // Clear canvas
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw radar circles
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 1;
+            [0.25, 0.5, 0.75, 1.0].forEach(factor => {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, maxRadius * factor, 0, Math.PI * 2);
+                ctx.stroke();
+            });
+            
+            // Draw crosshair
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY - maxRadius);
+            ctx.lineTo(centerX, centerY + maxRadius);
+            ctx.moveTo(centerX - maxRadius, centerY);
+            ctx.lineTo(centerX + maxRadius, centerY);
+            ctx.stroke();
+            
+            // Draw player (center point)
+            ctx.fillStyle = '#00ff88';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw targets
+            targets.forEach(target => {
+                const distance = Math.min(target.distance, 100);
+                const bearing = target.bearing;
+                
+                // Convert to canvas coordinates
+                const scale = maxRadius / 100;
+                const x = centerX + (target.offset.x * scale);
+                const y = centerY - (target.offset.y * scale);
+                
+                // Draw target
+                ctx.fillStyle = distance < 20 ? '#ff4444' : '#ffaa00';
+                ctx.beginPath();
+                ctx.arc(x, y, 6, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw distance label
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '10px monospace';
+                ctx.fillText(`${Math.round(distance)}m`, x + 8, y + 4);
+            });
+        }
+        
+        // Event listeners
+        document.getElementById('connectBtn').addEventListener('click', connect);
+        document.getElementById('disconnectBtn').addEventListener('click', disconnect);
+        document.getElementById('languageSelect').addEventListener('change', (e) => {
+            currentLang = e.target.value;
+            localStorage.setItem('lfs-lang', currentLang);
+            updateUI();
+        });
+        
+        // Initialize
+        document.getElementById('languageSelect').value = currentLang;
+        updateUI();
+        
+        // Draw empty radar on load
+        drawRadar([]);
+    </script>
+</body>
+</html>

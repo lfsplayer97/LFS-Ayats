@@ -1,9 +1,120 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
-<head><title>LFS Test</title></head>
+<head>
+    <meta charset="UTF-8">
+    <title>LFS Ayats - Working Test</title>
+    <style>
+        body { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            font-family: Arial; 
+            padding: 40px; 
+            text-align: center; 
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        h1 { font-size: 3em; margin-bottom: 20px; }
+        h2 { font-size: 1.5em; margin: 20px 0; opacity: 0.9; }
+        button { 
+            padding: 15px 40px; 
+            background: white; 
+            color: #667eea; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-size: 18px; 
+            margin: 10px; 
+            font-weight: bold; 
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        button:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        .status {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-size: 18px;
+        }
+        .links {
+            margin-top: 30px;
+        }
+        .links a {
+            display: inline-block;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            margin: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .links a:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
 <body>
-<h1 style="color: green;">✅ FUNCIONA!</h1>
-<h2>LFS Ayats - Prova</h2>
-<button onclick="alert('Opera GX funciona!')">🎮 PROVA</button>
+    <div class="container">
+        <h1>✅ FUNCIONA!</h1>
+        <h2>🏎️ LFS Ayats - Sistema Operatiu</h2>
+        <button onclick="testConnection()">🎮 PROVAR CONNEXIÓ</button>
+        <button onclick="window.location.href='dashboard.html'">📊 ANAR AL DASHBOARD</button>
+        
+        <div class="status" id="status">
+            Fes clic per provar la funcionalitat
+        </div>
+        
+        <div class="links">
+            <a href="simple.html">Simple</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="config.html">Configuració</a>
+            <a href="index.html">Portal Principal</a>
+        </div>
+    </div>
+
+    <script>
+        function testConnection() {
+            var status = document.getElementById('status');
+            status.textContent = '🔄 Provant connexió WebSocket...';
+            
+            try {
+                var ws = new WebSocket('ws://127.0.0.1:30333');
+                
+                var timeout = setTimeout(function() {
+                    ws.close();
+                    status.textContent = '⚠️ Servidor no disponible. Inicia el backend Python primer!';
+                }, 3000);
+                
+                ws.onopen = function() {
+                    clearTimeout(timeout);
+                    status.textContent = '✅ Connexió exitosa! El servidor està funcionant correctament.';
+                    setTimeout(function() {
+                        ws.close();
+                    }, 1000);
+                };
+                
+                ws.onerror = function() {
+                    clearTimeout(timeout);
+                    status.textContent = '❌ Error de connexió. Assegurat que el servidor està en marxa.';
+                };
+            } catch (error) {
+                status.textContent = '❌ Error: ' + error.message;
+            }
+        }
+    </script>
 </body>
 </html>
