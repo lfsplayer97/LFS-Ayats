@@ -38,12 +38,69 @@ python scripts/sync_version.py --check  # Només comprovar
 
 ## Requisits
 
-- Python 3.10 o superior.
-- Dependència d’execució: [`simpleaudio`](https://simpleaudio.readthedocs.io/) (>=1.0) per
-  reproduir els avisos sonors. S’instal·la automàticament amb `pip install -e .` i
-  garanteix que el subsistema d’àudio disposi dels beeps esperats.
-- Dependències de desenvolupament opcionals per a analitzadors estàtics: consulteu
-  `requirements-dev.txt`.
+- **Python**: 3.10 o superior
+- **Dependències del sistema** (Linux): Llibreries de desenvolupament ALSA per suport d'àudio
+  - Ubuntu/Debian: `sudo apt-get install libasound2-dev`
+  - Fedora/RHEL: `sudo dnf install alsa-lib-devel`
+- **Dependències Python**:
+  - Execució: `simpleaudio>=1.0` (s'instal·la automàticament amb pip)
+  - Desenvolupament: Consulteu `requirements-dev.txt`
+
+Tots els mòduls de la biblioteca estàndard (`threading`, `pathlib`, `dataclasses`, `json`, etc.) estan inclosos amb Python 3.10+ i no requereixen instal·lació addicional.
+
+## Instal·lació
+
+### Per a usuaris finals
+
+1. **Instal·lar dependències del sistema** (només Linux):
+   ```bash
+   # Ubuntu/Debian
+   sudo apt-get install libasound2-dev
+   
+   # Fedora/RHEL
+   sudo dnf install alsa-lib-devel
+   ```
+
+2. **Instal·lar el paquet**:
+   ```bash
+   pip install -e .
+   ```
+   
+   Això instal·larà automàticament `simpleaudio` i farà el projecte disponible.
+
+### Per a desenvolupadors
+
+1. **Instal·lar dependències del sistema** (només Linux - vegeu més amunt)
+
+2. **Instal·lar el paquet amb dependències de desenvolupament**:
+   ```bash
+   pip install -e .
+   pip install -r requirements-dev.txt
+   ```
+
+   Això instal·la el projecte juntament amb eines de desenvolupament:
+   - `bandit` - Linter de seguretat
+   - `black` - Formatejador de codi
+   - `flake8` - Verificador d'estil
+   - `isort` - Ordenador d'importacions
+   - `mypy` - Verificador de tipus
+   - `pylint` - Linter de codi
+   - `pytest` - Framework de proves
+
+3. **Executar proves**:
+   ```bash
+   pytest
+   ```
+
+4. **Executar linters**:
+   ```bash
+   black --check src tests main.py
+   isort --check-only src tests main.py
+   flake8 src tests
+   pylint src
+   mypy src
+   bandit -c bandit.yaml -r src
+   ```
 
 ## Configuració essencial
 
