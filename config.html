@@ -407,10 +407,16 @@
         }
         
         function getConfig() {
-            const intervals = document.getElementById('intervals').value
+            const intervalsInput = document.getElementById('intervals').value;
+            const intervals = intervalsInput
                 .split(',')
                 .map(s => parseInt(s.trim()))
                 .filter(n => !isNaN(n) && n > 0);
+            
+            // Validate intervals
+            if (intervals.length === 0) {
+                showAlert('Invalid intervals: Using default [400]. Please enter comma-separated positive numbers.', 'error');
+            }
             
             return {
                 insim: {

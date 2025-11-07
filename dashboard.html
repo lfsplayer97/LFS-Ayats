@@ -292,6 +292,10 @@
     </div>
     
     <script>
+        // Constants
+        const MS_TO_KMH = 3.6;  // Conversion factor from m/s to km/h
+        const RADAR_MAX_RANGE = 100;  // Maximum radar range in meters
+        
         // Simple i18n implementation
         const translations = {
             en: {
@@ -432,7 +436,7 @@
                 
                 // Speed
                 if (player.speed !== undefined) {
-                    const speedKmh = Math.round(player.speed * 3.6);
+                    const speedKmh = Math.round(player.speed * MS_TO_KMH);
                     document.getElementById('speedValue').textContent = speedKmh;
                 }
                 
@@ -511,11 +515,11 @@
             
             // Draw targets
             targets.forEach(target => {
-                const distance = Math.min(target.distance, 100);
+                const distance = Math.min(target.distance, RADAR_MAX_RANGE);
                 const bearing = target.bearing;
                 
                 // Convert to canvas coordinates
-                const scale = maxRadius / 100;
+                const scale = maxRadius / RADAR_MAX_RANGE;
                 const x = centerX + (target.offset.x * scale);
                 const y = centerY - (target.offset.y * scale);
                 

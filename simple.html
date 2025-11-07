@@ -57,6 +57,9 @@
     </div>
 
     <script>
+        // Constants
+        var MS_TO_KMH = 3.6;  // Conversion factor from m/s to km/h
+        
         var ws = null;
         var isConnected = false;
 
@@ -120,7 +123,7 @@
                 
                 // Speed
                 if (player.speed !== undefined) {
-                    var speedKmh = Math.round(player.speed * 3.6);
+                    var speedKmh = Math.round(player.speed * MS_TO_KMH);
                     document.getElementById('speed').textContent = speedKmh;
                 }
                 
