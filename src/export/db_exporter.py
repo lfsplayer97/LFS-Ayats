@@ -14,7 +14,7 @@ from typing import List, Any, Dict, Optional
 from datetime import datetime
 from pathlib import Path
 
-from src.database.repository import TelemetryRepository
+from src.database.repository import TelemetryRepository, _mask_connection_string_password
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,10 @@ class DatabaseExporter:
         if create_tables:
             self.repository.create_tables()
 
-        logger.info(f"DatabaseExporter inicialitzat: {connection_string}")
+        logger.info(
+            f"DatabaseExporter inicialitzat: "
+            f"{_mask_connection_string_password(connection_string)}"
+        )
 
     @staticmethod
     def from_config(config: Dict[str, Any]) -> "DatabaseExporter":

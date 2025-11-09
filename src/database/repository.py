@@ -21,6 +21,31 @@ from src.database.models import Base, Session, Lap, TelemetryPoint, Vehicle, Cir
 logger = logging.getLogger(__name__)
 
 
+def _mask_connection_string_password(connection_string: str) -> str:
+    """
+    Mask password in database connection string for safe logging.
+    
+    Args:
+        connection_string: Original connection string
+        
+    Returns:
+        Connection string with password masked as '***'
+    """
+    # Handle PostgreSQL/MySQL connection strings: protocol://user:pass@host:port/db
+    if "://" in connection_string and "@" in connection_string:
+        try:
+            parts = connection_string.split("://", 1)
+            if len(parts) == 2 and "@" in parts[1]:
+                credentials, rest = parts[1].split("@", 1)
+                if ":" in credentials:
+                    user, _ = credentials.split(":", 1)
+                    return f"{parts[0]}://{user}:***@{rest}"
+        except (ValueError, IndexError):
+            pass
+    # For SQLite or if masking fails, return as-is (no password)
+    return connection_string
+
+
 class TelemetryRepository:
     """
     Repository for telemetry data access.
@@ -71,7 +96,10 @@ class TelemetryRepository:
             )
 
         self.SessionLocal = sessionmaker(bind=self.engine, expire_on_commit=False)
-        logger.info(f"TelemetryRepository initialized with {connection_string}")
+        logger.info(
+            f"TelemetryRepository initialized with "
+            f"{_mask_connection_string_password(connection_string)}"
+        )
 
     def create_tables(self) -> None:
         """
