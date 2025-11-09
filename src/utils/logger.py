@@ -11,6 +11,7 @@ from datetime import datetime
 
 try:
     import colorlog
+
     COLORLOG_AVAILABLE = True
 except ImportError:
     COLORLOG_AVAILABLE = False
@@ -22,7 +23,7 @@ def setup_logger(
     log_file: Optional[str] = None,
     console: bool = True,
     log_format: Optional[str] = None,
-    use_colors: bool = True
+    use_colors: bool = True,
 ) -> logging.Logger:
     """
     Configura el sistema de logging amb colorlog.
@@ -56,28 +57,28 @@ def setup_logger(
     # Handler de consola amb colors
     if console:
         console_handler = logging.StreamHandler(sys.stdout)
-        
+
         if use_colors and COLORLOG_AVAILABLE:
             # Format amb colors per colorlog
             color_format = (
-                '%(log_color)s%(levelname)-8s%(reset)s '
-                '%(asctime)s - %(cyan)s%(name)s%(reset)s - %(message)s'
+                "%(log_color)s%(levelname)-8s%(reset)s "
+                "%(asctime)s - %(cyan)s%(name)s%(reset)s - %(message)s"
             )
             formatter = colorlog.ColoredFormatter(
                 color_format,
                 log_colors={
-                    'DEBUG': 'cyan',
-                    'INFO': 'green',
-                    'WARNING': 'yellow',
-                    'ERROR': 'red',
-                    'CRITICAL': 'red,bg_white',
+                    "DEBUG": "cyan",
+                    "INFO": "green",
+                    "WARNING": "yellow",
+                    "ERROR": "red",
+                    "CRITICAL": "red,bg_white",
                 },
                 secondary_log_colors={},
-                style='%'
+                style="%",
             )
         else:
             formatter = logging.Formatter(log_format)
-        
+
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
@@ -85,9 +86,9 @@ def setup_logger(
     if log_file:
         log_path = Path(log_file)
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         file_formatter = logging.Formatter(log_format)
-        file_handler = logging.FileHandler(log_path, encoding='utf-8')
+        file_handler = logging.FileHandler(log_path, encoding="utf-8")
         file_handler.setFormatter(file_formatter)
         logger.addHandler(file_handler)
 
@@ -119,10 +120,7 @@ def create_session_logger(base_name: str = "lfs_ayats") -> logging.Logger:
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_file = f"logs/{base_name}_{timestamp}.log"
-    
+
     return setup_logger(
-        name=f"{base_name}_{timestamp}",
-        level="DEBUG",
-        log_file=log_file,
-        console=True
+        name=f"{base_name}_{timestamp}", level="DEBUG", log_file=log_file, console=True
     )
