@@ -14,12 +14,9 @@ class TestCircuitModel:
     def test_circuit_creation(self):
         """Test creating a circuit"""
         circuit = Circuit(
-            name="Blackwood GP",
-            short_name="BL1",
-            length=3290.0,
-            sector_count=3
+            name="Blackwood GP", short_name="BL1", length=3290.0, sector_count=3
         )
-        
+
         assert circuit.name == "Blackwood GP"
         assert circuit.short_name == "BL1"
         assert circuit.length == 3290.0
@@ -28,16 +25,16 @@ class TestCircuitModel:
     def test_circuit_repr(self):
         """Test circuit string representation"""
         circuit = Circuit(id=1, name="Blackwood GP", short_name="BL1")
-        
+
         repr_str = repr(circuit)
-        
+
         assert "Circuit" in repr_str
         assert "BL1" in repr_str
 
     def test_circuit_default_sector_count(self):
         """Test default sector count"""
         circuit = Circuit(name="Test Circuit", short_name="TC1")
-        
+
         # Default is only set when inserted into database
         # Check the default value in the column definition
         assert Circuit.sector_count.default.arg == 3
@@ -48,12 +45,8 @@ class TestVehicleModel:
 
     def test_vehicle_creation(self):
         """Test creating a vehicle"""
-        vehicle = Vehicle(
-            name="XF GTI",
-            short_name="XFG",
-            class_type="TBO"
-        )
-        
+        vehicle = Vehicle(name="XF GTI", short_name="XFG", class_type="TBO")
+
         assert vehicle.name == "XF GTI"
         assert vehicle.short_name == "XFG"
         assert vehicle.class_type == "TBO"
@@ -61,9 +54,9 @@ class TestVehicleModel:
     def test_vehicle_repr(self):
         """Test vehicle string representation"""
         vehicle = Vehicle(id=1, name="XF GTI", short_name="XFG")
-        
+
         repr_str = repr(vehicle)
-        
+
         assert "Vehicle" in repr_str
         assert "XFG" in repr_str
 
@@ -75,12 +68,9 @@ class TestSessionModel:
         """Test creating a session"""
         now = datetime.now()
         session = Session(
-            datetime=now,
-            driver_name="Player1",
-            duration=600,
-            total_laps=10
+            datetime=now, driver_name="Player1", duration=600, total_laps=10
         )
-        
+
         assert session.datetime == now
         assert session.driver_name == "Player1"
         assert session.duration == 600
@@ -89,16 +79,16 @@ class TestSessionModel:
     def test_session_repr(self):
         """Test session string representation"""
         session = Session(id=1, datetime=datetime.now(), driver_name="Player1")
-        
+
         repr_str = repr(session)
-        
+
         assert "Session" in repr_str
         assert "Player1" in repr_str
 
     def test_session_default_total_laps(self):
         """Test default total laps"""
         session = Session(datetime=datetime.now())
-        
+
         # Default is only set when inserted into database
         # Check the default value in the column definition
         assert Session.total_laps.default.arg == 0
@@ -116,9 +106,9 @@ class TestLapModel:
             sector1_time=30000,
             sector2_time=32000,
             sector3_time=33000,
-            valid=True
+            valid=True,
         )
-        
+
         assert lap.session_id == 1
         assert lap.lap_number == 1
         assert lap.lap_time == 95000
@@ -130,16 +120,16 @@ class TestLapModel:
     def test_lap_repr(self):
         """Test lap string representation"""
         lap = Lap(id=1, session_id=1, lap_number=2, lap_time=95000)
-        
+
         repr_str = repr(lap)
-        
+
         assert "Lap" in repr_str
         assert "95000" in repr_str
 
     def test_lap_default_valid(self):
         """Test default valid flag"""
         lap = Lap(session_id=1, lap_number=1)
-        
+
         # Default is only set when inserted into database
         # Check the default value in the column definition
         assert Lap.valid.default.arg is True
@@ -163,9 +153,9 @@ class TestTelemetryPointModel:
             position_x=100.0,
             position_y=200.0,
             position_z=10.0,
-            engine_temp=85.5
+            engine_temp=85.5,
         )
-        
+
         assert point.lap_id == 1
         assert point.timestamp == 1000
         assert point.speed == 50.5
@@ -183,16 +173,16 @@ class TestTelemetryPointModel:
     def test_telemetry_point_repr(self):
         """Test telemetry point string representation"""
         point = TelemetryPoint(id=1, lap_id=1, timestamp=1000, speed=50.5)
-        
+
         repr_str = repr(point)
-        
+
         assert "TelemetryPoint" in repr_str
         assert "50.5" in repr_str
 
     def test_telemetry_point_minimal(self):
         """Test creating telemetry point with minimal data"""
         point = TelemetryPoint(lap_id=1, timestamp=0, speed=0.0)
-        
+
         assert point.lap_id == 1
         assert point.timestamp == 0
         assert point.speed == 0.0
@@ -206,7 +196,7 @@ class TestModelRelationships:
     def test_base_metadata(self):
         """Test Base metadata contains all tables"""
         table_names = [table.name for table in Base.metadata.sorted_tables]
-        
+
         assert "circuits" in table_names
         assert "vehicles" in table_names
         assert "sessions" in table_names
@@ -216,23 +206,23 @@ class TestModelRelationships:
     def test_session_relationships_defined(self):
         """Test Session relationships are defined"""
         session = Session(datetime=datetime.now())
-        
+
         # Check relationship attributes exist
-        assert hasattr(session, 'circuit')
-        assert hasattr(session, 'vehicle')
-        assert hasattr(session, 'laps')
+        assert hasattr(session, "circuit")
+        assert hasattr(session, "vehicle")
+        assert hasattr(session, "laps")
 
     def test_lap_relationships_defined(self):
         """Test Lap relationships are defined"""
         lap = Lap(session_id=1, lap_number=1)
-        
+
         # Check relationship attributes exist
-        assert hasattr(lap, 'session')
-        assert hasattr(lap, 'telemetry_points')
+        assert hasattr(lap, "session")
+        assert hasattr(lap, "telemetry_points")
 
     def test_telemetry_point_relationships_defined(self):
         """Test TelemetryPoint relationships are defined"""
         point = TelemetryPoint(lap_id=1, timestamp=0, speed=0.0)
-        
+
         # Check relationship attributes exist
-        assert hasattr(point, 'lap')
+        assert hasattr(point, "lap")

@@ -9,11 +9,11 @@ from src.database.models import Base, Session, Lap, TelemetryPoint, Vehicle, Cir
 from src.database.repository import TelemetryRepository
 
 __all__ = [
-    'Base',
-    'Session',
-    'Lap',
-    'TelemetryPoint',
-    'Vehicle',
-    'Circuit',
-    'TelemetryRepository',
+    "Base",
+    "Session",
+    "Lap",
+    "TelemetryPoint",
+    "Vehicle",
+    "Circuit",
+    "TelemetryRepository",
 ]

@@ -13,7 +13,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 from sqlalchemy import create_engine, select, func, and_
-from sqlalchemy.orm import Session as DBSession, sessionmaker
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool, StaticPool
 
 from src.database.models import Base, Session, Lap, TelemetryPoint, Vehicle, Circuit
@@ -195,11 +195,15 @@ class TelemetryRepository:
             if not circuit:
                 return []
 
-            sessions = db.execute(
-                select(Session)
-                .where(Session.circuit_id == circuit.id)
-                .order_by(Session.datetime.desc())
-            ).scalars().all()
+            sessions = (
+                db.execute(
+                    select(Session)
+                    .where(Session.circuit_id == circuit.id)
+                    .order_by(Session.datetime.desc())
+                )
+                .scalars()
+                .all()
+            )
 
             return list(sessions)
 
@@ -264,7 +268,7 @@ class TelemetryRepository:
         with self.SessionLocal() as db:
             lap = db.execute(
                 select(Lap)
-                .where(and_(Lap.session_id == session_id, Lap.valid == True))
+                .where(and_(Lap.session_id == session_id, Lap.valid.is_(True)))
                 .where(Lap.lap_time.is_not(None))
                 .order_by(Lap.lap_time)
                 .limit(1)
@@ -318,11 +322,15 @@ class TelemetryRepository:
             List of TelemetryPoint objects ordered by timestamp
         """
         with self.SessionLocal() as db:
-            points = db.execute(
-                select(TelemetryPoint)
-                .where(TelemetryPoint.lap_id == lap_id)
-                .order_by(TelemetryPoint.timestamp)
-            ).scalars().all()
+            points = (
+                db.execute(
+                    select(TelemetryPoint)
+                    .where(TelemetryPoint.lap_id == lap_id)
+                    .order_by(TelemetryPoint.timestamp)
+                )
+                .scalars()
+                .all()
+            )
 
             return list(points)
 
@@ -337,9 +345,7 @@ class TelemetryRepository:
             Dictionary with comparison data
         """
         with self.SessionLocal() as db:
-            laps = db.execute(
-                select(Lap).where(Lap.id.in_(lap_ids))
-            ).scalars().all()
+            laps = db.execute(select(Lap).where(Lap.id.in_(lap_ids))).scalars().all()
 
             comparison = {
                 "laps": [],
@@ -395,11 +401,14 @@ class TelemetryRepository:
             lap_stats = db.execute(
                 select(
                     func.count(Lap.id).label("total_laps"),
-                    func.count(Lap.id).filter(Lap.valid == True).label("valid_laps"),
-                    func.min(Lap.lap_time).filter(Lap.valid == True).label("best_time"),
-                    func.avg(Lap.lap_time).filter(Lap.valid == True).label("avg_time"),
-                )
-                .where(Lap.session_id == session_id)
+                    func.count(Lap.id).filter(Lap.valid.is_(True)).label("valid_laps"),
+                    func.min(Lap.lap_time)
+                    .filter(Lap.valid.is_(True))
+                    .label("best_time"),
+                    func.avg(Lap.lap_time)
+                    .filter(Lap.valid.is_(True))
+                    .label("avg_time"),
+                ).where(Lap.session_id == session_id)
             ).one()
 
             # Telemetry statistics
@@ -421,7 +430,9 @@ class TelemetryRepository:
                 "telemetry_points": telemetry_count or 0,
             }
 
-    def create_circuit(self, name: str, short_name: str, length: Optional[float] = None) -> int:
+    def create_circuit(
+        self, name: str, short_name: str, length: Optional[float] = None
+    ) -> int:
         """
         Create a new circuit.
 

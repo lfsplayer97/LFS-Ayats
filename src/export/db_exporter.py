@@ -220,13 +220,19 @@ class DatabaseExporter:
                         "clutch": getattr(item, "clutch", None),
                         "steering_angle": getattr(item, "steering_angle", None),
                         "position_x": (
-                            item.position.get("x") if hasattr(item, "position") else None
+                            item.position.get("x")
+                            if hasattr(item, "position")
+                            else None
                         ),
                         "position_y": (
-                            item.position.get("y") if hasattr(item, "position") else None
+                            item.position.get("y")
+                            if hasattr(item, "position")
+                            else None
                         ),
                         "position_z": (
-                            item.position.get("z") if hasattr(item, "position") else None
+                            item.position.get("z")
+                            if hasattr(item, "position")
+                            else None
                         ),
                         "engine_temp": getattr(item, "engine_temp", None),
                     }

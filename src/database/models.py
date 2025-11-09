@@ -113,7 +113,9 @@ class Session(Base):
     __tablename__ = "sessions"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    datetime: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now)
+    datetime: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=datetime.now
+    )
     circuit_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("circuits.id"), nullable=True
     )
@@ -125,8 +127,12 @@ class Session(Base):
     total_laps: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Relationships
-    circuit: Mapped[Optional["Circuit"]] = relationship("Circuit", back_populates="sessions")
-    vehicle: Mapped[Optional["Vehicle"]] = relationship("Vehicle", back_populates="sessions")
+    circuit: Mapped[Optional["Circuit"]] = relationship(
+        "Circuit", back_populates="sessions"
+    )
+    vehicle: Mapped[Optional["Vehicle"]] = relationship(
+        "Vehicle", back_populates="sessions"
+    )
     laps: Mapped[List["Lap"]] = relationship(
         "Lap", back_populates="session", cascade="all, delete-orphan"
     )
