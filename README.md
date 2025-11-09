@@ -28,8 +28,14 @@ LFS-Ayats/
 │   │   └── processor.py         # Processament i validació de dades
 │   ├── visualization/           # Mòdul de visualització
 │   │   ├── __init__.py
-│   │   ├── live_dashboard.py   # Dashboard en temps real
-│   │   └── plots.py            # Gràfics i visualitzacions
+│   │   ├── dashboard.py         # Dashboard web en temps real (Dash)
+│   │   ├── plots.py             # Gràfics d'anàlisi
+│   │   ├── map_view.py          # Visualització de mapes de circuit
+│   │   ├── comparator.py        # Comparació de voltes
+│   │   └── components/          # Components reutilitzables
+│   │       ├── gauges.py        # Indicadors (velocímetre, RPM)
+│   │       ├── charts.py        # Gràfics estandarditzats
+│   │       └── layout.py        # Components de layout Dash
 │   ├── export/                  # Mòdul d'exportació
 │   │   ├── __init__.py
 │   │   ├── csv_exporter.py     # Exportació a CSV
@@ -134,14 +140,49 @@ json_exporter.export(telemetry_data)
 ### Visualització en Temps Real
 
 ```python
-from src.visualization import LiveDashboard
+from src.visualization import TelemetryDashboard
 
-# Crear dashboard
-dashboard = LiveDashboard(collector)
+# Crear dashboard web en temps real
+dashboard = TelemetryDashboard(
+    host='127.0.0.1',
+    port=29999,
+    update_interval=100  # actualització cada 100ms
+)
 
-# Mostrar dashboard
-dashboard.show()
+# Executar el servidor del dashboard
+dashboard.run(debug=True, port=8050)
+# Obre el navegador a http://localhost:8050
 ```
+
+### Anàlisi i Comparació de Voltes
+
+```python
+from src.visualization import (
+    LapComparator,
+    create_speed_vs_distance_plot,
+    create_track_map,
+    create_heatmap_plot
+)
+
+# Comparar voltes
+comparator = LapComparator()
+comparator.add_lap("Lap 1", lap1_telemetry)
+comparator.add_lap("Lap 2", lap2_telemetry)
+
+# Crear gràfics de comparació
+fig = comparator.create_comparison_plot()
+fig.write_html("lap_comparison.html")
+
+# Crear mapa de circuit amb velocitats
+track_fig = create_track_map(telemetry, show_speed_colors=True)
+track_fig.write_html("track_map.html")
+
+# Crear mapa de calor
+heatmap_fig = create_heatmap_plot(telemetry)
+heatmap_fig.write_html("speed_heatmap.html")
+```
+
+Per més informació sobre visualització, consulta [docs/visualization.md](docs/visualization.md)
 
 ## 🧪 Proves Automàtiques
 
