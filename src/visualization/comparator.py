@@ -6,7 +6,7 @@ Reference: https://en.lfsmanual.net/wiki/InSim.txt
 """
 
 import plotly.graph_objects as go
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass
@@ -116,12 +116,8 @@ class LapComparator:
             end_idx2 = int(len(lap2) * (sector + 1) / 3)
 
             if end_idx1 > start_idx1 and end_idx2 > start_idx2:
-                sector1_time = (
-                    lap1[end_idx1 - 1].timestamp - lap1[start_idx1].timestamp
-                )
-                sector2_time = (
-                    lap2[end_idx2 - 1].timestamp - lap2[start_idx2].timestamp
-                )
+                sector1_time = lap1[end_idx1 - 1].timestamp - lap1[start_idx1].timestamp
+                sector2_time = lap2[end_idx2 - 1].timestamp - lap2[start_idx2].timestamp
                 sector_diffs[f"sector{sector+1}"] = sector2_time - sector1_time
 
         return LapComparison(
@@ -218,7 +214,10 @@ class LapComparator:
         return fig
 
     def create_time_delta_plot(
-        self, lap1: List[CarTelemetry], lap2: List[CarTelemetry], title: str = "Time Delta"
+        self,
+        lap1: List[CarTelemetry],
+        lap2: List[CarTelemetry],
+        title: str = "Time Delta",
     ) -> go.Figure:
         """
         Create a plot showing cumulative time difference between two laps.
@@ -369,7 +368,8 @@ class LapComparator:
 
                 if end_idx > start_idx:
                     sector_time = (
-                        telemetry[end_idx - 1].timestamp - telemetry[start_idx].timestamp
+                        telemetry[end_idx - 1].timestamp
+                        - telemetry[start_idx].timestamp
                     )
                     sector_data.append(
                         {
@@ -420,7 +420,9 @@ class LapComparator:
         return fig
 
     def create_trajectory_overlay(
-        self, laps: Optional[List[List[CarTelemetry]]] = None, lap_names: Optional[List[str]] = None
+        self,
+        laps: Optional[List[List[CarTelemetry]]] = None,
+        lap_names: Optional[List[str]] = None,
     ) -> go.Figure:
         """
         Create an overlay of multiple lap trajectories.
@@ -508,7 +510,9 @@ class LapComparator:
         stats = {
             "num_laps": len(self.laps),
             "lap_names": list(self.laps.keys()),
-            "lap_lengths": {name: len(telemetry) for name, telemetry in self.laps.items()},
+            "lap_lengths": {
+                name: len(telemetry) for name, telemetry in self.laps.items()
+            },
         }
 
         # Calculate lap times if available

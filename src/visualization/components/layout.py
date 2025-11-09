@@ -6,7 +6,6 @@ Reference: https://dash.plotly.com/layout
 """
 
 from dash import html, dcc
-import dash_bootstrap_components as dbc
 from typing import List, Dict, Any, Optional
 
 
@@ -320,9 +319,9 @@ def create_control_panel(controls: List[Dict[str, Any]]) -> html.Div:
                         control.get("max", 100): str(control.get("max", 100)),
                     },
                     tooltip={"placement": "bottom", "always_visible": True},
-                    style={"marginBottom": "20px"},
                 )
             )
+            control_elements.append(html.Div(style={"marginBottom": "20px"}))
         elif control_type == "checklist":
             control_elements.append(
                 dcc.Checklist(
@@ -354,7 +353,9 @@ def create_control_panel(controls: List[Dict[str, Any]]) -> html.Div:
     )
 
 
-def create_stat_box(label: str, value: str, unit: str = "", color: str = "#3498db") -> html.Div:
+def create_stat_box(
+    label: str, value: str, unit: str = "", color: str = "#3498db"
+) -> html.Div:
     """
     Create a statistics box displaying a single value.
 

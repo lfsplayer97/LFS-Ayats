@@ -55,10 +55,17 @@ def create_gauge(
             mode="gauge+number+delta",
             value=value,
             domain={"x": [0, 1], "y": [0, 1]},
-            title={"text": f"{title} ({unit})" if unit else title, "font": {"size": 18}},
+            title={
+                "text": f"{title} ({unit})" if unit else title,
+                "font": {"size": 18},
+            },
             number={"suffix": f" {unit}" if unit else "", "font": {"size": 24}},
             gauge={
-                "axis": {"range": [0, max_value], "tickwidth": 1, "tickcolor": "darkblue"},
+                "axis": {
+                    "range": [0, max_value],
+                    "tickwidth": 1,
+                    "tickcolor": "darkblue",
+                },
                 "bar": {"color": "darkblue", "thickness": 0.75},
                 "bgcolor": "white",
                 "borderwidth": 2,

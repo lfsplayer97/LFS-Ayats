@@ -7,7 +7,7 @@ Reference: https://plotly.com/python/
 
 import plotly.graph_objects as go
 import plotly.express as px
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 import pandas as pd
 import numpy as np
 from src.telemetry.collector import CarTelemetry
@@ -160,7 +160,9 @@ def create_trajectory_comparison_plot(
                     y=[y_coords[0]],
                     mode="markers",
                     name=f"{name} Start",
-                    marker=dict(size=10, color=colors[idx % len(colors)], symbol="circle"),
+                    marker=dict(
+                        size=10, color=colors[idx % len(colors)], symbol="circle"
+                    ),
                     showlegend=False,
                 )
             )
@@ -213,7 +215,7 @@ def create_braking_analysis_plot(
     # Calculate acceleration/deceleration
     times = [t.timestamp for t in telemetry_list]
     speeds_kmh = [t.speed * 3.6 for t in telemetry_list]
-    
+
     # Calculate acceleration (change in speed per second)
     accelerations = []
     for i in range(1, len(telemetry_list)):
@@ -243,7 +245,7 @@ def create_braking_analysis_plot(
 
     # Acceleration trace with color based on braking/accelerating
     colors = ["red" if a < -5 else "green" if a > 5 else "gray" for a in accelerations]
-    
+
     fig.add_trace(
         go.Bar(
             x=times,
@@ -480,13 +482,15 @@ def create_g_force_plot(
         dt = times[i] - times[i - 1]
         if dt > 0:
             # Longitudinal G (acceleration/braking)
-            dv = (telemetry_list[i].speed - telemetry_list[i - 1].speed)
+            dv = telemetry_list[i].speed - telemetry_list[i - 1].speed
             long_g = (dv / dt) / 9.81  # Convert to G units
             longitudinal_g.append(long_g)
 
             # Lateral G (cornering) - simplified using direction change
             # This is a rough approximation
-            lateral_g.append(0)  # Would need proper calculation from actual acceleration data
+            lateral_g.append(
+                0
+            )  # Would need proper calculation from actual acceleration data
         else:
             longitudinal_g.append(0)
             lateral_g.append(0)

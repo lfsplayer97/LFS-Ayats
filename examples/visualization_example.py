@@ -72,7 +72,9 @@ def main():
         # Get first player's data
         first_player = list(stats["players"].keys())[0]
         telemetry = collector.get_telemetry_history(first_player)
-        logger.info(f"Retrieved {len(telemetry)} telemetry samples for Player {first_player}")
+        logger.info(
+            f"Retrieved {len(telemetry)} telemetry samples for Player {first_player}"
+        )
 
         # Example 1: Speed vs Distance Plot
         logger.info("\n=== Creating Speed vs Distance Plot ===")
@@ -127,7 +129,9 @@ def main():
         # Disconnect
         client.disconnect()
         logger.info("\n=== Examples Complete! ===")
-        logger.info("Open the generated HTML files in your browser to view the visualizations")
+        logger.info(
+            "Open the generated HTML files in your browser to view the visualizations"
+        )
 
     except ConnectionError as e:
         logger.error(f"Connection error: {e}")

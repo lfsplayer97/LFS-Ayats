@@ -231,9 +231,7 @@ def create_lap_time_chart(
     # Find best lap
     if "lap_time_s" in df.columns:
         best_lap_idx = df["lap_time_s"].idxmin()
-        colors = [
-            "gold" if i == best_lap_idx else "lightblue" for i in range(len(df))
-        ]
+        colors = ["gold" if i == best_lap_idx else "lightblue" for i in range(len(df))]
     else:
         colors = "lightblue"
 

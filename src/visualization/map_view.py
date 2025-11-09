@@ -6,7 +6,7 @@ Reference: https://plotly.com/python/
 """
 
 import plotly.graph_objects as go
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Optional
 import numpy as np
 from src.telemetry.collector import CarTelemetry
 
@@ -428,8 +428,12 @@ def create_corner_analysis_map(
 
     # Highlight slow corners (speed < threshold)
     speed_threshold = np.mean(speeds_kmh) * 0.6  # 60% of average speed
-    corner_x = [x_coords[i] for i in range(len(speeds_kmh)) if speeds_kmh[i] < speed_threshold]
-    corner_y = [y_coords[i] for i in range(len(speeds_kmh)) if speeds_kmh[i] < speed_threshold]
+    corner_x = [
+        x_coords[i] for i in range(len(speeds_kmh)) if speeds_kmh[i] < speed_threshold
+    ]
+    corner_y = [
+        y_coords[i] for i in range(len(speeds_kmh)) if speeds_kmh[i] < speed_threshold
+    ]
 
     if corner_x:
         fig.add_trace(

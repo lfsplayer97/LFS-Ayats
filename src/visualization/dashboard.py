@@ -290,7 +290,10 @@ class TelemetryDashboard:
                 Output("connection-status", "children"),
                 Output("connection-state", "children"),
             ],
-            [Input("connect-button", "n_clicks"), Input("disconnect-button", "n_clicks")],
+            [
+                Input("connect-button", "n_clicks"),
+                Input("disconnect-button", "n_clicks"),
+            ],
             prevent_initial_call=True,
         )
         def handle_connection(connect_clicks, disconnect_clicks):
@@ -341,7 +344,10 @@ class TelemetryDashboard:
                 Output("stats-row", "children"),
                 Output("player-dropdown", "options"),
             ],
-            [Input("interval-component", "n_intervals"), Input("player-dropdown", "value")],
+            [
+                Input("interval-component", "n_intervals"),
+                Input("player-dropdown", "value"),
+            ],
             [State("connection-state", "children")],
         )
         def update_dashboard(n_intervals, selected_player, connection_state):
@@ -391,7 +397,9 @@ class TelemetryDashboard:
                 gear = 0  # Would need OutGauge packet
 
                 # Get history for charts
-                history = self.collector.get_telemetry_history(selected_player, limit=100)
+                history = self.collector.get_telemetry_history(
+                    selected_player, limit=100
+                )
 
                 # Convert history to dict format for charts
                 history_dicts = [
@@ -407,7 +415,9 @@ class TelemetryDashboard:
                 speed_gauge_fig = create_speed_gauge(speed_kmh)
                 rpm_gauge_fig = create_rpm_gauge(rpm)
                 gear_indicator_fig = create_gear_indicator(gear)
-                speed_chart_fig = create_speed_chart(history_dicts, title="Speed History")
+                speed_chart_fig = create_speed_chart(
+                    history_dicts, title="Speed History"
+                )
                 position_chart_fig = create_position_chart(
                     history_dicts, title="Track Position"
                 )
@@ -493,7 +503,9 @@ class TelemetryDashboard:
 
         self.connected = False
 
-    def run(self, debug: bool = False, port: int = 8050, host: str = "127.0.0.1") -> None:
+    def run(
+        self, debug: bool = False, port: int = 8050, host: str = "127.0.0.1"
+    ) -> None:
         """
         Run the dashboard server.
 
