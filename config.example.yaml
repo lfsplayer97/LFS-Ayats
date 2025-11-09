@@ -19,10 +19,25 @@ telemetry:
 
 # Exportació
 export:
-  format: csv              # Format: csv, json, o both
+  format: csv              # Format: csv, json, database, o both
   output_dir: data         # Directori de sortida
   filename_template: telemetry_{timestamp}  # Plantilla de nom de fitxer
   auto_compression: false  # Comprimir fitxers automàticament
+
+# Base de dades
+database:
+  type: sqlite             # sqlite, postgresql, mysql
+  sqlite:
+    path: ./data/telemetry.db  # Ruta del fitxer SQLite
+  postgresql:
+    host: localhost
+    port: 5432
+    database: lfs_telemetry
+    user: lfs_user
+    password: ${DB_PASSWORD}  # Des de variable d'entorn
+  pool_size: 5             # Mida del pool de connexions (PostgreSQL/MySQL)
+  max_overflow: 10         # Connexions addicionals permeses
+  echo: false              # Logging de consultes SQL (debug)
 
 # Visualització
 visualization:

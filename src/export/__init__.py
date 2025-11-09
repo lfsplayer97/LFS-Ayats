@@ -7,5 +7,6 @@ __version__ = "0.1.0"
 
 from .csv_exporter import CSVExporter
 from .json_exporter import JSONExporter
+from .db_exporter import DatabaseExporter
 
-__all__ = ["CSVExporter", "JSONExporter"]
+__all__ = ["CSVExporter", "JSONExporter", "DatabaseExporter"]
