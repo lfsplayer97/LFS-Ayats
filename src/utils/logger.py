@@ -1,6 +1,6 @@
 """
 Logger
-Sistema de logging per a LFS-Ayats.
+Sistema de logging per a LFS-Ayats amb suport per colorlog.
 """
 
 import logging
@@ -9,16 +9,23 @@ from pathlib import Path
 from typing import Optional
 from datetime import datetime
 
+try:
+    import colorlog
+    COLORLOG_AVAILABLE = True
+except ImportError:
+    COLORLOG_AVAILABLE = False
+
 
 def setup_logger(
     name: str = "lfs_ayats",
     level: str = "INFO",
     log_file: Optional[str] = None,
     console: bool = True,
-    log_format: Optional[str] = None
+    log_format: Optional[str] = None,
+    use_colors: bool = True
 ) -> logging.Logger:
     """
-    Configura el sistema de logging.
+    Configura el sistema de logging amb colorlog.
 
     Args:
         name: Nom del logger
@@ -26,6 +33,7 @@ def setup_logger(
         log_file: Fitxer de log (None per no usar fitxer)
         console: Mostrar logs a la consola
         log_format: Format dels logs
+        use_colors: Usar colors a la consola (requereix colorlog)
 
     Returns:
         logging.Logger: Logger configurat
@@ -43,23 +51,44 @@ def setup_logger(
 
     # Format per defecte
     if log_format is None:
-        log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        log_format = "%(asctime)s - %(name)s - %(levelname)-8s - %(message)s"
 
-    formatter = logging.Formatter(log_format)
-
-    # Handler de consola
+    # Handler de consola amb colors
     if console:
         console_handler = logging.StreamHandler(sys.stdout)
+        
+        if use_colors and COLORLOG_AVAILABLE:
+            # Format amb colors per colorlog
+            color_format = (
+                '%(log_color)s%(levelname)-8s%(reset)s '
+                '%(asctime)s - %(cyan)s%(name)s%(reset)s - %(message)s'
+            )
+            formatter = colorlog.ColoredFormatter(
+                color_format,
+                log_colors={
+                    'DEBUG': 'cyan',
+                    'INFO': 'green',
+                    'WARNING': 'yellow',
+                    'ERROR': 'red',
+                    'CRITICAL': 'red,bg_white',
+                },
+                secondary_log_colors={},
+                style='%'
+            )
+        else:
+            formatter = logging.Formatter(log_format)
+        
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
-    # Handler de fitxer
+    # Handler de fitxer (sense colors)
     if log_file:
         log_path = Path(log_file)
         log_path.parent.mkdir(parents=True, exist_ok=True)
         
+        file_formatter = logging.Formatter(log_format)
         file_handler = logging.FileHandler(log_path, encoding='utf-8')
-        file_handler.setFormatter(formatter)
+        file_handler.setFormatter(file_formatter)
         logger.addHandler(file_handler)
 
     return logger
