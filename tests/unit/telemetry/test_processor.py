@@ -149,19 +149,22 @@ class TestTelemetryProcessor:
         """Test anomaly detection"""
         processor = TelemetryProcessor()
         
-        # Normal data with one outlier
+        # Normal data with one outlier - using more data points for stable statistics
         telemetry_list = [
             MockCarTelemetry(speed=20.0),
             MockCarTelemetry(speed=21.0),
             MockCarTelemetry(speed=19.0),
             MockCarTelemetry(speed=20.5),
+            MockCarTelemetry(speed=19.5),
+            MockCarTelemetry(speed=20.2),
+            MockCarTelemetry(speed=19.8),
             MockCarTelemetry(speed=100.0),  # Outlier
         ]
         
         anomalies = processor.detect_anomalies(telemetry_list, threshold_stdev=2.0)
         
         assert len(anomalies) > 0
-        assert 4 in anomalies  # Index of outlier
+        assert 7 in anomalies  # Index of outlier
 
     def test_get_validation_errors(self):
         """Test getting validation errors"""
