@@ -1,0 +1,38 @@
+# Configuració LFS-Ayats
+# Exemple de configuració per defecte
+
+# Connexió InSim
+connection:
+  host: 127.0.0.1          # IP del servidor LFS
+  port: 29999              # Port InSim (per defecte 29999)
+  admin_password: ''       # Contrasenya admin (si cal)
+  app_name: LFS-Ayats      # Nom de l'aplicació (màx 16 caràcters)
+  udp: false               # Utilitzar UDP en lloc de TCP
+  timeout: 5.0             # Timeout de connexió en segons
+
+# Telemetria
+telemetry:
+  interval: 100            # Interval MCI/NLP en ms (100ms = 10Hz)
+  max_history: 10000       # Màxim de mostres a mantenir en memòria
+  auto_export: false       # Exportar automàticament
+  export_interval: 60      # Interval d'exportació automàtica (segons)
+
+# Exportació
+export:
+  format: csv              # Format: csv, json, o both
+  output_dir: data         # Directori de sortida
+  filename_template: telemetry_{timestamp}  # Plantilla de nom de fitxer
+  auto_compression: false  # Comprimir fitxers automàticament
+
+# Visualització
+visualization:
+  refresh_rate: 10         # Taxa de refresc en Hz
+  show_realtime: true      # Mostrar dades en temps real
+  plot_history: 100        # Nombre de mostres a mostrar en gràfics
+
+# Logging
+logging:
+  level: INFO              # Nivell: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  file: null               # Fitxer de log (null per no usar fitxer)
+  console: true            # Mostrar logs a la consola
