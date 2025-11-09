@@ -100,3 +100,8 @@ temp/
 
 # Specific files to ignore
 LFSLazy*.zip
+
+# Database files
+data/
+*.db
+*.db-journal

@@ -169,8 +169,11 @@ class TelemetryRepository:
         with self.SessionLocal() as db:
             session = db.get(Session, session_id)
             if session:
-                # Eagerly load relationships
-                db.refresh(session)
+                # Eagerly load relationships to avoid detached instance errors
+                _ = session.laps  # Force load laps
+                _ = session.circuit  # Force load circuit
+                _ = session.vehicle  # Force load vehicle
+                db.expunge(session)  # Detach from session
                 return session
             return None
 
