@@ -9,8 +9,10 @@ Aquest repositori proporciona una implementació professional del protocol InSim
 - **Connexió i comunicació** amb el servidor LFS mitjançant sockets TCP/UDP
 - **Recollida de telemetria** en temps real (velocitat, RPM, temperatura, posició, etc.)
 - **Processament de paquets** InSim amb validació i gestió d'errors
-- **Visualització de dades** en temps real
+- **Visualització de dades** en temps real amb dashboards interactius
 - **Exportació de dades** a formats CSV, JSON i bases de dades
+- **REST API** per accés programàtic i integració amb altres eines
+- **WebSocket** per streaming de telemetria en temps real
 - **Proves automàtiques** per validar inputs/outputs telemètrics
 
 ## 🏗️ Estructura del Repositori
@@ -18,6 +20,14 @@ Aquest repositori proporciona una implementació professional del protocol InSim
 ```
 LFS-Ayats/
 ├── src/                          # Codi font principal
+│   ├── api/                      # API REST (FastAPI)
+│   │   ├── __init__.py
+│   │   ├── main.py              # Aplicació FastAPI
+│   │   ├── models.py            # Models Pydantic
+│   │   ├── dependencies.py      # Dependency injection
+│   │   ├── middleware.py        # CORS i logging
+│   │   ├── exceptions.py        # Excepcions personalitzades
+│   │   └── routers/             # Endpoints API
 │   ├── connection/               # Mòdul de connexió InSim
 │   │   ├── __init__.py
 │   │   ├── insim_client.py      # Client InSim TCP/UDP
@@ -26,6 +36,10 @@ LFS-Ayats/
 │   │   ├── __init__.py
 │   │   ├── collector.py         # Recollida de dades telemètriques
 │   │   └── processor.py         # Processament i validació de dades
+│   ├── database/                # Mòdul de base de dades
+│   │   ├── __init__.py
+│   │   ├── models.py            # Models SQLAlchemy
+│   │   └── repository.py        # Capa d'accés a dades
 │   ├── visualization/           # Mòdul de visualització
 │   │   ├── __init__.py
 │   │   ├── dashboard.py         # Dashboard web en temps real (Dash)
@@ -33,9 +47,6 @@ LFS-Ayats/
 │   │   ├── map_view.py          # Visualització de mapes de circuit
 │   │   ├── comparator.py        # Comparació de voltes
 │   │   └── components/          # Components reutilitzables
-│   │       ├── gauges.py        # Indicadors (velocímetre, RPM)
-│   │       ├── charts.py        # Gràfics estandarditzats
-│   │       └── layout.py        # Components de layout Dash
 │   ├── export/                  # Mòdul d'exportació
 │   │   ├── __init__.py
 │   │   ├── csv_exporter.py     # Exportació a CSV
@@ -54,11 +65,13 @@ LFS-Ayats/
 ├── examples/                    # Exemples d'ús
 │   ├── basic_connection.py     # Connexió bàsica
 │   ├── telemetry_monitor.py   # Monitor de telemetria
-│   └── data_logger.py         # Logger de dades
+│   ├── data_logger.py         # Logger de dades
+│   └── api_client_example.py  # Client de l'API REST
 ├── docs/                       # Documentació
 │   ├── insim_protocol.md      # Documentació del protocol InSim
 │   ├── packet_reference.md    # Referència de paquets
 │   ├── api_reference.md       # Referència de l'API
+│   ├── api_documentation.md   # Documentació de l'API REST
 │   └── development.md         # Guia de desenvolupament
 ├── scripts/                    # Scripts d'utilitat
 │   └── delete-branches.sh     # Gestió de branques
@@ -136,6 +149,57 @@ csv_exporter.export(telemetry_data)
 json_exporter = JSONExporter('telemetry_data.json')
 json_exporter.export(telemetry_data)
 ```
+
+### REST API
+
+El sistema inclou una API REST completa construïda amb FastAPI per accés programàtic:
+
+```bash
+# Iniciar el servidor API
+uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Documentació Automàtica:**
+- Swagger UI: http://localhost:8000/api/docs
+- ReDoc: http://localhost:8000/api/redoc
+
+**Exemple d'ús del client:**
+
+```python
+import requests
+
+# Llistar sessions
+response = requests.get("http://localhost:8000/api/v1/sessions")
+sessions = response.json()
+
+# Obtenir telemetria d'una volta
+response = requests.get("http://localhost:8000/api/v1/1/telemetry")
+telemetry = response.json()
+
+# WebSocket per telemetria en temps real
+import websockets
+import asyncio
+
+async def receive_telemetry():
+    uri = "ws://localhost:8000/api/v1/telemetry/live"
+    async with websockets.connect(uri) as websocket:
+        while True:
+            data = await websocket.recv()
+            print(f"Telemetry: {data}")
+
+asyncio.run(receive_telemetry())
+```
+
+**Endpoints disponibles:**
+- `/api/v1/health` - Health check
+- `/api/v1/sessions` - Gestió de sessions
+- `/api/v1/{lap_id}` - Informació de voltes
+- `/api/v1/telemetry/live` - WebSocket streaming
+- `/api/v1/stats/best-laps` - Millors voltes
+- `/api/v1/export/csv/{lap_id}` - Exportació CSV
+- i molts més...
+
+Vegeu [docs/api_documentation.md](docs/api_documentation.md) per documentació completa de l'API.
 
 ### Visualització en Temps Real
 
