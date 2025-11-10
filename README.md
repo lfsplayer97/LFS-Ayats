@@ -110,6 +110,48 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
+## 📚 Documentació Completa
+
+LFS-Ayats disposa de documentació extensa per tots els nivells d'usuari:
+
+### 🚀 Començar
+
+- **[Guia d'Inici Ràpid](docs/quick-start.md)** - Posa el sistema en funcionament en 5-10 minuts
+- **[FAQ](docs/faq.md)** - Preguntes freqüents i solució de problemes
+
+### 🎓 Tutorials Interactius
+
+| Tutorial | Descripció | Temps | Nivell |
+|----------|------------|-------|--------|
+| **[01 - Primera Sessió](docs/tutorials/01-first-session.md)** | Recull i exporta telemetria bàsica | 30 min | Principiant |
+| **[02 - Anàlisi de Voltes](docs/tutorials/02-lap-analysis.md)** | Compara voltes i troba millores | 45 min | Intermedi |
+| **[03 - Dashboard Temps Real](docs/tutorials/03-real-time-dashboard.md)** | Crea dashboard web interactiu | 30 min | Intermedi |
+| **[04 - Anàlisi Avançada](docs/tutorials/04-advanced-analysis.md)** | Machine learning i prediccions | 60 min | Avançat |
+| **[05 - Base de Dades](docs/tutorials/05-database-integration.md)** | Emmagatzema històrics | 45 min | Avançat |
+
+### 💡 Casos d'Ús
+
+- **[Carreres de Lliga](docs/use-cases/league-racing.md)** - Configuració per lligues amb múltiples pilots
+- **[Entrenament de Pilots](docs/use-cases/driver-coaching.md)** - Sistema de coaching basat en dades
+
+### 🏗️ Documentació Tècnica
+
+- **[Arquitectura del Sistema](docs/architecture.md)** - Components i patrons de disseny
+- **[Protocol InSim](docs/insim_protocol.md)** - Detalls del protocol de comunicació
+- **[API REST](docs/api_documentation.md)** - Documentació completa de l'API
+- **[Referència API](docs/api_reference.md)** - Referència de classes i mètodes
+- **[Visualització](docs/visualization.md)** - Gràfics i dashboards
+- **[Mòdul d'Anàlisi](docs/analysis_module.md)** - Anàlisi avançada
+
+### 👨‍💻 Per Desenvolupadors
+
+- **[Configuració d'Entorn](docs/contributing/development-setup.md)** - Setup per contribuir
+- **[Estàndards de Codi](docs/contributing/coding-standards.md)** - Convencions i bones pràctiques
+- **[Guia de Testing](docs/contributing/testing-guide.md)** - Escriure i executar tests
+- **[Guia de Contribució](CONTRIBUTING.md)** - Com contribuir al projecte
+
+**📖 [Índex Complet de Documentació](docs/README.md)**
+
 ## 📖 Ús Bàsic
 
 ### Connexió a LFS
@@ -325,7 +367,12 @@ La telemetria que es pot recollir inclou:
 
 - **LFS Forum**: https://www.lfs.net/forum
 - **LFS World**: https://www.lfs.net/
-- **Packet Reference**: Consultar `docs/packet_reference.md`
+- **Documentació del Projecte**:
+  - [Protocol InSim Detallat](docs/insim_protocol.md)
+  - [Referència de Paquets](docs/packet_reference.md)
+  - [Arquitectura del Sistema](docs/architecture.md)
+  - [FAQ](docs/faq.md)
+  - [Índex de Documentació](docs/README.md)
 - **API Reference**: Consultar `docs/api_reference.md`
 
 ## 🤝 Contribució
@@ -338,11 +385,20 @@ Les contribucions són benvingudes! Si vols contribuir:
 4. Push a la branca (`git push origin feature/nova-funcionalitat`)
 5. Obre un Pull Request
 
+### Guies per Desenvolupadors
+
+Per començar a contribuir, consulta:
+
+- **[Guia de Contribució](CONTRIBUTING.md)** - Procés complet de contribució
+- **[Configuració d'Entorn](docs/contributing/development-setup.md)** - Setup del teu entorn
+- **[Estàndards de Codi](docs/contributing/coding-standards.md)** - Convencions a seguir
+- **[Guia de Testing](docs/contributing/testing-guide.md)** - Com escriure i executar tests
+
 ### Bones Pràctiques
 
 - Seguir les convencions de codi PEP 8
 - Escriure proves per a totes les noves funcionalitats
-- Documentar el codi amb docstrings
+- Documentar el codi amb docstrings (estil Google)
 - Actualitzar la documentació si cal
 - Mantenir la modularitat i separació de responsabilitats
 
