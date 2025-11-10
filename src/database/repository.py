@@ -13,7 +13,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 from sqlalchemy import create_engine, select, func, and_
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, selectinload
 from sqlalchemy.pool import NullPool, StaticPool
 
 from src.database.models import Base, Session, Lap, TelemetryPoint, Vehicle, Circuit
@@ -506,3 +506,136 @@ class TelemetryRepository:
         """Close the database connection pool."""
         self.engine.dispose()
         logger.info("Database connection pool closed")
+
+    def get_sessions(
+        self,
+        circuit: Optional[str] = None,
+        vehicle: Optional[str] = None,
+        driver: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> List[Session]:
+        """
+        Get sessions with optional filters.
+
+        Args:
+            circuit: Optional circuit name filter
+            vehicle: Optional vehicle name filter
+            driver: Optional driver name filter
+            limit: Maximum number of results
+            offset: Offset for pagination
+
+        Returns:
+            List of sessions matching filters
+        """
+        with self.SessionLocal() as db:
+            query = select(Session).options(
+                selectinload(Session.circuit),
+                selectinload(Session.vehicle),
+                selectinload(Session.laps)
+            )
+
+            # Apply filters
+            if circuit:
+                query = query.join(Circuit).where(
+                    (Circuit.name == circuit) | (Circuit.short_name == circuit)
+                )
+            if vehicle:
+                query = query.join(Vehicle).where(
+                    (Vehicle.name == vehicle) | (Vehicle.short_name == vehicle)
+                )
+            if driver:
+                query = query.where(Session.driver_name == driver)
+
+            # Apply pagination
+            query = query.limit(limit).offset(offset)
+
+            sessions = db.execute(query).scalars().all()
+            return list(sessions)
+
+    def get_lap(self, lap_id: int) -> Optional[Lap]:
+        """
+        Get a lap by ID.
+
+        Args:
+            lap_id: Lap ID
+
+        Returns:
+            Lap object or None if not found
+        """
+        with self.SessionLocal() as db:
+            lap = db.execute(select(Lap).where(Lap.id == lap_id)).scalar_one_or_none()
+            return lap
+
+    def get_or_create_circuit(
+        self, name: str, short_name: str, length: Optional[float] = None
+    ) -> Circuit:
+        """
+        Get existing circuit or create new one.
+
+        Args:
+            name: Circuit full name
+            short_name: Circuit short code
+            length: Circuit length in meters
+
+        Returns:
+            Circuit object
+        """
+        with self.SessionLocal() as db:
+            circuit = db.execute(
+                select(Circuit).where(Circuit.short_name == short_name)
+            ).scalar_one_or_none()
+
+            if not circuit:
+                circuit = Circuit(name=name, short_name=short_name, length=length)
+                db.add(circuit)
+                db.commit()
+                db.refresh(circuit)
+                logger.info(f"Circuit created: {name}")
+            
+            return circuit
+
+    def get_or_create_vehicle(
+        self, name: str, short_name: str, class_type: Optional[str] = None
+    ) -> Vehicle:
+        """
+        Get existing vehicle or create new one.
+
+        Args:
+            name: Vehicle full name
+            short_name: Vehicle short code
+            class_type: Vehicle class
+
+        Returns:
+            Vehicle object
+        """
+        with self.SessionLocal() as db:
+            vehicle = db.execute(
+                select(Vehicle).where(Vehicle.short_name == short_name)
+            ).scalar_one_or_none()
+
+            if not vehicle:
+                vehicle = Vehicle(name=name, short_name=short_name, class_type=class_type)
+                db.add(vehicle)
+                db.commit()
+                db.refresh(vehicle)
+                logger.info(f"Vehicle created: {name}")
+            
+            return vehicle
+
+    def delete_session(self, session_id: int) -> None:
+        """
+        Delete a session and all associated data.
+
+        Args:
+            session_id: Session ID to delete
+        """
+        with self.SessionLocal() as db:
+            session = db.execute(
+                select(Session).where(Session.id == session_id)
+            ).scalar_one_or_none()
+
+            if session:
+                db.delete(session)
+                db.commit()
+                logger.info(f"Session {session_id} deleted")
