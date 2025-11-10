@@ -133,16 +133,16 @@ OVERLAY_TEMPLATE = """
 class StreamingOverlay:
     """
     Real-time telemetry overlay for streaming platforms.
-    
+
     This class provides a web server that serves an HTML overlay
     compatible with OBS Browser Source, displaying real-time telemetry
     data via WebSocket connections.
-    
+
     Args:
         port: Port to run the overlay server on (default: 5000)
         host: Host address to bind to (default: '0.0.0.0')
         debug: Enable Flask debug mode (default: False)
-    
+
     Example:
         >>> overlay = StreamingOverlay(port=5000)
         >>> overlay.start()  # Start in background thread
@@ -153,7 +153,7 @@ class StreamingOverlay:
         ...     'gear': 4,
         ...     'lap_time': 98.456
         ... })
-    
+
     Usage with OBS:
         1. Add "Browser" source to OBS scene
         2. Set URL to: http://localhost:5000
@@ -161,16 +161,11 @@ class StreamingOverlay:
         4. Enable "Shutdown source when not visible"
         5. Adjust position and size as needed
     """
-    
-    def __init__(
-        self, 
-        port: int = 5000,
-        host: str = '0.0.0.0',
-        debug: bool = False
-    ):
+
+    def __init__(self, port: int = 5000, host: str = "0.0.0.0", debug: bool = False):
         """
         Initialize streaming overlay.
-        
+
         Args:
             port: Port number for the server
             host: Host address to bind to
@@ -180,45 +175,43 @@ class StreamingOverlay:
         self.host = host
         self.debug = debug
         self.current_data: Dict[str, Any] = {}
-        
+
         # Initialize Flask app and SocketIO
         self.app = Flask(__name__)
-        self.app.config['SECRET_KEY'] = 'lfs-ayats-overlay-secret'
+        self.app.config["SECRET_KEY"] = "lfs-ayats-overlay-secret"
         self.socketio = SocketIO(
-            self.app,
-            cors_allowed_origins="*",
-            async_mode='threading'
+            self.app, cors_allowed_origins="*", async_mode="threading"
         )
-        
+
         # Setup routes
         self._setup_routes()
-        
+
         # Server thread
         self._server_thread: Optional[threading.Thread] = None
         self._running = False
-    
+
     def _setup_routes(self):
         """Setup Flask routes."""
-        
-        @self.app.route('/')
+
+        @self.app.route("/")
         def index():
             """Serve the overlay HTML page."""
             return render_template_string(OVERLAY_TEMPLATE)
-        
-        @self.app.route('/api/telemetry')
+
+        @self.app.route("/api/telemetry")
         def get_telemetry():
             """Get current telemetry data as JSON."""
             return jsonify(self.current_data)
-        
-        @self.app.route('/health')
+
+        @self.app.route("/health")
         def health():
             """Health check endpoint."""
             return jsonify({"status": "ok", "running": self._running})
-    
+
     def update_telemetry(self, telemetry_data: Dict[str, Any]) -> None:
         """
         Update telemetry data and broadcast to connected clients.
-        
+
         Args:
             telemetry_data: Dictionary containing telemetry information
                 - speed: Speed in km/h
@@ -226,7 +219,7 @@ class StreamingOverlay:
                 - gear: Current gear (0-6, N for neutral)
                 - lap_time: Current lap time in seconds
                 - position: Current position (optional)
-        
+
         Example:
             >>> overlay.update_telemetry({
             ...     'speed': 120.5,
@@ -237,18 +230,18 @@ class StreamingOverlay:
             ... })
         """
         self.current_data.update(telemetry_data)
-        
+
         # Broadcast to all connected clients
         if self._running:
-            self.socketio.emit('telemetry_update', telemetry_data)
-    
+            self.socketio.emit("telemetry_update", telemetry_data)
+
     def start(self) -> None:
         """
         Start the overlay server in a background thread.
-        
+
         The server will run in a separate thread to avoid blocking
         the main application.
-        
+
         Example:
             >>> overlay = StreamingOverlay(port=5000)
             >>> overlay.start()
@@ -257,9 +250,9 @@ class StreamingOverlay:
         if self._running:
             print("Overlay server already running")
             return
-        
+
         self._running = True
-        
+
         def run_server():
             """Run the SocketIO server."""
             self.socketio.run(
@@ -267,28 +260,28 @@ class StreamingOverlay:
                 host=self.host,
                 port=self.port,
                 debug=self.debug,
-                use_reloader=False
+                use_reloader=False,
             )
-        
+
         self._server_thread = threading.Thread(target=run_server, daemon=True)
         self._server_thread.start()
-        
+
         print(f"Streaming overlay started at http://{self.host}:{self.port}")
-    
+
     def stop(self) -> None:
         """
         Stop the overlay server.
-        
+
         Note: Due to Flask/SocketIO limitations, the server cannot be
         cleanly stopped without restarting the application.
         """
         self._running = False
         print("Overlay server stopped (thread may still be running)")
-    
+
     def is_running(self) -> bool:
         """
         Check if the overlay server is running.
-        
+
         Returns:
             True if server is running, False otherwise
         """
