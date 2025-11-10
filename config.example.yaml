@@ -51,3 +51,36 @@ logging:
   format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
   file: null               # Fitxer de log (null per no usar fitxer)
   console: true            # Mostrar logs a la consola
+
+# Integracions externes
+integrations:
+  # Discord notifications
+  discord:
+    enabled: false         # Activar integració amb Discord
+    webhook_url: null      # URL del webhook de Discord
+    bot_token: null        # Token del bot (opcional, des de variable d'entorn)
+    notifications:
+      personal_best: true  # Notificar millor temps personal
+      session_summary: true  # Notificar resum de sessió
+      anomalies: true      # Notificar anomalies detectades
+  
+  # Telegram bot
+  telegram:
+    enabled: false         # Activar integració amb Telegram
+    bot_token: null        # Token del bot (des de variable d'entorn)
+    chat_id: null          # ID del xat per defecte
+  
+  # Streaming overlay (OBS)
+  streaming:
+    enabled: false         # Activar overlay per streaming
+    overlay_port: 5000     # Port del servidor overlay
+    update_rate: 10        # Freqüència d'actualització (Hz)
+  
+  # Cloud backup
+  cloud_backup:
+    enabled: false         # Activar backup automàtic
+    provider: google_drive # Proveïdor: google_drive, dropbox
+    auto_backup: true      # Backup automàtic
+    backup_interval: 3600  # Interval de backup (segons)
+    credentials_path: ./credentials.json  # Ruta de credencials
+    folder_id: null        # ID de carpeta (Google Drive) o path (Dropbox)
