@@ -8,8 +8,8 @@ Reference:
     https://docs.pydantic.dev/
 """
 
-from datetime import datetime
-from typing import List, Optional
+from datetime import datetime as DateTime
+from typing import List, Optional, Union
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -25,8 +25,8 @@ class SessionBase(BaseModel):
 class SessionCreate(SessionBase):
     """Data for creating a new session."""
 
-    datetime: Optional[datetime] = Field(
-        None, description="Session datetime (defaults to now)"
+    datetime: Optional[DateTime] = Field(
+        default=None, description="Session datetime (defaults to now)"
     )
 
 
@@ -36,10 +36,10 @@ class SessionResponse(SessionBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(..., description="Session ID")
-    datetime: datetime = Field(..., description="Session datetime")
+    datetime: DateTime = Field(..., description="Session datetime")
     duration: int = Field(..., description="Session duration in seconds")
     total_laps: int = Field(0, description="Total number of laps")
-    best_lap_time: Optional[float] = Field(None, description="Best lap time in seconds")
+    best_lap_time: Optional[float] = Field(default=None, description="Best lap time in seconds")
 
 
 class SessionListResponse(BaseModel):
@@ -66,9 +66,9 @@ class LapResponse(LapBase):
 
     id: int = Field(..., description="Lap ID")
     session_id: int = Field(..., description="Parent session ID")
-    sector1_time: Optional[float] = Field(None, description="Sector 1 time in seconds")
-    sector2_time: Optional[float] = Field(None, description="Sector 2 time in seconds")
-    sector3_time: Optional[float] = Field(None, description="Sector 3 time in seconds")
+    sector1_time: Optional[float] = Field(default=None, description="Sector 1 time in seconds")
+    sector2_time: Optional[float] = Field(default=None, description="Sector 2 time in seconds")
+    sector3_time: Optional[float] = Field(default=None, description="Sector 3 time in seconds")
     valid: bool = Field(True, description="Whether lap is valid")
 
 
@@ -111,7 +111,7 @@ class SectorAnalysis(BaseModel):
 
     sector_number: int = Field(..., ge=1, le=3, description="Sector number")
     time: float = Field(..., description="Sector time in seconds")
-    delta: Optional[float] = Field(None, description="Delta to best sector time")
+    delta: Optional[float] = Field(default=None, description="Delta to best sector time")
     speed_avg: float = Field(..., description="Average speed in sector")
     speed_max: float = Field(..., description="Maximum speed in sector")
 
@@ -164,7 +164,7 @@ class BestLapStats(BaseModel):
     driver: str = Field(..., description="Driver name")
     circuit: str = Field(..., description="Circuit name")
     vehicle: str = Field(..., description="Vehicle name")
-    session_date: datetime = Field(..., description="Session date")
+    session_date: DateTime = Field(..., description="Session date")
 
 
 class DriverStats(BaseModel):
@@ -173,9 +173,9 @@ class DriverStats(BaseModel):
     driver_name: str = Field(..., description="Driver name")
     total_sessions: int = Field(..., description="Total sessions")
     total_laps: int = Field(..., description="Total laps driven")
-    best_lap_time: Optional[float] = Field(None, description="Best lap time overall")
-    avg_lap_time: Optional[float] = Field(None, description="Average lap time")
-    total_distance: Optional[float] = Field(None, description="Total distance in km")
+    best_lap_time: Optional[float] = Field(default=None, description="Best lap time overall")
+    avg_lap_time: Optional[float] = Field(default=None, description="Average lap time")
+    total_distance: Optional[float] = Field(default=None, description="Total distance in km")
 
 
 class CircuitStats(BaseModel):
@@ -184,8 +184,8 @@ class CircuitStats(BaseModel):
     circuit_name: str = Field(..., description="Circuit name")
     total_sessions: int = Field(..., description="Total sessions on circuit")
     total_laps: int = Field(..., description="Total laps on circuit")
-    best_lap_time: Optional[float] = Field(None, description="Best lap time on circuit")
-    best_lap_driver: Optional[str] = Field(None, description="Driver with best lap")
+    best_lap_time: Optional[float] = Field(default=None, description="Best lap time on circuit")
+    best_lap_driver: Optional[str] = Field(default=None, description="Driver with best lap")
 
 
 # Configuration models
@@ -213,7 +213,7 @@ class CircuitInfo(BaseModel):
 
     name: str = Field(..., description="Circuit full name")
     short_name: str = Field(..., description="Circuit short code")
-    length: Optional[float] = Field(None, description="Circuit length in meters")
+    length: Optional[float] = Field(default=None, description="Circuit length in meters")
 
 
 class VehicleInfo(BaseModel):
@@ -221,7 +221,7 @@ class VehicleInfo(BaseModel):
 
     name: str = Field(..., description="Vehicle full name")
     short_name: str = Field(..., description="Vehicle short code")
-    class_type: Optional[str] = Field(None, description="Vehicle class")
+    class_type: Optional[str] = Field(default=None, description="Vehicle class")
 
 
 # System models
@@ -229,7 +229,7 @@ class HealthResponse(BaseModel):
     """API health check response."""
 
     status: str = Field("healthy", description="Health status")
-    version: str = Field(__version__, description="API version")
+    version: str = Field(default="0.1.0", description="API version")
 
 
 class SystemStatusResponse(BaseModel):
@@ -239,7 +239,7 @@ class SystemStatusResponse(BaseModel):
     uptime: float = Field(..., description="System uptime in seconds")
     sessions_count: int = Field(..., description="Total sessions in database")
     laps_count: int = Field(..., description="Total laps in database")
-    last_telemetry: Optional[datetime] = Field(
+    last_telemetry: Optional[DateTime] = Field(
         None, description="Last telemetry timestamp"
     )
 
@@ -268,7 +268,7 @@ class LiveTelemetryMessage(BaseModel):
 
     type: str = Field("telemetry", description="Message type")
     data: TelemetryPoint = Field(..., description="Telemetry data")
-    session_id: Optional[int] = Field(None, description="Current session ID")
+    session_id: Optional[int] = Field(default=None, description="Current session ID")
 
 
 class WebSocketError(BaseModel):
