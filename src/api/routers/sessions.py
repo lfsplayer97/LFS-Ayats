@@ -67,7 +67,7 @@ async def list_sessions(
                 id=session.id,
                 circuit=session.circuit.name if session.circuit else "Unknown",
                 vehicle=session.vehicle.name if session.vehicle else "Unknown",
-                driver=session.driver,
+                driver=session.driver_name,
                 datetime=session.datetime,
                 duration=session.duration,
                 total_laps=len(session.laps) if session.laps else 0,
@@ -113,7 +113,7 @@ async def get_session(
         id=session.id,
         circuit=session.circuit.name if session.circuit else "Unknown",
         vehicle=session.vehicle.name if session.vehicle else "Unknown",
-        driver=session.driver,
+        driver=session.driver_name,
         datetime=session.datetime,
         duration=session.duration,
         total_laps=len(session.laps) if session.laps else 0,
@@ -149,25 +149,24 @@ async def create_session(
         name=session_data.vehicle, short_name=session_data.vehicle[:10]
     )
 
-    # Create session
-    session = db_models.Session(
-        datetime=session_data.datetime or datetime.now(),
-        driver=session_data.driver,
-        circuit_id=circuit.id,
-        vehicle_id=vehicle.id,
-        duration=0,  # Will be updated as data comes in
+    # Create session using repository method
+    session_id = repo.save_session(
+        datetime_start=session_data.datetime or datetime.now(),
+        circuit_name=circuit.short_name,
+        vehicle_name=vehicle.short_name,
+        driver_name=session_data.driver,
+        duration=0,
     )
 
-    session_id = repo.save_session(session)
     created_session = repo.get_session(session_id)
 
     return SessionResponse(
         id=created_session.id,
-        circuit=created_session.circuit.name,
-        vehicle=created_session.vehicle.name,
-        driver=created_session.driver,
+        circuit=created_session.circuit.name if created_session.circuit else "Unknown",
+        vehicle=created_session.vehicle.name if created_session.vehicle else "Unknown",
+        driver=created_session.driver_name or "Unknown",
         datetime=created_session.datetime,
-        duration=created_session.duration,
+        duration=created_session.duration or 0,
         total_laps=0,
         best_lap_time=None,
     )

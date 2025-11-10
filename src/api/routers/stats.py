@@ -73,7 +73,7 @@ async def get_best_laps(
                     sector3_time=lap.sector3_time,
                     valid=True,
                 ),
-                driver=session.driver,
+                driver=session.driver_name,
                 circuit=session.circuit.name if session.circuit else "Unknown",
                 vehicle=session.vehicle.name if session.vehicle else "Unknown",
                 session_date=session.datetime,
@@ -158,7 +158,7 @@ async def get_circuit_stats(
             session_best = min(session.laps, key=lambda l: l.lap_time, default=None)
             if session_best and (best_lap is None or session_best.lap_time < best_lap):
                 best_lap = session_best.lap_time
-                best_driver = session.driver
+                best_driver = session.driver_name
 
     return CircuitStats(
         circuit_name=circuit_name,
