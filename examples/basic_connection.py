@@ -1,35 +1,35 @@
 """
 Basic Connection Example
-Exemple bàsic de connexió a LFS mitjançant InSim.
+Basic example of connecting to LFS via InSim.
 
-Referència: https://en.lfsmanual.net/wiki/InSim.txt
+Reference: https://en.lfsmanual.net/wiki/InSim.txt
 """
 
 import sys
 import time
 from pathlib import Path
 
-# Afegir src al path
+# Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from connection import InSimClient, PacketHandler
 from utils import setup_logger
 
-# Configurar logging
+# Configure logging
 logger = setup_logger("basic_connection", "DEBUG")
 
 
 def main():
-    """Exemple bàsic de connexió."""
-    logger.info("=== Exemple Bàsic de Connexió InSim ===")
+    """Basic connection example."""
+    logger.info("=== Basic InSim Connection Example ===")
     
-    # Configuració
+    # Configuration
     HOST = "127.0.0.1"  # Localhost
-    PORT = 29999        # Port InSim per defecte
+    PORT = 29999        # Default InSim port
     
     try:
-        # Crear client InSim
-        logger.info(f"Connectant a {HOST}:{PORT}...")
+        # Create InSim client
+        logger.info(f"Connecting to {HOST}:{PORT}...")
         client = InSimClient(
             host=HOST,
             port=PORT,
@@ -37,16 +37,16 @@ def main():
             app_name="BasicExample"
         )
         
-        # Connectar
+        # Connect
         client.connect()
-        logger.info("Connexió establerta!")
+        logger.info("Connection established!")
         
-        # Inicialitzar InSim
+        # Initialize InSim
         client.initialize()
-        logger.info("InSim inicialitzat!")
+        logger.info("InSim initialized!")
         
-        # Rebre alguns paquets
-        logger.info("Rebent paquets durant 10 segons...")
+        # Receive some packets
+        logger.info("Receiving packets for 10 seconds...")
         handler = PacketHandler()
         
         start_time = time.time()
@@ -55,24 +55,24 @@ def main():
             if packet:
                 info = handler.parse_packet(packet)
                 if info:
-                    logger.info(f"Paquet rebut - Tipus: {info.type}, Mida: {info.size}")
+                    logger.info(f"Packet received - Type: {info.type}, Size: {info.size}")
         
-        # Desconnectar
+        # Disconnect
         client.disconnect()
-        logger.info("Desconnectat!")
+        logger.info("Disconnected!")
         
     except ConnectionError as e:
-        logger.error(f"Error de connexió: {e}")
-        logger.info("Assegura't que LFS està executant-se i InSim està habilitat")
-        logger.info("Per habilitar InSim: /insim 29999 a LFS")
+        logger.error(f"Connection error: {e}")
+        logger.info("Make sure LFS is running and InSim is enabled")
+        logger.info("To enable InSim: /insim 29999 in LFS")
         return 1
     
     except KeyboardInterrupt:
-        logger.info("Interromput per l'usuari")
+        logger.info("Interrupted by user")
         return 0
     
     except Exception as e:
-        logger.error(f"Error inesperat: {e}", exc_info=True)
+        logger.error(f"Unexpected error: {e}", exc_info=True)
         return 1
     
     return 0

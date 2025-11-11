@@ -1,8 +1,8 @@
 """
 InSim Client
-Client per connectar-se al servidor LFS mitjançant el protocol InSim.
+Client to connect to the LFS server using the InSim protocol.
 
-Referència: https://en.lfsmanual.net/wiki/InSim.txt
+Reference: https://en.lfsmanual.net/wiki/InSim.txt
 """
 
 import socket
@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 class InSimVersion(IntEnum):
-    """Versions del protocol InSim"""
+    """InSim protocol versions"""
 
-    INSIM_VERSION = 9  # Versió actual del protocol
+    INSIM_VERSION = 9  # Current protocol version
 
 
 class ConnectionState(Enum):
@@ -34,7 +34,7 @@ class ConnectionState(Enum):
 
 
 class TinySubtype(IntEnum):
-    """Subtipus de paquets TINY per keepalive i control"""
+    """TINY packet subtypes for keepalive and control"""
 
     TINY_NONE = 0  # No subtype (keepalive)
     TINY_VER = 1  # Request version

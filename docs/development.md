@@ -1,64 +1,64 @@
-# Guia de Desenvolupament
+# Development Guide
 
-Aquesta guia proporciona informació per desenvolupadors que volen contribuir o utilitzar LFS-Ayats.
+This guide provides information for developers who want to contribute to or use LFS-Ayats.
 
-## Configuració de l'Entorn de Desenvolupament
+## Development Environment Setup
 
-### Requisits
+### Requirements
 
-- Python 3.8 o superior
+- Python 3.8 or higher
 - Git
-- Live for Speed (opcional per proves reals)
+- Live for Speed (optional for real testing)
 
-### Instal·lació
+### Installation
 
 ```bash
-# Clonar repositori
+# Clone repository
 git clone https://github.com/lfsplayer97/LFS-Ayats.git
 cd LFS-Ayats
 
-# Crear entorn virtual
+# Create virtual environment
 python -m venv venv
 
-# Activar entorn virtual
+# Activate virtual environment
 source venv/bin/activate  # Linux/Mac
 venv\Scripts\activate     # Windows
 
-# Instal·lar dependències de desenvolupament
+# Install development dependencies
 pip install -r requirements.txt
 pip install -e .
 ```
 
-## Estructura del Projecte
+## Project Structure
 
 ```
 LFS-Ayats/
-├── src/                    # Codi font
-│   ├── connection/        # Connexió InSim
-│   ├── telemetry/         # Telemetria
-│   ├── visualization/     # Visualització
-│   ├── export/            # Exportació
-│   ├── config/            # Configuració
-│   └── utils/             # Utilitats
+├── src/                    # Source code
+│   ├── connection/        # InSim connection
+│   ├── telemetry/         # Telemetry
+│   ├── visualization/     # Visualization
+│   ├── export/            # Export
+│   ├── config/            # Configuration
+│   └── utils/             # Utilities
 ├── tests/                 # Tests
-│   ├── unit/             # Tests unitaris
-│   └── integration/      # Tests d'integració
-├── examples/             # Exemples
-├── docs/                 # Documentació
-└── scripts/              # Scripts d'utilitat
+│   ├── unit/             # Unit tests
+│   └── integration/      # Integration tests
+├── examples/             # Examples
+├── docs/                 # Documentation
+└── scripts/              # Utility scripts
 ```
 
-## Convencions de Codi
+## Code Conventions
 
-### Estil Python (PEP 8)
+### Python Style (PEP 8)
 
-Utilitzem Black per formatació automàtica:
+We use Black for automatic formatting:
 
 ```bash
-# Formatar codi
+# Format code
 black src/ tests/
 
-# Comprovar estil
+# Check style
 flake8 src/ tests/
 
 # Type checking
@@ -67,24 +67,24 @@ mypy src/
 
 ### Docstrings
 
-Utilitzem docstrings estil Google:
+We use Google-style docstrings:
 
 ```python
 def function_name(param1: str, param2: int) -> bool:
     """
-    Breu descripció de la funció.
+    Brief function description.
 
-    Descripció més detallada si cal.
+    More detailed description if needed.
 
     Args:
-        param1: Descripció del paràmetre 1
-        param2: Descripció del paràmetre 2
+        param1: Description of parameter 1
+        param2: Description of parameter 2
 
     Returns:
-        Descripció del valor de retorn
+        Description of return value
 
     Raises:
-        ValueError: Quan param2 és negatiu
+        ValueError: When param2 is negative
 
     Example:
         >>> function_name("test", 42)
@@ -93,34 +93,34 @@ def function_name(param1: str, param2: int) -> bool:
     pass
 ```
 
-### Nomenclatura
+### Naming
 
-- **Classes**: `PascalCase` (ex: `InSimClient`)
-- **Funcions/mètodes**: `snake_case` (ex: `send_packet`)
-- **Constants**: `UPPER_SNAKE_CASE` (ex: `MAX_SPEED`)
-- **Variables privades**: `_leading_underscore` (ex: `_internal_var`)
+- **Classes**: `PascalCase` (e.g., `InSimClient`)
+- **Functions/methods**: `snake_case` (e.g., `send_packet`)
+- **Constants**: `UPPER_SNAKE_CASE` (e.g., `MAX_SPEED`)
+- **Private variables**: `_leading_underscore` (e.g., `_internal_var`)
 
 ## Tests
 
-### Executar Tests
+### Running Tests
 
 ```bash
-# Tots els tests
+# All tests
 pytest
 
-# Tests amb cobertura
+# Tests with coverage
 pytest --cov=src --cov-report=html
 
-# Tests específics
+# Specific tests
 pytest tests/unit/connection/
 pytest tests/integration/
 
-# Tests marcats
+# Marked tests
 pytest -m unit
 pytest -m integration
 ```
 
-### Escriure Tests
+### Writing Tests
 
 ```python
 import pytest
@@ -148,7 +148,7 @@ class TestInSimClient:
         assert client.connected
 ```
 
-### Fixtures de Test
+### Test Fixtures
 
 ```python
 # tests/fixtures/packets.py
@@ -159,22 +159,22 @@ def create_test_mci_packet():
     return struct.pack("=4B", 8, 38, 0, 1)  # Simplified
 ```
 
-## Desenvolupament de Nous Mòduls
+## Developing New Modules
 
-### 1. Planificació
+### 1. Planning
 
-- Definir la responsabilitat del mòdul
-- Identificar dependències
-- Dissenyar interfície pública
-- Considerar testabilitat
+- Define module responsibility
+- Identify dependencies
+- Design public interface
+- Consider testability
 
-### 2. Implementació
+### 2. Implementation
 
 ```python
 # src/new_module/__init__.py
 """
 New Module
-Descripció del mòdul.
+Module description.
 """
 
 __version__ = "0.1.0"
@@ -184,55 +184,55 @@ from .main_class import MainClass
 __all__ = ["MainClass"]
 ```
 
-### 3. Documentació
+### 3. Documentation
 
-- Docstrings completes
-- Exemples d'ús
-- Referències a documentació InSim
-- Actualitzar README.md si cal
+- Complete docstrings
+- Usage examples
+- References to InSim documentation
+- Update README.md if needed
 
 ### 4. Tests
 
-- Tests unitaris per totes les funcions públiques
-- Tests d'integració si interactua amb altres mòduls
-- Cobertura > 80%
+- Unit tests for all public functions
+- Integration tests if it interacts with other modules
+- Coverage > 80%
 
-## Integració amb InSim
+## InSim Integration
 
-### Afegir Suport per Nou Tipus de Paquet
+### Adding Support for New Packet Type
 
-1. **Actualitzar PacketType enum**:
+1. **Update PacketType enum**:
 
 ```python
 # src/connection/insim_client.py
 class PacketType(IntEnum):
-    # ... paquets existents ...
-    ISP_NEW = 99  # Nou tipus
+    # ... existing packets ...
+    ISP_NEW = 99  # New type
 ```
 
-2. **Afegir parser al PacketHandler**:
+2. **Add parser to PacketHandler**:
 
 ```python
 # src/connection/packet_handler.py
 def parse_new_packet(self, data: bytes) -> Optional[Dict[str, Any]]:
     """
-    Parseja un paquet IS_NEW.
+    Parse an IS_NEW packet.
     
-    Referència: https://en.lfsmanual.net/wiki/InSim.txt#IS_NEW
+    Reference: https://en.lfsmanual.net/wiki/InSim.txt#IS_NEW
     """
     try:
-        # Implementar parsing segons estructura
+        # Implement parsing according to structure
         unpacked = struct.unpack("=format", data)
         return {
             'field1': unpacked[0],
             'field2': unpacked[1],
         }
     except struct.error as e:
-        logger.error(f"Error parsejant IS_NEW: {e}")
+        logger.error(f"Error parsing IS_NEW: {e}")
         return None
 ```
 
-3. **Afegir tests**:
+3. **Add tests**:
 
 ```python
 # tests/unit/connection/test_packet_handler.py
@@ -254,24 +254,24 @@ def test_parse_new_packet(self):
 ```python
 from src.utils import setup_logger
 
-# Crear logger
+# Create logger
 logger = setup_logger("debug_session", level="DEBUG", log_file="debug.log")
 
-# Utilitzar
-logger.debug("Missatge de debug")
-logger.info("Informació")
-logger.warning("Advertència")
+# Use it
+logger.debug("Debug message")
+logger.info("Information")
+logger.warning("Warning")
 logger.error("Error")
 ```
 
-### Inspeccionar Paquets
+### Inspecting Packets
 
 ```python
 import struct
 
 def inspect_packet(data: bytes):
-    """Mostra contingut d'un paquet"""
-    print(f"Mida: {len(data)} bytes")
+    """Display packet contents"""
+    print(f"Size: {len(data)} bytes")
     print(f"Hex: {data.hex()}")
     
     if len(data) >= 4:
@@ -279,9 +279,9 @@ def inspect_packet(data: bytes):
         print(f"Size: {size}, Type: {pkt_type}, ReqI: {req_id}, Sub: {sub}")
 ```
 
-### Simular Servidor LFS
+### Simulating LFS Server
 
-Per desenvolupament sense LFS:
+For development without LFS:
 
 ```python
 # scripts/mock_server.py
@@ -289,7 +289,7 @@ import socket
 import struct
 
 def mock_lfs_server(port=29999):
-    """Mock LFS server per tests"""
+    """Mock LFS server for testing"""
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(('127.0.0.1', port))
     sock.listen(1)
@@ -299,11 +299,11 @@ def mock_lfs_server(port=29999):
     conn, addr = sock.accept()
     print(f"Connection from {addr}")
     
-    # Rebre IS_ISI
+    # Receive IS_ISI
     data = conn.recv(1024)
     print(f"Received: {len(data)} bytes")
     
-    # Enviar IS_VER
+    # Send IS_VER
     ver_packet = struct.pack(
         "=4B8s6sH",
         5, 2, 0, 0,
@@ -314,27 +314,27 @@ def mock_lfs_server(port=29999):
     conn.sendall(ver_packet)
     print("Sent IS_VER")
     
-    # Mantenir connexió...
+    # Keep connection...
 ```
 
-## Workflow de Desenvolupament
+## Development Workflow
 
-### 1. Crear Branca
+### 1. Create Branch
 
 ```bash
-git checkout -b feature/nova-funcionalitat
+git checkout -b feature/new-feature
 ```
 
-### 2. Desenvolupar
+### 2. Develop
 
-- Escriure codi
-- Afegir tests
-- Actualitzar documentació
+- Write code
+- Add tests
+- Update documentation
 
-### 3. Validar
+### 3. Validate
 
 ```bash
-# Formatar
+# Format
 black src/ tests/
 
 # Lint
@@ -351,43 +351,43 @@ mypy src/
 
 ```bash
 git add .
-git commit -m "feat: Afegir nova funcionalitat
+git commit -m "feat: Add new feature
 
-- Descripció detallada
-- Referències a issues si escau
+- Detailed description
+- References to issues if applicable
 "
 ```
 
 ### 5. Pull Request
 
-- Push de la branca
-- Crear PR amb descripció clara
-- Assegurar que els tests passen
-- Review de codi
+- Push the branch
+- Create PR with clear description
+- Ensure tests pass
+- Code review
 
-## Bones Pràctiques
+## Best Practices
 
-### Gestió d'Errors
+### Error Handling
 
 ```python
 try:
     result = risky_operation()
 except SpecificException as e:
-    logger.error(f"Error específic: {e}")
-    # Gestionar error
+    logger.error(f"Specific error: {e}")
+    # Handle error
 except Exception as e:
-    logger.error(f"Error inesperat: {e}", exc_info=True)
-    raise  # Re-llançar si no es pot gestionar
+    logger.error(f"Unexpected error: {e}", exc_info=True)
+    raise  # Re-raise if cannot handle
 ```
 
 ### Context Managers
 
 ```python
-# Preferir context managers per recursos
+# Prefer context managers for resources
 with InSimClient() as client:
     client.initialize()
-    # Utilitzar client...
-# Connexió tancada automàticament
+    # Use client...
+# Connection closed automatically
 ```
 
 ### Type Hints
@@ -399,31 +399,31 @@ def process_data(
     data: List[CarTelemetry],
     filter_speed: Optional[float] = None
 ) -> Dict[str, Any]:
-    """Sempre utilitzar type hints"""
+    """Always use type hints"""
     pass
 ```
 
-### Documentació de Codi
+### Code Documentation
 
-- Docstrings per totes les classes i funcions públiques
-- Comentaris per lògica complexa
-- Referències a InSim.txt quan apliqui
-- Exemples d'ús
+- Docstrings for all public classes and functions
+- Comments for complex logic
+- References to InSim.txt when applicable
+- Usage examples
 
-## Recursos
+## Resources
 
-### Documentació
+### Documentation
 - [InSim Protocol](insim_protocol.md)
 - [Packet Reference](packet_reference.md)
 - [API Reference](api_reference.md)
 
-### Eines
-- **Black**: Formatació de codi
+### Tools
+- **Black**: Code formatting
 - **Flake8**: Linting
 - **MyPy**: Type checking
 - **Pytest**: Testing
-- **Coverage**: Cobertura de tests
+- **Coverage**: Test coverage
 
-### Comunitat
+### Community
 - [LFS Forum](https://www.lfs.net/forum)
 - [GitHub Issues](https://github.com/lfsplayer97/LFS-Ayats/issues)

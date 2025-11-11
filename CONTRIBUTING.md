@@ -1,65 +1,65 @@
-# Guia de Contribució
+# Contribution Guide
 
-Gràcies pel teu interès en contribuir a LFS-Ayats! Aquest document proporciona directrius per contribuir al projecte.
+Thank you for your interest in contributing to LFS-Ayats! This document provides guidelines for contributing to the project.
 
-## Codi de Conducta
+## Code of Conduct
 
-- Sigues respectuós i professional
-- Accepta crítiques constructives
-- Centra't en el millor per la comunitat
-- Mostra empatia cap altres membres
+- Be respectful and professional
+- Accept constructive criticism
+- Focus on what's best for the community
+- Show empathy towards other members
 
-## Com Contribuir
+## How to Contribute
 
-### Reportar Bugs
+### Reporting Bugs
 
-Si trobes un bug, si us plau obre un issue amb:
+If you find a bug, please open an issue with:
 
-1. **Títol descriptiu**
-2. **Descripció detallada** del problema
-3. **Passos per reproduir** el bug
-4. **Comportament esperat** vs comportament actual
-5. **Entorn**: Versió de Python, OS, versió de LFS
-6. **Logs o captures** si escau
+1. **Descriptive title**
+2. **Detailed description** of the problem
+3. **Steps to reproduce** the bug
+4. **Expected behavior** vs actual behavior
+5. **Environment**: Python version, OS, LFS version
+6. **Logs or screenshots** if applicable
 
-### Suggerir Millores
+### Suggesting Improvements
 
-Per suggerir noves funcionalitats:
+To suggest new features:
 
-1. **Comprova** que no existeixi ja un issue similar
-2. **Descriu** la funcionalitat desitjada
-3. **Explica** el cas d'ús i beneficis
-4. **Proposa** una implementació si és possible
+1. **Check** that a similar issue doesn't already exist
+2. **Describe** the desired functionality
+3. **Explain** the use case and benefits
+4. **Propose** an implementation if possible
 
 ### Pull Requests
 
-#### Preparació
+#### Preparation
 
-1. **Fork** el repositori
-2. **Crea una branca** des de `main`:
+1. **Fork** the repository
+2. **Create a branch** from `main`:
    ```bash
-   git checkout -b feature/nom-funcionalitat
-   # o
-   git checkout -b fix/nom-bug
+   git checkout -b feature/feature-name
+   # or
+   git checkout -b fix/bug-name
    ```
 
-#### Desenvolupament
+#### Development
 
-1. **Segueix** les convencions de codi (PEP 8)
-2. **Escriu tests** per la teva funcionalitat
-3. **Actualitza documentació** si cal
-4. **Assegura't** que tots els tests passen:
+1. **Follow** coding conventions (PEP 8)
+2. **Write tests** for your functionality
+3. **Update documentation** if needed
+4. **Ensure** all tests pass:
    ```bash
    pytest --cov=src
    ```
 
-#### Format i Qualitat
+#### Format and Quality
 
 ```bash
-# Formatar codi
+# Format code
 black src/ tests/
 
-# Comprovar estil
+# Check style
 flake8 src/ tests/
 
 # Type checking
@@ -68,53 +68,53 @@ mypy src/
 
 #### Commit
 
-Utilitza missatges de commit descriptius:
+Use descriptive commit messages:
 
 ```
-feat: Afegir suport per paquet IS_NEW
+feat: Add support for IS_NEW packet
 
-- Implementar parser per IS_NEW
-- Afegir tests unitaris
-- Actualitzar documentació
+- Implement parser for IS_NEW
+- Add unit tests
+- Update documentation
 
 Refs: #123
 ```
 
-Prefixos recomanats:
-- `feat:` Nova funcionalitat
-- `fix:` Correcció de bug
-- `docs:` Canvis en documentació
-- `test:` Afegir o modificar tests
-- `refactor:` Refactorització de codi
-- `style:` Canvis de format (no afecten funcionalitat)
-- `perf:` Millores de rendiment
+Recommended prefixes:
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation changes
+- `test:` Add or modify tests
+- `refactor:` Code refactoring
+- `style:` Format changes (don't affect functionality)
+- `perf:` Performance improvements
 
-#### Crear Pull Request
+#### Creating Pull Request
 
-1. **Push** la teva branca al teu fork
-2. **Obre** un Pull Request a `main`
-3. **Descriu** els canvis realitzats
-4. **Referencia** issues relacionats
-5. **Espera** el review
+1. **Push** your branch to your fork
+2. **Open** a Pull Request to `main`
+3. **Describe** the changes made
+4. **Reference** related issues
+5. **Wait** for review
 
-### Review de Codi
+### Code Review
 
-Els PRs seran revisats per:
+PRs will be reviewed for:
 
-- **Qualitat del codi**: Seguiment de convencions
-- **Tests**: Cobertura adequada
-- **Documentació**: Clara i completa
-- **Funcionalitat**: Funciona com s'espera
-- **Impacte**: No trenca funcionalitat existent
+- **Code quality**: Following conventions
+- **Tests**: Adequate coverage
+- **Documentation**: Clear and complete
+- **Functionality**: Works as expected
+- **Impact**: Doesn't break existing functionality
 
-## Estàndards de Codi
+## Coding Standards
 
 ### Python (PEP 8)
 
 ```python
-# Bones pràctiques
+# Best practices
 
-# 1. Imports organitzats
+# 1. Organized imports
 import os
 import sys
 from typing import List, Optional
@@ -122,75 +122,75 @@ from typing import List, Optional
 from src.connection import InSimClient
 from src.telemetry import TelemetryCollector
 
-# 2. Constants en majúscules
+# 2. Constants in uppercase
 MAX_SPEED = 150.0
 DEFAULT_PORT = 29999
 
-# 3. Funcions amb type hints
+# 3. Functions with type hints
 def process_telemetry(data: List[CarTelemetry]) -> ProcessedTelemetry:
     """
-    Processa telemetria.
+    Process telemetry.
     
     Args:
-        data: Llista de telemetria
+        data: List of telemetry
         
     Returns:
-        Dades processades
+        Processed data
     """
     pass
 
-# 4. Classes amb docstrings
+# 4. Classes with docstrings
 class TelemetryProcessor:
     """
-    Processador de telemetria.
+    Telemetry processor.
     
     Attributes:
-        max_speed: Velocitat màxima permesa
+        max_speed: Maximum allowed speed
     """
     
     def __init__(self, max_speed: float = 150.0):
         self.max_speed = max_speed
 ```
 
-### Documentació
+### Documentation
 
-Tots els mòduls, classes i funcions públiques han de tenir docstrings:
+All public modules, classes, and functions must have docstrings:
 
 ```python
 def function_name(param1: str, param2: int) -> bool:
     """
-    Descripció breu.
+    Brief description.
 
-    Descripció detallada si necessària. Pot incloure múltiples
-    paràgrafs per explicar el comportament.
+    Detailed description if needed. Can include multiple
+    paragraphs to explain behavior.
 
     Args:
-        param1: Descripció del primer paràmetre
-        param2: Descripció del segon paràmetre
+        param1: Description of first parameter
+        param2: Description of second parameter
 
     Returns:
-        Descripció del valor retornat
+        Description of return value
 
     Raises:
-        ValueError: Quan param2 és negatiu
-        ConnectionError: Si no es pot connectar
+        ValueError: When param2 is negative
+        ConnectionError: If connection fails
 
     Example:
         >>> function_name("test", 42)
         True
         
-    Referència: https://en.lfsmanual.net/wiki/InSim.txt#section
+    Reference: https://en.lfsmanual.net/wiki/InSim.txt#section
     """
     pass
 ```
 
 ### Tests
 
-Escriu tests per:
+Write tests for:
 
-- Totes les funcions públiques
-- Casos límit i errors
-- Integració entre mòduls
+- All public functions
+- Edge cases and errors
+- Integration between modules
 
 ```python
 import pytest
@@ -218,21 +218,21 @@ class TestMyClass:
     @pytest.mark.integration
     def test_integration(self, instance):
         """Test integration with other modules"""
-        # Test d'integració
+        # Integration test
         pass
 ```
 
-## Estructura de Projecte
+## Project Structure
 
-Quan afegeixis nova funcionalitat, segueix aquesta estructura:
+When adding new functionality, follow this structure:
 
 ```
 src/
 └── new_module/
-    ├── __init__.py          # Exporta API pública
-    ├── main_class.py        # Classe principal
-    ├── helpers.py           # Funcions auxiliars
-    └── constants.py         # Constants del mòdul
+    ├── __init__.py          # Export public API
+    ├── main_class.py        # Main class
+    ├── helpers.py           # Helper functions
+    └── constants.py         # Module constants
 
 tests/
 └── unit/
@@ -242,59 +242,59 @@ tests/
         └── test_helpers.py
 
 docs/
-└── new_module.md            # Documentació del mòdul
+└── new_module.md            # Module documentation
 
 examples/
-└── new_module_example.py    # Exemple d'ús
+└── new_module_example.py    # Usage example
 ```
 
-## Aspectes Específics d'InSim
+## InSim-Specific Aspects
 
-### Implementar Nou Tipus de Paquet
+### Implementing New Packet Type
 
-1. **Consulta InSim.txt**: https://en.lfsmanual.net/wiki/InSim.txt
-2. **Afegeix el tipus** a `PacketType` enum
-3. **Implementa el parser** a `PacketHandler`
-4. **Escriu tests** amb paquets de prova
-5. **Documenta** l'estructura i ús
+1. **Consult InSim.txt**: https://en.lfsmanual.net/wiki/InSim.txt
+2. **Add the type** to `PacketType` enum
+3. **Implement the parser** in `PacketHandler`
+4. **Write tests** with test packets
+5. **Document** structure and usage
 
-### Telemetria
+### Telemetry
 
-- Considera rendiment (alta freqüència de dades)
-- Valida dades rebudes
-- Gestiona errors de xarxa
-- Documenta unitats de mesura
+- Consider performance (high data frequency)
+- Validate received data
+- Handle network errors
+- Document units of measurement
 
-### Referències
+### References
 
-Inclou sempre referències a la documentació oficial:
+Always include references to official documentation:
 
 ```python
 """
-Implementació del paquet IS_MCI.
+Implementation of IS_MCI packet.
 
-Referència: https://en.lfsmanual.net/wiki/InSim.txt#IS_MCI
+Reference: https://en.lfsmanual.net/wiki/InSim.txt#IS_MCI
 """
 ```
 
-## Llicència
+## License
 
-En contribuir, acceptes que les teves contribucions es llicenciïn sota la llicència MIT del projecte.
+By contributing, you agree that your contributions will be licensed under the project's MIT license.
 
-## Preguntes?
+## Questions?
 
-Si tens preguntes:
+If you have questions:
 
-1. Consulta la [documentació](docs/)
-2. Busca a [issues existents](https://github.com/lfsplayer97/LFS-Ayats/issues)
-3. Obre un nou issue amb etiqueta "question"
+1. Check the [documentation](docs/)
+2. Search [existing issues](https://github.com/lfsplayer97/LFS-Ayats/issues)
+3. Open a new issue with "question" label
 
-## Reconeixements
+## Acknowledgments
 
-Les contribucions seran reconegudes:
+Contributions will be acknowledged:
 
-- Al README.md
-- A les release notes
-- Al fitxer AUTHORS (si existeix)
+- In README.md
+- In release notes
+- In the AUTHORS file (if it exists)
 
-Gràcies per ajudar a millorar LFS-Ayats! 🏎️
+Thank you for helping improve LFS-Ayats! 🏎️

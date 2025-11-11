@@ -1,8 +1,8 @@
 """
 Data Logger Example
-Exemple de logger de dades amb exportació.
+Example of data logger with export functionality.
 
-Referència: https://en.lfsmanual.net/wiki/InSim.txt
+Reference: https://en.lfsmanual.net/wiki/InSim.txt
 """
 
 import sys
@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 from datetime import datetime
 
-# Afegir src al path
+# Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from connection import InSimClient
@@ -18,58 +18,58 @@ from telemetry import TelemetryCollector
 from export import CSVExporter, JSONExporter
 from utils import setup_logger
 
-# Configurar logging
+# Configure logging
 logger = setup_logger("data_logger", "INFO")
 
 
 def main():
-    """Exemple de logger de dades."""
-    logger.info("=== Data Logger LFS ===")
+    """Data logger example."""
+    logger.info("=== LFS Data Logger ===")
     
-    # Configuració
+    # Configuration
     HOST = "127.0.0.1"
     PORT = 29999
-    DURATION = 60  # segons
+    DURATION = 60  # seconds
     
-    # Crear directoris de sortida
+    # Create output directories
     output_dir = Path("data")
     output_dir.mkdir(exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     try:
-        # Crear client i connectar
-        logger.info(f"Connectant a {HOST}:{PORT}...")
+        # Create client and connect
+        logger.info(f"Connecting to {HOST}:{PORT}...")
         client = InSimClient(host=HOST, port=PORT, app_name="DataLogger")
         client.connect()
         
-        # Crear col·lector
+        # Create collector
         collector = TelemetryCollector(client)
         
-        # Iniciar recollida
-        logger.info(f"Recollint dades durant {DURATION} segons...")
+        # Start collection
+        logger.info(f"Collecting data for {DURATION} seconds...")
         collector.start(interval=100)
         
-        # Esperar
+        # Wait
         time.sleep(DURATION)
         
-        # Aturar recollida
+        # Stop collection
         collector.stop()
         
-        # Exportar dades
-        logger.info("\nExportant dades...")
+        # Export data
+        logger.info("\nExporting data...")
         
         for plid in collector.car_telemetry.keys():
             history = collector.get_telemetry_history(plid)
             
             if history:
-                # Exportar a CSV
+                # Export to CSV
                 csv_file = output_dir / f"telemetry_plid{plid}_{timestamp}.csv"
                 csv_exporter = CSVExporter(str(csv_file))
                 if csv_exporter.export(history):
-                    logger.info(f"Dades exportades a {csv_file}")
+                    logger.info(f"Data exported to {csv_file}")
                 
-                # Exportar a JSON
+                # Export to JSON
                 json_file = output_dir / f"telemetry_plid{plid}_{timestamp}.json"
                 json_exporter = JSONExporter(str(json_file))
                 metadata = {
@@ -78,18 +78,18 @@ def main():
                     'sample_count': len(history)
                 }
                 if json_exporter.export(history, metadata):
-                    logger.info(f"Dades exportades a {json_file}")
+                    logger.info(f"Data exported to {json_file}")
         
-        # Desconnectar
+        # Disconnect
         client.disconnect()
-        logger.info("Finalitzat!")
+        logger.info("Finished!")
         
     except ConnectionError as e:
-        logger.error(f"Error de connexió: {e}")
+        logger.error(f"Connection error: {e}")
         return 1
     
     except KeyboardInterrupt:
-        logger.info("\nInterromput per l'usuari")
+        logger.info("\nInterrupted by user")
         return 0
     
     except Exception as e:

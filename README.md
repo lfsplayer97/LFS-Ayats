@@ -1,166 +1,166 @@
 # LFS-Ayats: Live for Speed InSim Telemetry System
 
-Un sistema modular i complet per a la recollida, processament i visualització de dades de telemetria del simulador Live for Speed mitjançant el protocol InSim.
+A modular and complete system for collecting, processing, and visualizing telemetry data from the Live for Speed racing simulator using the InSim protocol.
 
-## 📋 Descripció
+## 📋 Description
 
-Aquest repositori proporciona una implementació professional del protocol InSim de Live for Speed, permetent:
+This repository provides a professional implementation of the Live for Speed InSim protocol, enabling:
 
-- **Connexió i comunicació** amb el servidor LFS mitjançant sockets TCP/UDP
-- **Recollida de telemetria** en temps real (velocitat, RPM, temperatura, posició, etc.)
-- **Processament de paquets** InSim amb validació i gestió d'errors
-- **Visualització de dades** en temps real amb dashboards interactius
-- **Exportació de dades** a formats CSV, JSON i bases de dades
-- **REST API** per accés programàtic i integració amb altres eines
-- **WebSocket** per streaming de telemetria en temps real
-- **Proves automàtiques** per validar inputs/outputs telemètrics
+- **Connection and communication** with the LFS server via TCP/UDP sockets
+- **Real-time telemetry collection** (speed, RPM, temperature, position, etc.)
+- **InSim packet processing** with validation and error handling
+- **Real-time data visualization** with interactive dashboards
+- **Data export** to CSV, JSON, and database formats
+- **REST API** for programmatic access and integration with other tools
+- **WebSocket** for real-time telemetry streaming
+- **Automated tests** to validate telemetry inputs/outputs
 
-## 🏗️ Estructura del Repositori
+## 🏗️ Repository Structure
 
 ```
 LFS-Ayats/
-├── src/                          # Codi font principal
-│   ├── api/                      # API REST (FastAPI)
+├── src/                          # Main source code
+│   ├── api/                      # REST API (FastAPI)
 │   │   ├── __init__.py
-│   │   ├── main.py              # Aplicació FastAPI
-│   │   ├── models.py            # Models Pydantic
+│   │   ├── main.py              # FastAPI application
+│   │   ├── models.py            # Pydantic models
 │   │   ├── dependencies.py      # Dependency injection
-│   │   ├── middleware.py        # CORS i logging
-│   │   ├── exceptions.py        # Excepcions personalitzades
-│   │   └── routers/             # Endpoints API
-│   ├── connection/               # Mòdul de connexió InSim
+│   │   ├── middleware.py        # CORS and logging
+│   │   ├── exceptions.py        # Custom exceptions
+│   │   └── routers/             # API endpoints
+│   ├── connection/               # InSim connection module
 │   │   ├── __init__.py
-│   │   ├── insim_client.py      # Client InSim TCP/UDP
-│   │   └── packet_handler.py    # Gestió de paquets InSim
-│   ├── telemetry/               # Mòdul de telemetria
+│   │   ├── insim_client.py      # InSim TCP/UDP client
+│   │   └── packet_handler.py    # InSim packet handling
+│   ├── telemetry/               # Telemetry module
 │   │   ├── __init__.py
-│   │   ├── collector.py         # Recollida de dades telemètriques
-│   │   └── processor.py         # Processament i validació de dades
-│   ├── database/                # Mòdul de base de dades
+│   │   ├── collector.py         # Telemetry data collection
+│   │   └── processor.py         # Data processing and validation
+│   ├── database/                # Database module
 │   │   ├── __init__.py
-│   │   ├── models.py            # Models SQLAlchemy
-│   │   └── repository.py        # Capa d'accés a dades
-│   ├── visualization/           # Mòdul de visualització
+│   │   ├── models.py            # SQLAlchemy models
+│   │   └── repository.py        # Data access layer
+│   ├── visualization/           # Visualization module
 │   │   ├── __init__.py
-│   │   ├── dashboard.py         # Dashboard web en temps real (Dash)
-│   │   ├── plots.py             # Gràfics d'anàlisi
-│   │   ├── map_view.py          # Visualització de mapes de circuit
-│   │   ├── comparator.py        # Comparació de voltes
-│   │   └── components/          # Components reutilitzables
-│   ├── export/                  # Mòdul d'exportació
+│   │   ├── dashboard.py         # Real-time web dashboard (Dash)
+│   │   ├── plots.py             # Analysis plots
+│   │   ├── map_view.py          # Circuit map visualization
+│   │   ├── comparator.py        # Lap comparison
+│   │   └── components/          # Reusable components
+│   ├── export/                  # Export module
 │   │   ├── __init__.py
-│   │   ├── csv_exporter.py     # Exportació a CSV
-│   │   ├── json_exporter.py    # Exportació a JSON
-│   │   └── db_exporter.py      # Exportació a base de dades
-│   ├── config/                  # Gestió de configuració
+│   │   ├── csv_exporter.py     # CSV export
+│   │   ├── json_exporter.py    # JSON export
+│   │   └── db_exporter.py      # Database export
+│   ├── config/                  # Configuration management
 │   │   ├── __init__.py
-│   │   └── settings.py         # Configuració de l'aplicació
-│   └── utils/                   # Utilitats comunes
+│   │   └── settings.py         # Application configuration
+│   └── utils/                   # Common utilities
 │       ├── __init__.py
-│       └── logger.py           # Sistema de logging
-├── tests/                       # Proves automàtiques
-│   ├── unit/                   # Tests unitaris
-│   ├── integration/            # Tests d'integració
-│   └── fixtures/               # Dades de prova
-├── examples/                    # Exemples d'ús
-│   ├── basic_connection.py     # Connexió bàsica
-│   ├── telemetry_monitor.py   # Monitor de telemetria
-│   ├── data_logger.py         # Logger de dades
-│   └── api_client_example.py  # Client de l'API REST
-├── docs/                       # Documentació
-│   ├── insim_protocol.md      # Documentació del protocol InSim
-│   ├── packet_reference.md    # Referència de paquets
-│   ├── api_reference.md       # Referència de l'API
-│   ├── api_documentation.md   # Documentació de l'API REST
-│   └── development.md         # Guia de desenvolupament
-├── scripts/                    # Scripts d'utilitat
-│   └── delete-branches.sh     # Gestió de branques
-├── .gitignore                 # Fitxers ignorats per Git
-├── requirements.txt           # Dependències Python
-├── setup.py                   # Instal·lació del paquet
-├── pytest.ini                 # Configuració de pytest
-└── README.md                  # Aquest fitxer
+│       └── logger.py           # Logging system
+├── tests/                       # Automated tests
+│   ├── unit/                   # Unit tests
+│   ├── integration/            # Integration tests
+│   └── fixtures/               # Test data
+├── examples/                    # Usage examples
+│   ├── basic_connection.py     # Basic connection
+│   ├── telemetry_monitor.py   # Telemetry monitor
+│   ├── data_logger.py         # Data logger
+│   └── api_client_example.py  # REST API client
+├── docs/                       # Documentation
+│   ├── insim_protocol.md      # InSim protocol documentation
+│   ├── packet_reference.md    # Packet reference
+│   ├── api_reference.md       # API reference
+│   ├── api_documentation.md   # REST API documentation
+│   └── development.md         # Development guide
+├── scripts/                    # Utility scripts
+│   └── delete-branches.sh     # Branch management
+├── .gitignore                 # Git ignored files
+├── requirements.txt           # Python dependencies
+├── setup.py                   # Package installation
+├── pytest.ini                 # pytest configuration
+└── README.md                  # This file
 ```
 
-## 🚀 Instal·lació
+## 🚀 Installation
 
-### Requisits Previs
+### Prerequisites
 
-- Python 3.8 o superior
-- Live for Speed (demostració o versió completa)
-- pip (gestor de paquets Python)
+- Python 3.8 or higher
+- Live for Speed (demo or full version)
+- pip (Python package manager)
 
-### Instal·lació de Dependències
+### Installing Dependencies
 
 ```bash
-# Clonar el repositori
+# Clone the repository
 git clone https://github.com/lfsplayer97/LFS-Ayats.git
 cd LFS-Ayats
 
-# Crear entorn virtual (recomanat)
+# Create virtual environment (recommended)
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-# o
+# or
 venv\Scripts\activate  # Windows
 
-# Instal·lar dependències
+# Install dependencies
 pip install -r requirements.txt
 
-# Instal·lar el paquet en mode desenvolupament
+# Install package in development mode
 pip install -e .
 ```
 
-## 📚 Documentació Completa
+## 📚 Complete Documentation
 
-LFS-Ayats disposa de documentació extensa per tots els nivells d'usuari:
+LFS-Ayats has extensive documentation for all user levels:
 
-### 🚀 Començar
+### 🚀 Getting Started
 
-- **[Guia d'Inici Ràpid](docs/quick-start.md)** - Posa el sistema en funcionament en 5-10 minuts
-- **[FAQ](docs/faq.md)** - Preguntes freqüents i solució de problemes
+- **[Quick Start Guide](docs/quick-start.md)** - Get the system running in 5-10 minutes
+- **[FAQ](docs/faq.md)** - Frequently asked questions and troubleshooting
 
-### 🎓 Tutorials Interactius
+### 🎓 Interactive Tutorials
 
-| Tutorial | Descripció | Temps | Nivell |
-|----------|------------|-------|--------|
-| **[01 - Primera Sessió](docs/tutorials/01-first-session.md)** | Recull i exporta telemetria bàsica | 30 min | Principiant |
-| **[02 - Anàlisi de Voltes](docs/tutorials/02-lap-analysis.md)** | Compara voltes i troba millores | 45 min | Intermedi |
-| **[03 - Dashboard Temps Real](docs/tutorials/03-real-time-dashboard.md)** | Crea dashboard web interactiu | 30 min | Intermedi |
-| **[04 - Anàlisi Avançada](docs/tutorials/04-advanced-analysis.md)** | Machine learning i prediccions | 60 min | Avançat |
-| **[05 - Base de Dades](docs/tutorials/05-database-integration.md)** | Emmagatzema històrics | 45 min | Avançat |
+| Tutorial | Description | Time | Level |
+|----------|-------------|------|-------|
+| **[01 - First Session](docs/tutorials/01-first-session.md)** | Collect and export basic telemetry | 30 min | Beginner |
+| **[02 - Lap Analysis](docs/tutorials/02-lap-analysis.md)** | Compare laps and find improvements | 45 min | Intermediate |
+| **[03 - Real-time Dashboard](docs/tutorials/03-real-time-dashboard.md)** | Create interactive web dashboard | 30 min | Intermediate |
+| **[04 - Advanced Analysis](docs/tutorials/04-advanced-analysis.md)** | Machine learning and predictions | 60 min | Advanced |
+| **[05 - Database](docs/tutorials/05-database-integration.md)** | Store historical data | 45 min | Advanced |
 
-### 💡 Casos d'Ús
+### 💡 Use Cases
 
-- **[Carreres de Lliga](docs/use-cases/league-racing.md)** - Configuració per lligues amb múltiples pilots
-- **[Entrenament de Pilots](docs/use-cases/driver-coaching.md)** - Sistema de coaching basat en dades
+- **[League Racing](docs/use-cases/league-racing.md)** - Configuration for leagues with multiple drivers
+- **[Driver Coaching](docs/use-cases/driver-coaching.md)** - Data-driven coaching system
 
-### 🏗️ Documentació Tècnica
+### 🏗️ Technical Documentation
 
-- **[Arquitectura del Sistema](docs/architecture.md)** - Components i patrons de disseny
-- **[Protocol InSim](docs/insim_protocol.md)** - Detalls del protocol de comunicació
-- **[API REST](docs/api_documentation.md)** - Documentació completa de l'API
-- **[Referència API](docs/api_reference.md)** - Referència de classes i mètodes
-- **[Visualització](docs/visualization.md)** - Gràfics i dashboards
-- **[Mòdul d'Anàlisi](docs/analysis_module.md)** - Anàlisi avançada
+- **[System Architecture](docs/architecture.md)** - Components and design patterns
+- **[InSim Protocol](docs/insim_protocol.md)** - Communication protocol details
+- **[REST API](docs/api_documentation.md)** - Complete API documentation
+- **[API Reference](docs/api_reference.md)** - Class and method reference
+- **[Visualization](docs/visualization.md)** - Charts and dashboards
+- **[Analysis Module](docs/analysis_module.md)** - Advanced analysis
 
-### 👨‍💻 Per Desenvolupadors
+### 👨‍💻 For Developers
 
-- **[Configuració d'Entorn](docs/contributing/development-setup.md)** - Setup per contribuir
-- **[Estàndards de Codi](docs/contributing/coding-standards.md)** - Convencions i bones pràctiques
-- **[Guia de Testing](docs/contributing/testing-guide.md)** - Escriure i executar tests
-- **[Guia de Contribució](CONTRIBUTING.md)** - Com contribuir al projecte
+- **[Environment Setup](docs/contributing/development-setup.md)** - Setup for contributing
+- **[Coding Standards](docs/contributing/coding-standards.md)** - Conventions and best practices
+- **[Testing Guide](docs/contributing/testing-guide.md)** - Writing and running tests
+- **[Contribution Guide](CONTRIBUTING.md)** - How to contribute to the project
 
-**📖 [Índex Complet de Documentació](docs/README.md)**
+**📖 [Complete Documentation Index](docs/README.md)**
 
-## 📖 Ús Bàsic
+## 📖 Basic Usage
 
-### Connexió a LFS
+### Connecting to LFS
 
 ```python
 from src.connection import InSimClient
 from src.telemetry import TelemetryCollector
 
-# Crear client InSim
+# Create InSim client
 client = InSimClient(
     host='127.0.0.1',
     port=29999,
@@ -168,57 +168,57 @@ client = InSimClient(
     app_name='LFS-Ayats'
 )
 
-# Connectar
+# Connect
 client.connect()
 
-# Crear col·lector de telemetria
+# Create telemetry collector
 collector = TelemetryCollector(client)
 
-# Iniciar recollida de dades
+# Start data collection
 collector.start()
 ```
 
-### Exportació de Dades
+### Data Export
 
 ```python
 from src.export import CSVExporter, JSONExporter
 
-# Exportar a CSV
+# Export to CSV
 csv_exporter = CSVExporter('telemetry_data.csv')
 csv_exporter.export(telemetry_data)
 
-# Exportar a JSON
+# Export to JSON
 json_exporter = JSONExporter('telemetry_data.json')
 json_exporter.export(telemetry_data)
 ```
 
 ### REST API
 
-El sistema inclou una API REST completa construïda amb FastAPI per accés programàtic:
+The system includes a complete REST API built with FastAPI for programmatic access:
 
 ```bash
-# Iniciar el servidor API
+# Start the API server
 uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-**Documentació Automàtica:**
+**Automatic Documentation:**
 - Swagger UI: http://localhost:8000/api/docs
 - ReDoc: http://localhost:8000/api/redoc
 
-**Exemple d'ús del client:**
+**Client usage example:**
 
 ```python
 import requests
 
-# Llistar sessions
+# List sessions
 response = requests.get("http://localhost:8000/api/v1/sessions")
 sessions = response.json()
 
-# Obtenir telemetria d'una volta
+# Get lap telemetry
 response = requests.get("http://localhost:8000/api/v1/1/telemetry")
 telemetry = response.json()
 
-# WebSocket per telemetria en temps real
+# WebSocket for real-time telemetry
 import websockets
 import asyncio
 
@@ -232,31 +232,31 @@ async def receive_telemetry():
 asyncio.run(receive_telemetry())
 ```
 
-**Endpoints disponibles:**
+**Available endpoints:**
 - `/api/v1/health` - Health check
-- `/api/v1/sessions` - Gestió de sessions
-- `/api/v1/{lap_id}` - Informació de voltes
+- `/api/v1/sessions` - Session management
+- `/api/v1/{lap_id}` - Lap information
 - `/api/v1/telemetry/live` - WebSocket streaming
-- `/api/v1/stats/best-laps` - Millors voltes
-- `/api/v1/export/csv/{lap_id}` - Exportació CSV
-- i molts més...
+- `/api/v1/stats/best-laps` - Best laps
+- `/api/v1/export/csv/{lap_id}` - CSV export
+- and many more...
 
-Vegeu [docs/api_documentation.md](docs/api_documentation.md) per documentació completa de l'API.
+See [docs/api_documentation.md](docs/api_documentation.md) for complete API documentation.
 
-## 🔌 Integracions Externes
+## 🔌 External Integrations
 
-LFS-Ayats ofereix integracions amb serveis externs per notificacions, streaming i backup automàtic.
+LFS-Ayats offers integrations with external services for notifications, streaming, and automatic backup.
 
 ### Discord
 
-Envia notificacions automàtiques a canals de Discord:
+Send automatic notifications to Discord channels:
 
 ```python
 from src.integrations import DiscordIntegration
 
 discord = DiscordIntegration(webhook_url="https://discord.com/api/webhooks/...")
 
-# Notificar millor temps personal
+# Notify personal best
 await discord.notify_personal_best({
     'circuit': 'Blackwood GP',
     'time': 98.456,
@@ -267,26 +267,26 @@ await discord.notify_personal_best({
 
 ### Telegram
 
-Envia missatges i imatges a través d'un bot de Telegram:
+Send messages and images via a Telegram bot:
 
 ```python
 from src.integrations import TelegramIntegration
 
 telegram = TelegramIntegration(bot_token="YOUR_TOKEN", chat_id="YOUR_CHAT_ID")
-await telegram.send_message("<b>Sistema en línia!</b>")
+await telegram.send_message("<b>System online!</b>")
 ```
 
 ### Streaming Overlay (OBS)
 
-Mostra telemetria en temps real en OBS Studio:
+Display real-time telemetry in OBS Studio:
 
 ```python
 from src.integrations import StreamingOverlay
 
 overlay = StreamingOverlay(port=5000)
-overlay.start()  # Accedeix a http://localhost:5000
+overlay.start()  # Access at http://localhost:5000
 
-# Actualitza dades de telemetria
+# Update telemetry data
 overlay.update_telemetry({
     'speed': 120.5,
     'rpm': 6500,
@@ -297,7 +297,7 @@ overlay.update_telemetry({
 
 ### Cloud Storage (Google Drive / Dropbox)
 
-Backup automàtic a Google Drive o Dropbox:
+Automatic backup to Google Drive or Dropbox:
 
 ```python
 from src.integrations import GoogleDriveIntegration
@@ -306,9 +306,9 @@ gdrive = GoogleDriveIntegration('./credentials.json')
 gdrive.auto_backup('./data/', folder_id='optional_folder_id')
 ```
 
-**Configuració:**
+**Configuration:**
 
-Afegeix a `config.yaml`:
+Add to `config.yaml`:
 
 ```yaml
 integrations:
@@ -334,37 +334,37 @@ integrations:
     enabled: false
     provider: google_drive
     auto_backup: true
-    backup_interval: 3600  # segons
+    backup_interval: 3600  # seconds
     credentials_path: ./credentials.json
 ```
 
-**Exemples complets:**
+**Complete examples:**
 - `examples/discord_integration_example.py`
 - `examples/telegram_integration_example.py`
 - `examples/streaming_overlay_example.py`
 - `examples/cloud_storage_example.py`
 - `examples/integrated_system_example.py`
 
-Vegeu [docs/integrations.md](docs/integrations.md) per documentació completa de les integracions.
+See [docs/integrations.md](docs/integrations.md) for complete integration documentation.
 
-### Visualització en Temps Real
+### Real-time Visualization
 
 ```python
 from src.visualization import TelemetryDashboard
 
-# Crear dashboard web en temps real
+# Create real-time web dashboard
 dashboard = TelemetryDashboard(
     host='127.0.0.1',
     port=29999,
-    update_interval=100  # actualització cada 100ms
+    update_interval=100  # update every 100ms
 )
 
-# Executar el servidor del dashboard
+# Run the dashboard server
 dashboard.run(debug=True, port=8050)
-# Obre el navegador a http://localhost:8050
+# Open browser at http://localhost:8050
 ```
 
-### Anàlisi i Comparació de Voltes
+### Lap Analysis and Comparison
 
 ```python
 from src.visualization import (
@@ -374,156 +374,156 @@ from src.visualization import (
     create_heatmap_plot
 )
 
-# Comparar voltes
+# Compare laps
 comparator = LapComparator()
 comparator.add_lap("Lap 1", lap1_telemetry)
 comparator.add_lap("Lap 2", lap2_telemetry)
 
-# Crear gràfics de comparació
+# Create comparison plots
 fig = comparator.create_comparison_plot()
 fig.write_html("lap_comparison.html")
 
-# Crear mapa de circuit amb velocitats
+# Create track map with speeds
 track_fig = create_track_map(telemetry, show_speed_colors=True)
 track_fig.write_html("track_map.html")
 
-# Crear mapa de calor
+# Create heatmap
 heatmap_fig = create_heatmap_plot(telemetry)
 heatmap_fig.write_html("speed_heatmap.html")
 ```
 
-Per més informació sobre visualització, consulta [docs/visualization.md](docs/visualization.md)
+For more information on visualization, see [docs/visualization.md](docs/visualization.md)
 
-## 🧪 Proves Automàtiques
+## 🧪 Automated Tests
 
-El projecte inclou proves automàtiques completes per garantir la qualitat del codi:
+The project includes comprehensive automated tests to ensure code quality:
 
 ```bash
-# Executar totes les proves
+# Run all tests
 pytest
 
-# Executar proves amb cobertura
+# Run tests with coverage
 pytest --cov=src --cov-report=html
 
-# Executar proves específiques
+# Run specific tests
 pytest tests/unit/connection/
 pytest tests/integration/
 ```
 
-## 📚 Protocol InSim
+## 📚 InSim Protocol
 
-InSim (Internet Simulator) és el protocol de comunicació de Live for Speed que permet a aplicacions externes interactuar amb el simulador.
+InSim (Internet Simulator) is Live for Speed's communication protocol that allows external applications to interact with the simulator.
 
-### Paquets InSim Principals
+### Main InSim Packets
 
-| Paquet | Descripció | Ús |
-|--------|------------|-----|
-| `IS_ISI` | InSim Init | Inicialitzar connexió InSim |
-| `IS_VER` | Version | Versió del protocol InSim |
-| `IS_TINY` | Tiny | Paquets de control petit |
-| `IS_SMALL` | Small | Paquets de dades petit |
-| `IS_MCI` | Multi Car Info | Informació de múltiples cotxes |
-| `IS_NLP` | Node and Lap | Informació de nodes i voltes |
-| `IS_MSO` | Message Out | Missatges del servidor |
-| `IS_III` | InSim Info | Informació del servidor |
-| `IS_STA` | State | Estat del servidor |
-| `IS_NCN` | New Connection | Nova connexió de jugador |
-| `IS_CNL` | Connection Leave | Jugador desconnecta |
-| `IS_CPR` | Connection Player Rename | Canvi de nom de jugador |
-| `IS_NPL` | New Player | Nou jugador a la pista |
-| `IS_PLP` | Player Leave | Jugador deixa la pista |
-| `IS_PIT` | Pit Stop | Parada als boxes |
-| `IS_PSF` | Pit Stop Finish | Fi de parada als boxes |
-| `IS_LAP` | Lap Time | Temps de volta |
-| `IS_SPX` | Split Time | Temps de sector |
-| `IS_PEN` | Penalty | Penalització |
-| `IS_TOC` | Take Over Car | Canvi de control de cotxe |
-| `IS_FLG` | Flag | Bandera |
-| `IS_RES` | Result | Resultats |
-| `IS_REO` | Reorder | Reordenació de cotxes |
-| `IS_BTN` | Button | Botons d'interfície |
-| `IS_BFN` | Button Function | Funcions de botons |
-| `IS_AXI` | Autocross Info | Informació d'Autocross |
-| `IS_RIP` | Replay Info | Informació de replay |
+| Packet | Description | Usage |
+|--------|-------------|-------|
+| `IS_ISI` | InSim Init | Initialize InSim connection |
+| `IS_VER` | Version | InSim protocol version |
+| `IS_TINY` | Tiny | Small control packets |
+| `IS_SMALL` | Small | Small data packets |
+| `IS_MCI` | Multi Car Info | Multiple car information |
+| `IS_NLP` | Node and Lap | Node and lap information |
+| `IS_MSO` | Message Out | Server messages |
+| `IS_III` | InSim Info | Server information |
+| `IS_STA` | State | Server state |
+| `IS_NCN` | New Connection | New player connection |
+| `IS_CNL` | Connection Leave | Player disconnect |
+| `IS_CPR` | Connection Player Rename | Player name change |
+| `IS_NPL` | New Player | New player on track |
+| `IS_PLP` | Player Leave | Player leaves track |
+| `IS_PIT` | Pit Stop | Pit stop |
+| `IS_PSF` | Pit Stop Finish | Pit stop finish |
+| `IS_LAP` | Lap Time | Lap time |
+| `IS_SPX` | Split Time | Sector time |
+| `IS_PEN` | Penalty | Penalty |
+| `IS_TOC` | Take Over Car | Car control change |
+| `IS_FLG` | Flag | Flag |
+| `IS_RES` | Result | Results |
+| `IS_REO` | Reorder | Car reordering |
+| `IS_BTN` | Button | Interface buttons |
+| `IS_BFN` | Button Function | Button functions |
+| `IS_AXI` | Autocross Info | Autocross information |
+| `IS_RIP` | Replay Info | Replay information |
 
-### Telemetria Disponible
+### Available Telemetry
 
-La telemetria que es pot recollir inclou:
+Telemetry that can be collected includes:
 
-- **Dades del vehicle**: velocitat, RPM, marxa, angle de direcció
-- **Dades del motor**: temperatura, consum de combustible, força
-- **Dades de posició**: coordenades X/Y/Z, orientació, alçada
-- **Dades de volta**: temps de volta, millor temps, sectors
-- **Dades de la pista**: tipus de superfície, distància recorreguda
-- **Dades del jugador**: nom, equip, cotxe, configuració
-- **Esdeveniments**: sortida, arribada, parades als boxes, penalitzacions
+- **Vehicle data**: speed, RPM, gear, steering angle
+- **Engine data**: temperature, fuel consumption, force
+- **Position data**: X/Y/Z coordinates, orientation, altitude
+- **Lap data**: lap time, best time, sectors
+- **Track data**: surface type, distance traveled
+- **Player data**: name, team, car, setup
+- **Events**: start, finish, pit stops, penalties
 
-## 📖 Referències
+## 📖 References
 
-### Documentació Oficial
+### Official Documentation
 
 - **LFS Manual**: https://en.lfsmanual.net/wiki/Main_Page
 - **InSim Protocol**: https://en.lfsmanual.net/wiki/InSim.txt
 - **Outgauge Protocol**: https://en.lfsmanual.net/wiki/OutGauge
 - **Outsim Protocol**: https://en.lfsmanual.net/wiki/OutSim
 
-### Recursos Addicionals
+### Additional Resources
 
 - **LFS Forum**: https://www.lfs.net/forum
 - **LFS World**: https://www.lfs.net/
-- **Documentació del Projecte**:
-  - [Protocol InSim Detallat](docs/insim_protocol.md)
-  - [Referència de Paquets](docs/packet_reference.md)
-  - [Arquitectura del Sistema](docs/architecture.md)
+- **Project Documentation**:
+  - [Detailed InSim Protocol](docs/insim_protocol.md)
+  - [Packet Reference](docs/packet_reference.md)
+  - [System Architecture](docs/architecture.md)
   - [FAQ](docs/faq.md)
-  - [Índex de Documentació](docs/README.md)
-- **API Reference**: Consultar `docs/api_reference.md`
+  - [Documentation Index](docs/README.md)
+- **API Reference**: See `docs/api_reference.md`
 
-## 🤝 Contribució
+## 🤝 Contributing
 
-Les contribucions són benvingudes! Si vols contribuir:
+Contributions are welcome! If you want to contribute:
 
-1. Fork el repositori
-2. Crea una branca per la teva feature (`git checkout -b feature/nova-funcionalitat`)
-3. Commit els teus canvis (`git commit -m 'Afegir nova funcionalitat'`)
-4. Push a la branca (`git push origin feature/nova-funcionalitat`)
-5. Obre un Pull Request
+1. Fork the repository
+2. Create a branch for your feature (`git checkout -b feature/new-feature`)
+3. Commit your changes (`git commit -m 'Add new feature'`)
+4. Push to the branch (`git push origin feature/new-feature`)
+5. Open a Pull Request
 
-### Guies per Desenvolupadors
+### Developer Guides
 
-Per començar a contribuir, consulta:
+To start contributing, see:
 
-- **[Guia de Contribució](CONTRIBUTING.md)** - Procés complet de contribució
-- **[Configuració d'Entorn](docs/contributing/development-setup.md)** - Setup del teu entorn
-- **[Estàndards de Codi](docs/contributing/coding-standards.md)** - Convencions a seguir
-- **[Guia de Testing](docs/contributing/testing-guide.md)** - Com escriure i executar tests
+- **[Contribution Guide](CONTRIBUTING.md)** - Complete contribution process
+- **[Environment Setup](docs/contributing/development-setup.md)** - Setup your environment
+- **[Coding Standards](docs/contributing/coding-standards.md)** - Conventions to follow
+- **[Testing Guide](docs/contributing/testing-guide.md)** - How to write and run tests
 
-### Bones Pràctiques
+### Best Practices
 
-- Seguir les convencions de codi PEP 8
-- Escriure proves per a totes les noves funcionalitats
-- Documentar el codi amb docstrings (estil Google)
-- Actualitzar la documentació si cal
-- Mantenir la modularitat i separació de responsabilitats
+- Follow PEP 8 coding conventions
+- Write tests for all new features
+- Document code with docstrings (Google style)
+- Update documentation as needed
+- Maintain modularity and separation of concerns
 
-## 📄 Llicència
+## 📄 License
 
-Aquest projecte està sota llicència MIT. Veure el fitxer `LICENSE` per més detalls.
+This project is licensed under the MIT License. See the `LICENSE` file for more details.
 
-## ✨ Autors
+## ✨ Authors
 
-- **lfsplayer97** - Desenvolupador principal
+- **lfsplayer97** - Main developer
 
-## 🙏 Agraïments
+## 🙏 Acknowledgments
 
-- Scawen Roberts i l'equip de Live for Speed pel simulator i el protocol InSim
-- La comunitat LFS per la documentació i suport
-- Contributors i beta testers
+- Scawen Roberts and the Live for Speed team for the simulator and InSim protocol
+- The LFS community for documentation and support
+- Contributors and beta testers
 
-## 📞 Contacte
+## 📞 Contact
 
-Per qüestions, suggeriments o problemes, si us plau obre un issue al repositori de GitHub.
+For questions, suggestions, or issues, please open an issue on the GitHub repository.
 
 ---
 
-**Nota**: Aquest projecte està en desenvolupament actiu. Consulta la documentació i els exemples per més informació sobre l'ús i les funcionalitats disponibles.
+**Note**: This project is under active development. Check the documentation and examples for more information on usage and available features.
