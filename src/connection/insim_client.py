@@ -62,24 +62,24 @@ class TinySubtype(IntEnum):
 
 class PacketType(IntEnum):
     """
-    Tipus de paquets InSim
-    Referència: https://en.lfsmanual.net/wiki/InSim.txt
+    InSim packet types
+    Reference: https://en.lfsmanual.net/wiki/InSim.txt
     """
 
     ISP_NONE = 0  # Instruction packet
-    ISP_ISI = 1  # InSim Init - Inicialitzar connexió
-    ISP_VER = 2  # Version - Informació de versió
-    ISP_TINY = 3  # Tiny - Paquets de control petit
-    ISP_SMALL = 4  # Small - Paquets de dades petit
-    ISP_STA = 5  # State - Estat del servidor
-    ISP_SCH = 6  # Single Character - Un caràcter
+    ISP_ISI = 1  # InSim Init - Initialize connection
+    ISP_VER = 2  # Version - Version information
+    ISP_TINY = 3  # Tiny - Small control packets
+    ISP_SMALL = 4  # Small - Small data packets
+    ISP_STA = 5  # State - Server state
+    ISP_SCH = 6  # Single Character - One character
     ISP_SFP = 7  # State Flags Pack
     ISP_SCC = 8  # Set Car Camera
     ISP_CPP = 9  # Camera Position Pack
     ISP_ISM = 10  # InSim Multi
-    ISP_MSO = 11  # Message Out - Missatges del servidor
+    ISP_MSO = 11  # Message Out - Server messages
     ISP_III = 12  # InSim Info
-    ISP_MST = 13  # MSg Type - Tipus de missatge
+    ISP_MST = 13  # MSg Type - Message type
     ISP_MTC = 14  # Msg To Connection
     ISP_MOD = 15  # MODification
     ISP_VTN = 16  # VoTe Notification
@@ -126,22 +126,22 @@ class PacketType(IntEnum):
 
 class InSimClient:
     """
-    Client per connectar-se i comunicar-se amb el servidor LFS mitjançant InSim.
+    Client to connect and communicate with the LFS server via InSim.
 
-    Inclou sistema de reconnexió automàtica, circuit breaker, heartbeat,
-    i validació de paquets per garantir fiabilitat.
+    Includes automatic reconnection system, circuit breaker, heartbeat,
+    and packet validation to ensure reliability.
 
     Attributes:
-        host (str): Adreça IP del servidor LFS
-        port (int): Port InSim del servidor (per defecte 29999)
-        admin_password (str): Contrasenya d'administrador
-        app_name (str): Nom de l'aplicació (màx 16 caràcters)
-        max_retries (int): Nombre màxim d'intents de reconnexió
-        retry_delay (float): Retard inicial entre intents (segons)
-        reconnect_enabled (bool): Habilitar reconnexió automàtica
-        heartbeat_interval (float): Interval entre heartbeats (segons)
+        host (str): IP address of the LFS server
+        port (int): InSim port of the server (default 29999)
+        admin_password (str): Administrator password
+        app_name (str): Application name (max 16 characters)
+        max_retries (int): Maximum number of reconnection attempts
+        retry_delay (float): Initial delay between attempts (seconds)
+        reconnect_enabled (bool): Enable automatic reconnection
+        heartbeat_interval (float): Interval between heartbeats (seconds)
 
-    Exemple:
+    Example:
         >>> client = InSimClient('127.0.0.1', 29999, '', 'LFS-Ayats')
         >>> client.connect_with_retry()
         >>> client.initialize()
@@ -161,23 +161,23 @@ class InSimClient:
         heartbeat_interval: float = 30.0,
     ):
         """
-        Inicialitza el client InSim.
+        Initialize the InSim client.
 
         Args:
-            host: Adreça IP del servidor LFS
-            port: Port InSim (per defecte 29999)
-            admin_password: Contrasenya d'administrador (si cal)
-            app_name: Nom de l'aplicació (màx 16 caràcters)
-            udp: Utilitzar UDP en lloc de TCP
-            max_retries: Nombre màxim d'intents de reconnexió
-            retry_delay: Retard inicial entre intents (exponencial backoff)
-            reconnect_enabled: Habilitar reconnexió automàtica
-            heartbeat_interval: Interval entre heartbeats (segons)
+            host: IP address of the LFS server
+            port: InSim port (default 29999)
+            admin_password: Administrator password (if required)
+            app_name: Application name (max 16 characters)
+            udp: Use UDP instead of TCP
+            max_retries: Maximum number of reconnection attempts
+            retry_delay: Initial delay between attempts (exponential backoff)
+            reconnect_enabled: Enable automatic reconnection
+            heartbeat_interval: Interval between heartbeats (seconds)
         """
         self.host = host
         self.port = port
         self.admin_password = admin_password
-        self.app_name = app_name[:16]  # Limitar a 16 caràcters
+        self.app_name = app_name[:16]  # Limit to 16 characters
         self.udp = udp
 
         # Reconnection settings
@@ -201,48 +201,48 @@ class InSimClient:
         self.callbacks: Dict[int, Callable] = {}
 
         logger.info(
-            f"InSim client creat per {host}:{port} ({'UDP' if udp else 'TCP'}), "
+            f"InSim client created for {host}:{port} ({'UDP' if udp else 'TCP'}), "
             f"max_retries={max_retries}, heartbeat={heartbeat_interval}s"
         )
 
     def on_state_change(self, state: ConnectionState, callback: Callable) -> None:
         """
-        Registra un callback per canvis d'estat de connexió.
+        Register a callback for connection state changes.
 
         Args:
-            state: Estat que dispara el callback
-            callback: Funció a cridar (rep old_state, new_state)
+            state: State that triggers the callback
+            callback: Function to call (receives old_state, new_state)
         """
         self.state_callbacks[state].append(callback)
-        logger.debug(f"Callback registrat per estat {state.value}")
+        logger.debug(f"Callback registered for state {state.value}")
 
     def _change_state(self, new_state: ConnectionState) -> None:
         """
-        Canvia l'estat de connexió i notifica callbacks.
+        Change connection state and notify callbacks.
 
         Args:
-            new_state: Nou estat de connexió
+            new_state: New connection state
         """
         old_state = self.state
         self.state = new_state
-        logger.info(f"Estat de connexió: {old_state.value} -> {new_state.value}")
+        logger.info(f"Connection state: {old_state.value} -> {new_state.value}")
 
-        # Notificar callbacks
+        # Notify callbacks
         for callback in self.state_callbacks[new_state]:
             try:
                 callback(old_state, new_state)
             except Exception as e:
-                logger.error(f"Error en callback d'estat: {e}")
+                logger.error(f"Error in state callback: {e}")
 
     def connect(self) -> bool:
         """
-        Estableix la connexió amb el servidor LFS.
+        Establish connection with the LFS server.
 
         Returns:
-            bool: True si la connexió és exitosa, False altrament
+            bool: True if connection is successful, False otherwise
 
         Raises:
-            ConnectionError: Si no es pot connectar al servidor
+            ConnectionError: If unable to connect to the server
         """
         try:
             self._change_state(ConnectionState.CONNECTING)
@@ -257,24 +257,24 @@ class InSimClient:
 
             self.connected = True
             self._change_state(ConnectionState.CONNECTED)
-            logger.info(f"Connectat a {self.host}:{self.port}")
+            logger.info(f"Connected to {self.host}:{self.port}")
             return True
 
         except socket.error as e:
             self._change_state(ConnectionState.ERROR)
-            logger.error(f"Error de connexió: {e}")
+            logger.error(f"Connection error: {e}")
             raise ConnectionError(
-                f"No es pot connectar a {self.host}:{self.port}"
+                f"Cannot connect to {self.host}:{self.port}"
             ) from e
 
     def connect_with_retry(self) -> bool:
         """
-        Intenta connectar amb retries exponencials.
+        Attempt to connect with exponential retries.
 
-        Implementa exponential backoff per evitar sobrecàrrega del servidor.
+        Implements exponential backoff to avoid server overload.
 
         Returns:
-            bool: True si la connexió és exitosa, False després de max_retries
+            bool: True if connection is successful, False after max_retries
         """
         self.retry_count = 0
 
@@ -282,22 +282,22 @@ class InSimClient:
             try:
                 self.connect()
                 self.retry_count = 0  # Reset on success
-                logger.info("Connexió establerta amb èxit")
+                logger.info("Connection established successfully")
                 return True
             except ConnectionError:  # noqa: F841
                 self.retry_count += 1
 
                 if self.retry_count >= self.max_retries:
                     logger.error(
-                        f"Màxim d'intents de connexió assolit ({self.max_retries})"
+                        f"Maximum connection attempts reached ({self.max_retries})"
                     )
                     return False
 
                 # Exponential backoff: delay * (2 ^ retry_count)
                 delay = self.retry_delay * (2 ** (self.retry_count - 1))
                 logger.warning(
-                    f"Intent {self.retry_count}/{self.max_retries} fallit. "
-                    f"Reintentant en {delay:.1f}s..."
+                    f"Attempt {self.retry_count}/{self.max_retries} failed. "
+                    f"Retrying in {delay:.1f}s..."
                 )
                 time.sleep(delay)
 
@@ -305,56 +305,56 @@ class InSimClient:
 
     def trigger_reconnect(self) -> None:
         """
-        Dispara una reconnexió automàtica.
+        Trigger automatic reconnection.
 
-        Executa la reconnexió en un fil separat per no bloquejar.
+        Executes reconnection in a separate thread to avoid blocking.
         """
         if not self.reconnect_enabled:
-            logger.info("Reconnexió deshabilitada")
+            logger.info("Reconnection disabled")
             return
 
         self._change_state(ConnectionState.RECONNECTING)
-        logger.info("Disparant reconnexió automàtica...")
+        logger.info("Triggering automatic reconnection...")
 
         # Disconnect first
         self.disconnect()
 
         # Try to reconnect
         if self.connect_with_retry():
-            logger.info("Reconnexió exitosa")
-            # Reiniciar heartbeat si estava actiu
+            logger.info("Reconnection successful")
+            # Restart heartbeat if it was active
             if self.heartbeat_thread and not self._stop_heartbeat.is_set():
                 self.start_heartbeat(self.heartbeat_interval)
         else:
-            logger.error("Reconnexió fallida després de tots els intents")
+            logger.error("Reconnection failed after all attempts")
             self._change_state(ConnectionState.ERROR)
 
     def initialize(self, flags: int = 0, interval: int = 0) -> None:
         """
-        Inicialitza la connexió InSim enviant el paquet IS_ISI.
+        Initialize InSim connection by sending IS_ISI packet.
 
         Args:
-            flags: Flags d'InSim (veure InSim.txt)
-            interval: Interval per paquets MCI/NLP (centèssimes de segon)
+            flags: InSim flags (see InSim.txt)
+            interval: Interval for MCI/NLP packets (hundredths of a second)
 
-        Referència: https://en.lfsmanual.net/wiki/InSim.txt#IS_ISI
+        Reference: https://en.lfsmanual.net/wiki/InSim.txt#IS_ISI
         """
         if not self.connected:
-            raise ConnectionError("No connectat al servidor")
+            raise ConnectionError("Not connected to server")
 
-        # Construir paquet IS_ISI
+        # Build IS_ISI packet
         # struct IS_ISI {
-        #     byte Size;      // 44
-        #     byte Type;      // ISP_ISI
-        #     byte ReqI;      // Request ID
-        #     byte Zero;      // 0
-        #     word UDPPort;   // Port UDP (0 per TCP)
-        #     word Flags;     // Flags
-        #     byte InSimVer;  // Versió InSim
-        #     byte Prefix;    // Prefix per comandaments (0 = none)
-        #     word Interval;  // Interval MCI/NLP
-        #     char Admin[16]; // Admin password
-        #     char IName[16]; // Application name
+        #     byte Size;      # 44
+        #     byte Type;      # ISP_ISI
+        #     byte ReqI;      # Request ID
+        #     byte Zero;      # 0
+        #     word UDPPort;   # UDP port (0 for TCP)
+        #     word Flags;     # Flags
+        #     byte InSimVer;  # InSim version
+        #     byte Prefix;    # Prefix for commands (0 = none)
+        #     word Interval;  # MCI/NLP interval
+        #     char Admin[16]; # Admin password
+        #     char IName[16]; # Application name
         # }
 
         packet = struct.pack(
@@ -373,82 +373,82 @@ class InSimClient:
         )
 
         self.send_packet(packet)
-        logger.info("Paquet IS_ISI enviat")
+        logger.info("IS_ISI packet sent")
 
     def send_packet(self, packet: bytes) -> None:
         """
-        Envia un paquet al servidor LFS.
+        Send a packet to the LFS server.
 
         Args:
-            packet: Paquet en format bytes
+            packet: Packet in bytes format
 
         Raises:
-            ConnectionError: Si no hi ha connexió activa
+            ConnectionError: If no active connection
         """
         if not self.connected or not self.socket:
-            raise ConnectionError("No connectat al servidor")
+            raise ConnectionError("Not connected to server")
 
         try:
             self.socket.sendall(packet)
-            logger.debug(f"Paquet enviat: {len(packet)} bytes")
+            logger.debug(f"Packet sent: {len(packet)} bytes")
         except socket.error as e:
-            logger.error(f"Error enviant paquet: {e}")
+            logger.error(f"Error sending packet: {e}")
             if self.reconnect_enabled:
                 self.trigger_reconnect()
             raise
 
     def send_tiny(self, subtype: int) -> None:
         """
-        Envia un paquet TINY (control petit).
+        Send a TINY packet (small control).
 
-        Els paquets TINY s'utilitzen per keepalive i control bàsic.
+        TINY packets are used for keepalive and basic control.
 
         Args:
-            subtype: Subtipus del paquet TINY (TinySubtype)
+            subtype: TINY packet subtype (TinySubtype)
 
-        Referència: https://en.lfsmanual.net/wiki/InSim.txt#IS_TINY
+        Reference: https://en.lfsmanual.net/wiki/InSim.txt#IS_TINY
         """
         if not self.connected or not self.socket:
-            raise ConnectionError("No connectat al servidor")
+            raise ConnectionError("Not connected to server")
 
         # struct IS_TINY {
-        #     byte Size;   // 4
-        #     byte Type;   // ISP_TINY
-        #     byte ReqI;   // 0
-        #     byte SubT;   // Subtype
+        #     byte Size;   # 4
+        #     byte Type;   # ISP_TINY
+        #     byte ReqI;   # 0
+        #     byte SubT;   # Subtype
         # }
         packet = struct.pack("=4B", 4, PacketType.ISP_TINY, 0, subtype)
 
         try:
             self.socket.sendall(packet)
-            logger.debug(f"Paquet TINY enviat: subtype={subtype}")
+            logger.debug(f"TINY packet sent: subtype={subtype}")
         except socket.error as e:
-            logger.error(f"Error enviant paquet TINY: {e}")
+            logger.error(f"Error sending TINY packet: {e}")
             if self.reconnect_enabled:
                 self.trigger_reconnect()
             raise
 
     def validate_packet(self, packet: bytes) -> bool:
         """
-        Valida la integritat d'un paquet InSim.
+        Validate integrity of an InSim packet.
 
-        Comprova:
-        - Longitud mínima (4 bytes)
-        - Coherència entre mida declarada i real
-        - Tipus de paquet vàlid
+        Checks:
+        - Minimum length (4 bytes)
+        - Consistency between declared and actual size
+        - Valid packet type
 
         Args:
-            packet: Paquet a validar
+            packet: Packet to validate
 
         Returns:
-            bool: True si el paquet és vàlid
+            bool: True if packet is valid
         """
         if not packet or len(packet) < 4:
-            logger.error("Paquet massa curt (< 4 bytes)")
+            logger.error("Packet too short (< 4 bytes)")
             return False
 
-        # El primer byte és la mida en múltiples de 4
-        # Per exemple: size=1 significa 4 bytes, size=2 significa 8 bytes
+        # First byte is size in multiples of 4
+        # For example: size=1 means 4 bytes, size=2 means 8 bytes
         declared_size_multiplier = packet[0]
         declared_size = (
             declared_size_multiplier * 4 if declared_size_multiplier > 0 else 4
@@ -457,50 +457,50 @@ class InSimClient:
 
         if declared_size != actual_size:
             logger.error(
-                f"Incoherència de mida: declarat={declared_size} "
-                f"(multiplier={declared_size_multiplier}), real={actual_size}"
+                f"Size inconsistency: declared={declared_size} "
+                f"(multiplier={declared_size_multiplier}), actual={actual_size}"
             )
             return False
 
         packet_type = packet[1]
         try:
-            # Comprovar si el tipus és vàlid
+            # Check if type is valid
             PacketType(packet_type)
         except ValueError:
-            logger.warning(f"Tipus de paquet desconegut: {packet_type}")
-            # No retornem False aquí perquè poden haver-hi nous tipus
+            logger.warning(f"Unknown packet type: {packet_type}")
+            # Don't return False here as there may be new types
 
         return True
 
     def receive_packet(self, timeout: Optional[float] = None) -> Optional[bytes]:
         """
-        Rep un paquet del servidor LFS amb validació.
+        Receive a packet from the LFS server with validation.
 
         Args:
-            timeout: Temps d'espera màxim en segons (None = bloqueig)
+            timeout: Maximum wait time in seconds (None = blocking)
 
         Returns:
-            bytes: Paquet rebut o None si no hi ha dades
+            bytes: Received packet or None if no data
 
         Raises:
-            ConnectionError: Si no hi ha connexió activa
+            ConnectionError: If no active connection
         """
         if not self.connected or not self.socket:
-            raise ConnectionError("No connectat al servidor")
+            raise ConnectionError("Not connected to server")
 
         try:
             if timeout is not None:
                 self.socket.settimeout(timeout)
 
-            # Primer, llegir l'encapçalament (4 bytes)
+            # First, read the header (4 bytes)
             header = self.socket.recv(4)
             if not header or len(header) < 1:
                 return None
 
-            # El primer byte és la mida del paquet (en múltiples de 4)
+            # First byte is packet size (in multiples of 4)
             packet_size = header[0] * 4 if header[0] > 0 else 4
 
-            # Llegir la resta del paquet
+            # Read the rest of the packet
             remaining = packet_size - 4
             if remaining > 0:
                 data = self.socket.recv(remaining)
@@ -508,61 +508,61 @@ class InSimClient:
             else:
                 packet = header
 
-            # Validar paquet
+            # Validate packet
             if not self.validate_packet(packet):
-                logger.warning("Paquet invàlid rebut i descartat")
+                logger.warning("Invalid packet received and discarded")
                 return None
 
             logger.debug(
-                f"Paquet rebut: {len(packet)} bytes, "
-                f"tipus: {header[1] if len(header) > 1 else 'unknown'}"
+                f"Packet received: {len(packet)} bytes, "
+                f"type: {header[1] if len(header) > 1 else 'unknown'}"
             )
             return packet
 
         except socket.timeout:
             return None
         except socket.error as e:
-            logger.error(f"Error rebent paquet: {e}")
+            logger.error(f"Error receiving packet: {e}")
             if self.reconnect_enabled:
                 self.trigger_reconnect()
             raise
 
     def start_heartbeat(self, interval: Optional[float] = None) -> None:
         """
-        Inicia el sistema de heartbeat.
+        Start the heartbeat system.
 
-        Envia paquets TINY_NONE periòdicament per mantenir la connexió viva
-        i detectar connexions mortes.
+        Sends TINY_NONE packets periodically to keep the connection alive
+        and detect dead connections.
 
         Args:
-            interval: Interval entre heartbeats (segons).
-                     Si None, usa self.heartbeat_interval
+            interval: Interval between heartbeats (seconds).
+                     If None, uses self.heartbeat_interval
         """
         if interval is not None:
             self.heartbeat_interval = interval
 
-        # Parar heartbeat anterior si existeix
+        # Stop previous heartbeat if exists
         self.stop_heartbeat()
 
         self._stop_heartbeat.clear()
 
         def heartbeat_loop():
-            logger.info(f"Heartbeat iniciat (interval={self.heartbeat_interval}s)")
+            logger.info(f"Heartbeat started (interval={self.heartbeat_interval}s)")
 
             while not self._stop_heartbeat.is_set() and self.connected:
                 try:
                     self.send_tiny(TinySubtype.TINY_NONE)
-                    logger.debug("Heartbeat enviat")
+                    logger.debug("Heartbeat sent")
                 except Exception as e:
-                    logger.error(f"Heartbeat fallit: {e}")
+                    logger.error(f"Heartbeat failed: {e}")
                     if self.reconnect_enabled:
                         self.trigger_reconnect()
                     break
 
-                # Esperar interval o fins que s'aturi
+                # Wait for interval or until stopped
                 self._stop_heartbeat.wait(timeout=self.heartbeat_interval)
 
-            logger.info("Heartbeat aturat")
+            logger.info("Heartbeat stopped")
 
         self.heartbeat_thread = threading.Thread(
             target=heartbeat_loop, daemon=True, name="InSimHeartbeat"
@@ -570,35 +570,35 @@ class InSimClient:
         self.heartbeat_thread.start()
 
     def stop_heartbeat(self) -> None:
-        """Atura el sistema de heartbeat."""
+        """Stop the heartbeat system."""
         if self.heartbeat_thread and self.heartbeat_thread.is_alive():
-            logger.info("Aturant heartbeat...")
+            logger.info("Stopping heartbeat...")
             self._stop_heartbeat.set()
             self.heartbeat_thread.join(timeout=2.0)
             self.heartbeat_thread = None
 
     def register_callback(self, packet_type: int, callback: Callable) -> None:
         """
-        Registra un callback per un tipus de paquet específic.
+        Register a callback for a specific packet type.
 
         Args:
-            packet_type: Tipus de paquet (PacketType)
-            callback: Funció a cridar quan es rep el paquet
+            packet_type: Packet type (PacketType)
+            callback: Function to call when packet is received
         """
         self.callbacks[packet_type] = callback
-        logger.debug(f"Callback registrat per paquet tipus {packet_type}")
+        logger.debug(f"Callback registered for packet type {packet_type}")
 
     def disconnect(self) -> None:
-        """Tanca la connexió amb el servidor LFS."""
+        """Close connection with the LFS server."""
         # Stop heartbeat first
         self.stop_heartbeat()
 
         if self.socket:
             try:
                 self.socket.close()
-                logger.info("Desconnectat del servidor")
+                logger.info("Disconnected from server")
             except socket.error as e:
-                logger.error(f"Error tancant connexió: {e}")
+                logger.error(f"Error closing connection: {e}")
             finally:
                 self.socket = None
                 self.connected = False
@@ -614,6 +614,6 @@ class InSimClient:
         self.disconnect()
 
     def __del__(self):
-        """Assegura que la connexió es tanca."""
+        """Ensure connection is closed."""
         if self.connected:
             self.disconnect()

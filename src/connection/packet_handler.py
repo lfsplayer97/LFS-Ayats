@@ -42,7 +42,7 @@ class TinySubtype(IntEnum):
 
 @dataclass
 class PacketInfo:
-    """Informació d'un paquet InSim"""
+    """Information about an InSim packet"""
     size: int
     type: int
     req_id: int
@@ -51,68 +51,68 @@ class PacketInfo:
 
 class PacketHandler:
     """
-    Gestiona el processament de paquets InSim.
+    Handles processing of InSim packets.
     
-    Aquesta classe s'encarrega de:
-    - Parsejar paquets InSim rebuts
-    - Validar l'estructura dels paquets
-    - Extraure dades dels paquets
-    - Gestionar callbacks per tipus de paquet
+    This class is responsible for:
+    - Parsing received InSim packets
+    - Validating packet structure
+    - Extracting data from packets
+    - Managing callbacks for packet types
     
-    Exemple:
+    Example:
         >>> handler = PacketHandler()
         >>> handler.register_handler(PacketType.ISP_VER, handle_version)
         >>> handler.process_packet(packet_data)
     """
 
     def __init__(self):
-        """Inicialitza el gestor de paquets."""
+        """Initialize the packet handler."""
         self.handlers: Dict[int, Callable] = {}
         self.packet_count: Dict[int, int] = {}
-        logger.info("PacketHandler inicialitzat")
+        logger.info("PacketHandler initialized")
 
     def register_handler(self, packet_type: int, handler: Callable) -> None:
         """
-        Registra un gestor per a un tipus de paquet específic.
+        Register a handler for a specific packet type.
 
         Args:
-            packet_type: Tipus de paquet (veure PacketType)
-            handler: Funció a cridar quan es rep el paquet
+            packet_type: Packet type (see PacketType)
+            handler: Function to call when packet is received
         """
         self.handlers[packet_type] = handler
-        logger.debug(f"Handler registrat per tipus {packet_type}")
+        logger.debug(f"Handler registered for type {packet_type}")
 
     def parse_packet(self, data: bytes) -> Optional[PacketInfo]:
         """
-        Parseja un paquet InSim i extreu la informació bàsica.
+        Parse an InSim packet and extract basic information.
 
         Args:
-            data: Dades del paquet en bytes
+            data: Packet data in bytes
 
         Returns:
-            PacketInfo: Informació del paquet o None si és invàlid
+            PacketInfo: Packet information or None if invalid
         """
         if not data or len(data) < 4:
-            logger.warning("Paquet massa curt")
+            logger.warning("Packet too short")
             return None
 
         try:
-            # Estructura bàsica de tots els paquets InSim:
-            # byte Size;   // Mida en bytes dividida per 4
-            # byte Type;   // Tipus de paquet (PacketType)
-            # byte ReqI;   // Request ID (0 normalment)
-            # byte SubT;   // Subtipus (depèn del tipus)
+            # Basic structure of all InSim packets:
+            # byte Size;   # Size in bytes divided by 4
+            # byte Type;   # Packet type (PacketType)
+            # byte ReqI;   # Request ID (0 normally)
+            # byte SubT;   # Subtype (depends on type)
             
             size, pkt_type, req_id, sub_type = struct.unpack("=4B", data[:4])
             
-            # La mida real és size * 4
+            # Actual size is size * 4
             actual_size = size * 4
             
             if len(data) < actual_size:
-                logger.warning(f"Paquet incomplet: esperat {actual_size}, rebut {len(data)}")
+                logger.warning(f"Incomplete packet: expected {actual_size}, received {len(data)}")
                 return None
 
-            # Comptador de paquets
+            # Packet counter
             self.packet_count[pkt_type] = self.packet_count.get(pkt_type, 0) + 1
 
             return PacketInfo(
@@ -123,58 +123,58 @@ class PacketHandler:
             )
 
         except struct.error as e:
-            logger.error(f"Error parsejant paquet: {e}")
+            logger.error(f"Error parsing packet: {e}")
             return None
 
     def process_packet(self, data: bytes) -> bool:
         """
-        Processa un paquet InSim i crida el handler corresponent.
+        Process an InSim packet and call corresponding handler.
 
         Args:
-            data: Dades del paquet en bytes
+            data: Packet data in bytes
 
         Returns:
-            bool: True si s'ha processat correctament, False altrament
+            bool: True if processed successfully, False otherwise
         """
         packet_info = self.parse_packet(data)
         if not packet_info:
             return False
 
-        # Cridar el handler si existeix
+        # Call handler if exists
         handler = self.handlers.get(packet_info.type)
         if handler:
             try:
                 handler(packet_info)
-                logger.debug(f"Paquet tipus {packet_info.type} processat")
+                logger.debug(f"Packet type {packet_info.type} processed")
                 return True
             except Exception as e:
-                logger.error(f"Error processant paquet tipus {packet_info.type}: {e}")
+                logger.error(f"Error processing packet type {packet_info.type}: {e}")
                 return False
         else:
-            logger.debug(f"Cap handler per paquet tipus {packet_info.type}")
+            logger.debug(f"No handler for packet type {packet_info.type}")
             return False
 
     def parse_version_packet(self, data: bytes) -> Optional[Dict[str, Any]]:
         """
-        Parseja un paquet IS_VER (versió).
+        Parse an IS_VER (version) packet.
 
         Args:
-            data: Dades del paquet
+            data: Packet data
 
         Returns:
-            Dict amb informació de versió o None si error
+            Dict with version information or None on error
             
-        Referència: https://en.lfsmanual.net/wiki/InSim.txt#IS_VER
+        Reference: https://en.lfsmanual.net/wiki/InSim.txt#IS_VER
         """
         try:
             # struct IS_VER {
-            #     byte Size;       // 20
-            #     byte Type;       // ISP_VER
-            #     byte ReqI;       // Request ID
-            #     byte Zero;       // 0
-            #     char Version[8]; // LFS version
-            #     char Product[6]; // Product
-            #     word InSimVer;   // InSim version
+            #     byte Size;       # 20
+            #     byte Type;       # ISP_VER
+            #     byte ReqI;       # Request ID
+            #     byte Zero;       # 0
+            #     char Version[8]; # LFS version
+            #     char Product[6]; # Product
+            #     word InSimVer;   # InSim version
             # }
             
             if len(data) < 20:
@@ -192,42 +192,42 @@ class PacketHandler:
             }
 
         except struct.error as e:
-            logger.error(f"Error parsejant IS_VER: {e}")
+            logger.error(f"Error parsing IS_VER: {e}")
             return None
 
     def parse_state_packet(self, data: bytes) -> Optional[Dict[str, Any]]:
         """
-        Parseja un paquet IS_STA (estat del servidor).
+        Parse an IS_STA (server state) packet.
 
         Args:
-            data: Dades del paquet
+            data: Packet data
 
         Returns:
-            Dict amb informació d'estat o None si error
+            Dict with state information or None on error
             
-        Referència: https://en.lfsmanual.net/wiki/InSim.txt#IS_STA
+        Reference: https://en.lfsmanual.net/wiki/InSim.txt#IS_STA
         """
         try:
             # struct IS_STA {
-            #     byte Size;           // 28
-            #     byte Type;           // ISP_STA
-            #     byte ReqI;           // Request ID
-            #     byte Zero;           // 0
-            #     float ReplaySpeed;   // Velocitat de replay (1.0 = normal)
-            #     word Flags;          // Flags d'estat
-            #     byte InGameCam;      // Càmera en joc
-            #     byte ViewPLID;       // Player ID de la vista
-            #     byte NumP;           // Nombre de jugadors
-            #     byte NumConns;       // Nombre de connexions
-            #     byte NumFinished;    // Nombre acabats
-            #     byte RaceInProg;     // 0 = no race, 1 = race, 2 = qualifying
-            #     byte QualMins;       // Minuts de qualificació
-            #     byte RaceLaps;       // Laps de la cursa (0 = endless)
-            #     byte Spare2;         // 0
-            #     byte Spare3;         // 0
-            #     char Track[6];       // Nom curt de la pista
-            #     byte Weather;        // Clima
-            #     byte Wind;           // Vent
+            #     byte Size;           # 28
+            #     byte Type;           # ISP_STA
+            #     byte ReqI;           # Request ID
+            #     byte Zero;           # 0
+            #     float ReplaySpeed;   # Replay speed (1.0 = normal)
+            #     word Flags;          # State flags
+            #     byte InGameCam;      # In-game camera
+            #     byte ViewPLID;       # Player ID of view
+            #     byte NumP;           # Number of players
+            #     byte NumConns;       # Number of connections
+            #     byte NumFinished;    # Number finished
+            #     byte RaceInProg;     # 0 = no race, 1 = race, 2 = qualifying
+            #     byte QualMins;       # Qualifying minutes
+            #     byte RaceLaps;       # Race laps (0 = endless)
+            #     byte Spare2;         # 0
+            #     byte Spare3;         # 0
+            #     char Track[6];       # Short track name
+            #     byte Weather;        # Weather
+            #     byte Wind;           # Wind
             # }
             
             if len(data) < 28:
@@ -253,28 +253,28 @@ class PacketHandler:
             }
 
         except struct.error as e:
-            logger.error(f"Error parsejant IS_STA: {e}")
+            logger.error(f"Error parsing IS_STA: {e}")
             return None
 
     def parse_mci_packet(self, data: bytes) -> Optional[Dict[str, Any]]:
         """
-        Parseja un paquet IS_MCI (Multi Car Info) - telemetria de vehicles.
+        Parse an IS_MCI (Multi Car Info) packet - vehicle telemetry.
 
         Args:
-            data: Dades del paquet
+            data: Packet data
 
         Returns:
-            Dict amb informació de vehicles o None si error
+            Dict with vehicle information or None on error
             
-        Referència: https://en.lfsmanual.net/wiki/InSim.txt#IS_MCI
+        Reference: https://en.lfsmanual.net/wiki/InSim.txt#IS_MCI
         """
         try:
             # struct IS_MCI {
-            #     byte Size;      // 4 + NumC * 28
-            #     byte Type;      // ISP_MCI
-            #     byte ReqI;      // Request ID
-            #     byte NumC;      // Nombre de cotxes (max 8)
-            #     CompCar Info[NumC]; // Info de cada cotxe
+            #     byte Size;      # 4 + NumC * 28
+            #     byte Type;      # ISP_MCI
+            #     byte ReqI;      # Request ID
+            #     byte NumC;      # Number of cars (max 8)
+            #     CompCar Info[NumC]; # Info for each car
             # }
             
             if len(data) < 4:
@@ -289,7 +289,7 @@ class PacketHandler:
                 if offset + 28 > len(data):
                     break
                 
-                # struct CompCar (28 bytes) - informació compacta de cotxe
+                # struct CompCar (28 bytes) - compact car information
                 car_data = struct.unpack("=2H4i2H4B", data[offset:offset+28])
                 
                 cars.append({
@@ -316,19 +316,19 @@ class PacketHandler:
             }
 
         except struct.error as e:
-            logger.error(f"Error parsejant IS_MCI: {e}")
+            logger.error(f"Error parsing IS_MCI: {e}")
             return None
 
     def get_packet_stats(self) -> Dict[int, int]:
         """
-        Obté estadístiques de paquets processats.
+        Get statistics of processed packets.
 
         Returns:
-            Dict amb el nombre de paquets per tipus
+            Dict with number of packets by type
         """
         return self.packet_count.copy()
 
     def reset_stats(self) -> None:
-        """Reinicia les estadístiques de paquets."""
+        """Reset packet statistics."""
         self.packet_count.clear()
-        logger.info("Estadístiques de paquets reiniciades")
+        logger.info("Packet statistics reset")
