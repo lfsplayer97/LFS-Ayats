@@ -1,6 +1,6 @@
 """
 Telemetry Processor
-Processament i validació de dades telemètriques.
+Processing and validation of telemetry data.
 """
 
 import logging
@@ -14,14 +14,14 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ProcessedTelemetry:
     """
-    Dades telemètriques processades amb estadístiques.
+    Processed telemetry data with statistics.
     
     Attributes:
-        avg_speed: Velocitat mitjana
-        max_speed: Velocitat màxima
-        min_speed: Velocitat mínima
-        total_distance: Distància total recorreguda
-        sample_count: Nombre de mostres
+        avg_speed: Average speed
+        max_speed: Maximum speed
+        min_speed: Minimum speed
+        total_distance: Total distance traveled
+        sample_count: Number of samples
     """
     avg_speed: float = 0.0
     max_speed: float = 0.0
@@ -32,15 +32,15 @@ class ProcessedTelemetry:
 
 class TelemetryProcessor:
     """
-    Processa i valida dades telemètriques.
+    Processes and validates telemetry data.
     
-    Aquesta classe proporciona:
-    - Validació de dades telemètriques
-    - Càlcul d'estadístiques
-    - Filtratge de dades
-    - Detecció d'anomalies
+    This class provides:
+    - Telemetry data validation
+    - Statistics calculation
+    - Data filtering
+    - Anomaly detection
     
-    Exemple:
+    Example:
         >>> processor = TelemetryProcessor()
         >>> processed = processor.process_telemetry(telemetry_data)
         >>> stats = processor.calculate_statistics(telemetry_data)
@@ -48,81 +48,81 @@ class TelemetryProcessor:
 
     def __init__(self, max_speed: float = 150.0):
         """
-        Inicialitza el processador de telemetria.
+        Initialize the telemetry processor.
 
         Args:
-            max_speed: Velocitat màxima vàlida en m/s (per defecte 150 m/s)
+            max_speed: Maximum valid speed in m/s (default 150 m/s)
         """
         self.max_speed = max_speed
         self.validation_errors: List[str] = []
-        logger.info("TelemetryProcessor inicialitzat")
+        logger.info("TelemetryProcessor initialized")
 
     def validate_telemetry(self, telemetry) -> bool:
         """
-        Valida les dades telemètriques.
+        Validate telemetry data.
 
         Args:
-            telemetry: Objecte CarTelemetry
+            telemetry: CarTelemetry object
 
         Returns:
-            bool: True si les dades són vàlides, False altrament
+            bool: True if data is valid, False otherwise
         """
         self.validation_errors.clear()
         is_valid = True
 
-        # Validar velocitat
+        # Validate speed
         if telemetry.speed < 0:
-            self.validation_errors.append("Velocitat negativa")
+            self.validation_errors.append("Negative speed")
             is_valid = False
         elif telemetry.speed > self.max_speed:
-            self.validation_errors.append(f"Velocitat massa alta: {telemetry.speed}")
+            self.validation_errors.append(f"Speed too high: {telemetry.speed}")
             is_valid = False
 
-        # Validar posició
+        # Validate position
         if not telemetry.position:
-            self.validation_errors.append("Posició buida")
+            self.validation_errors.append("Empty position")
             is_valid = False
 
-        # Validar player ID
+        # Validate player ID
         if telemetry.plid < 0 or telemetry.plid > 255:
-            self.validation_errors.append(f"Player ID invàlid: {telemetry.plid}")
+            self.validation_errors.append(f"Invalid Player ID: {telemetry.plid}")
             is_valid = False
 
         if not is_valid:
-            logger.warning(f"Telemetria invàlida: {', '.join(self.validation_errors)}")
+            logger.warning(f"Invalid telemetry: {', '.join(self.validation_errors)}")
 
         return is_valid
 
     def process_telemetry(self, telemetry_list: List) -> ProcessedTelemetry:
         """
-        Processa una llista de telemetria i calcula estadístiques.
+        Process a list of telemetry and calculate statistics.
 
         Args:
-            telemetry_list: Llista d'objectes CarTelemetry
+            telemetry_list: List of CarTelemetry objects
 
         Returns:
-            ProcessedTelemetry: Dades processades amb estadístiques
+            ProcessedTelemetry: Processed data with statistics
         """
         if not telemetry_list:
             return ProcessedTelemetry()
 
-        # Filtrar dades vàlides
+        # Filter valid data
         valid_telemetry = [t for t in telemetry_list if self.validate_telemetry(t)]
 
         if not valid_telemetry:
-            logger.warning("Cap telemetria vàlida per processar")
+            logger.warning("No valid telemetry to process")
             return ProcessedTelemetry()
 
-        # Calcular estadístiques
+        # Calculate statistics
         speeds = [t.speed for t in valid_telemetry]
         
-        # Calcular distància (aproximació simple)
+        # Calculate distance (simple approximation)
         total_distance = 0.0
         for i in range(1, len(valid_telemetry)):
             prev = valid_telemetry[i-1]
             curr = valid_telemetry[i]
             
-            # Distància euclidiana entre dos punts
+            # Euclidean distance between two points
             if prev.position and curr.position:
                 dx = curr.position.get('x', 0) - prev.position.get('x', 0)
                 dy = curr.position.get('y', 0) - prev.position.get('y', 0)
@@ -139,13 +139,13 @@ class TelemetryProcessor:
 
     def calculate_statistics(self, telemetry_list: List) -> Dict[str, Any]:
         """
-        Calcula estadístiques detallades de la telemetria.
+        Calculate detailed telemetry statistics.
 
         Args:
-            telemetry_list: Llista d'objectes CarTelemetry
+            telemetry_list: List of CarTelemetry objects
 
         Returns:
-            Dict amb estadístiques detallades
+            Dict with detailed statistics
         """
         if not telemetry_list:
             return {}
@@ -174,15 +174,15 @@ class TelemetryProcessor:
         max_speed: Optional[float] = None
     ) -> List:
         """
-        Filtra telemetria per rang de velocitat.
+        Filter telemetry by speed range.
 
         Args:
-            telemetry_list: Llista de telemetria
-            min_speed: Velocitat mínima
-            max_speed: Velocitat màxima (None = sense límit)
+            telemetry_list: List of telemetry
+            min_speed: Minimum speed
+            max_speed: Maximum speed (None = no limit)
 
         Returns:
-            Llista filtrada de telemetria
+            Filtered list of telemetry
         """
         max_spd = max_speed if max_speed is not None else float('inf')
         
@@ -197,14 +197,14 @@ class TelemetryProcessor:
         threshold_stdev: float = 3.0
     ) -> List[int]:
         """
-        Detecta anomalies en la telemetria utilitzant desviació estàndard.
+        Detect anomalies in telemetry using standard deviation.
 
         Args:
-            telemetry_list: Llista de telemetria
-            threshold_stdev: Threshold en desviacions estàndard
+            telemetry_list: List of telemetry
+            threshold_stdev: Threshold in standard deviations
 
         Returns:
-            Llista d'índexs amb anomalies
+            List of indices with anomalies
         """
         if len(telemetry_list) < 3:
             return []
@@ -218,15 +218,15 @@ class TelemetryProcessor:
             z_score = abs((speed - mean_speed) / stdev_speed) if stdev_speed > 0 else 0
             if z_score > threshold_stdev:
                 anomalies.append(i)
-                logger.debug(f"Anomalia detectada a índex {i}: speed={speed}, z-score={z_score:.2f}")
+                logger.debug(f"Anomaly detected at index {i}: speed={speed}, z-score={z_score:.2f}")
 
         return anomalies
 
     def get_validation_errors(self) -> List[str]:
         """
-        Obté els errors de validació de l'última validació.
+        Get validation errors from the last validation.
 
         Returns:
-            Llista d'errors
+            List of errors
         """
         return self.validation_errors.copy()
