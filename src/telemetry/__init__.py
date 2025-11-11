@@ -1,6 +1,6 @@
 """
 Telemetry Module
-Recollida i processament de dades telemètriques de Live for Speed
+Collection and processing of telemetry data from Live for Speed
 """
 
 __version__ = "0.1.0"

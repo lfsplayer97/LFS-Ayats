@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class CarTelemetry:
     """
     Telemetry data for a vehicle.
-    
+
     Attributes:
         timestamp: Sample timestamp
         plid: Player ID
@@ -31,6 +31,7 @@ class CarTelemetry:
         heading: Orientation
         angular_velocity: Angular velocity
     """
+
     timestamp: float = field(default_factory=time.time)
     plid: int = 0
     node: int = 0
@@ -46,7 +47,7 @@ class CarTelemetry:
 class LapTelemetry:
     """
     Telemetry data for a lap.
-    
+
     Attributes:
         timestamp: Timestamp
         plid: Player ID
@@ -56,6 +57,7 @@ class LapTelemetry:
         split_times: Sector times
         flags: Lap flags
     """
+
     timestamp: float = field(default_factory=time.time)
     plid: int = 0
     lap: int = 0
@@ -69,7 +71,7 @@ class LapTelemetry:
 class PlayerInfo:
     """
     Player information.
-    
+
     Attributes:
         plid: Player ID
         ucid: Unique Connection ID
@@ -79,6 +81,7 @@ class PlayerInfo:
         plate: License plate
         flags: Player flags
     """
+
     plid: int = 0
     ucid: int = 0
     player_name: str = ""
@@ -91,13 +94,13 @@ class PlayerInfo:
 class TelemetryCollector:
     """
     Collects telemetry data from the LFS server.
-    
+
     This class handles continuous telemetry collection:
     - Position and movement data for vehicles (IS_MCI)
     - Lap and sector times (IS_LAP, IS_SPX)
     - Player information (IS_NPL)
     - Track events (IS_PIT, IS_FIN, etc.)
-    
+
     Example:
         >>> from src.connection import InSimClient
         >>> client = InSimClient('127.0.0.1', 29999)
@@ -120,21 +123,21 @@ class TelemetryCollector:
         self.running = False
         self.collection_thread: Optional[Thread] = None
         self.stop_event = Event()
-        
+
         # Data storage
         self.car_telemetry: Dict[int, List[CarTelemetry]] = {}
         self.lap_telemetry: Dict[int, List[LapTelemetry]] = {}
         self.player_info: Dict[int, PlayerInfo] = {}
-        
+
         # Custom callbacks
         self.callbacks: Dict[str, List[Callable]] = {
-            'car_update': [],
-            'lap_complete': [],
-            'split_time': [],
-            'player_join': [],
-            'player_leave': [],
+            "car_update": [],
+            "lap_complete": [],
+            "split_time": [],
+            "player_join": [],
+            "player_leave": [],
         }
-        
+
         logger.info("TelemetryCollector initialized")
 
     def register_callback(self, event_type: str, callback: Callable) -> None:
@@ -167,32 +170,32 @@ class TelemetryCollector:
             packet_data: Packet data
         """
         from src.connection.packet_handler import PacketHandler
-        
+
         handler = PacketHandler()
         mci_info = handler.parse_mci_packet(packet_data)
-        
+
         if mci_info:
-            for car in mci_info['cars']:
+            for car in mci_info["cars"]:
                 telemetry = CarTelemetry(
                     timestamp=time.time(),
-                    plid=car['plid'],
-                    node=car['node'],
-                    lap=car['lap'],
-                    position=car['position'],
-                    speed=car['speed'] / 32768.0,  # Convert to m/s
-                    direction=car['direction'],
-                    heading=car['heading'],
-                    angular_velocity=car['angular_vel'],
+                    plid=car["plid"],
+                    node=car["node"],
+                    lap=car["lap"],
+                    position=car["position"],
+                    speed=car["speed"] / 32768.0,  # Convert to m/s
+                    direction=car["direction"],
+                    heading=car["heading"],
+                    angular_velocity=car["angular_vel"],
                 )
-                
+
                 # Store telemetry
-                plid = car['plid']
+                plid = car["plid"]
                 if plid not in self.car_telemetry:
                     self.car_telemetry[plid] = []
                 self.car_telemetry[plid].append(telemetry)
-                
+
                 # Trigger callbacks
-                self._trigger_callbacks('car_update', telemetry)
+                self._trigger_callbacks("car_update", telemetry)
 
     def handle_lap_packet(self, packet_data: bytes) -> None:
         """
@@ -218,19 +221,20 @@ class TelemetryCollector:
 
         self.running = True
         self.stop_event.clear()
-        
+
         # Initialize InSim with telemetry interval
         self.client.initialize(flags=0, interval=interval)
-        
+
         # Register packet handlers
         from src.connection.insim_client import PacketType
+
         self.client.register_callback(PacketType.ISP_MCI, self.handle_mci_packet)
         self.client.register_callback(PacketType.ISP_LAP, self.handle_lap_packet)
-        
+
         # Start collection thread
         self.collection_thread = Thread(target=self._collection_loop, daemon=True)
         self.collection_thread.start()
-        
+
         logger.info(f"Telemetry collection started (interval: {interval}ms)")
 
     def _collection_loop(self) -> None:
@@ -242,9 +246,10 @@ class TelemetryCollector:
                 if packet:
                     # Process packet with PacketHandler
                     from src.connection.packet_handler import PacketHandler
+
                     handler = PacketHandler()
                     handler.process_packet(packet)
-                    
+
             except Exception as e:
                 logger.error(f"Error in collection loop: {e}")
                 time.sleep(0.1)
@@ -257,13 +262,15 @@ class TelemetryCollector:
 
         self.running = False
         self.stop_event.set()
-        
+
         if self.collection_thread:
             self.collection_thread.join(timeout=2.0)
-        
+
         logger.info("Telemetry collection stopped")
 
-    def get_latest_telemetry(self, plid: Optional[int] = None) -> Dict[int, CarTelemetry]:
+    def get_latest_telemetry(
+        self, plid: Optional[int] = None
+    ) -> Dict[int, CarTelemetry]:
         """
         Get the most recent vehicle telemetry.
 
@@ -274,7 +281,7 @@ class TelemetryCollector:
             Dict with telemetry by player ID
         """
         result = {}
-        
+
         if plid is not None:
             if plid in self.car_telemetry and self.car_telemetry[plid]:
                 result[plid] = self.car_telemetry[plid][-1]
@@ -282,13 +289,11 @@ class TelemetryCollector:
             for player_id, telemetry_list in self.car_telemetry.items():
                 if telemetry_list:
                     result[player_id] = telemetry_list[-1]
-        
+
         return result
 
     def get_telemetry_history(
-        self, 
-        plid: int, 
-        limit: Optional[int] = None
+        self, plid: int, limit: Optional[int] = None
     ) -> List[CarTelemetry]:
         """
         Get telemetry history for a player.
@@ -302,9 +307,9 @@ class TelemetryCollector:
         """
         if plid not in self.car_telemetry:
             return []
-        
+
         history = self.car_telemetry[plid]
-        
+
         if limit:
             return history[-limit:]
         return history
@@ -333,13 +338,12 @@ class TelemetryCollector:
             Dict with statistics
         """
         total_samples = sum(len(t) for t in self.car_telemetry.values())
-        
+
         return {
             "running": self.running,
             "total_players": len(self.car_telemetry),
             "total_samples": total_samples,
             "players": {
-                plid: len(telemetry)
-                for plid, telemetry in self.car_telemetry.items()
-            }
+                plid: len(telemetry) for plid, telemetry in self.car_telemetry.items()
+            },
         }

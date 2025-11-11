@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class ProcessedTelemetry:
     """
     Processed telemetry data with statistics.
-    
+
     Attributes:
         avg_speed: Average speed
         max_speed: Maximum speed
@@ -23,6 +23,7 @@ class ProcessedTelemetry:
         total_distance: Total distance traveled
         sample_count: Number of samples
     """
+
     avg_speed: float = 0.0
     max_speed: float = 0.0
     min_speed: float = 0.0
@@ -33,13 +34,13 @@ class ProcessedTelemetry:
 class TelemetryProcessor:
     """
     Processes and validates telemetry data.
-    
+
     This class provides:
     - Telemetry data validation
     - Statistics calculation
     - Data filtering
     - Anomaly detection
-    
+
     Example:
         >>> processor = TelemetryProcessor()
         >>> processed = processor.process_telemetry(telemetry_data)
@@ -115,18 +116,18 @@ class TelemetryProcessor:
 
         # Calculate statistics
         speeds = [t.speed for t in valid_telemetry]
-        
+
         # Calculate distance (simple approximation)
         total_distance = 0.0
         for i in range(1, len(valid_telemetry)):
-            prev = valid_telemetry[i-1]
+            prev = valid_telemetry[i - 1]
             curr = valid_telemetry[i]
-            
+
             # Euclidean distance between two points
             if prev.position and curr.position:
-                dx = curr.position.get('x', 0) - prev.position.get('x', 0)
-                dy = curr.position.get('y', 0) - prev.position.get('y', 0)
-                distance = (dx**2 + dy**2)**0.5
+                dx = curr.position.get("x", 0) - prev.position.get("x", 0)
+                dy = curr.position.get("y", 0) - prev.position.get("y", 0)
+                distance = (dx**2 + dy**2) ** 0.5
                 total_distance += distance
 
         return ProcessedTelemetry(
@@ -134,7 +135,7 @@ class TelemetryProcessor:
             max_speed=max(speeds),
             min_speed=min(speeds),
             total_distance=total_distance,
-            sample_count=len(valid_telemetry)
+            sample_count=len(valid_telemetry),
         )
 
     def calculate_statistics(self, telemetry_list: List) -> Dict[str, Any]:
@@ -168,10 +169,10 @@ class TelemetryProcessor:
         }
 
     def filter_by_speed_range(
-        self, 
+        self,
         telemetry_list: List,
         min_speed: float = 0.0,
-        max_speed: Optional[float] = None
+        max_speed: Optional[float] = None,
     ) -> List:
         """
         Filter telemetry by speed range.
@@ -184,17 +185,12 @@ class TelemetryProcessor:
         Returns:
             Filtered list of telemetry
         """
-        max_spd = max_speed if max_speed is not None else float('inf')
-        
-        return [
-            t for t in telemetry_list
-            if min_speed <= t.speed <= max_spd
-        ]
+        max_spd = max_speed if max_speed is not None else float("inf")
+
+        return [t for t in telemetry_list if min_speed <= t.speed <= max_spd]
 
     def detect_anomalies(
-        self, 
-        telemetry_list: List,
-        threshold_stdev: float = 3.0
+        self, telemetry_list: List, threshold_stdev: float = 3.0
     ) -> List[int]:
         """
         Detect anomalies in telemetry using standard deviation.
@@ -218,7 +214,9 @@ class TelemetryProcessor:
             z_score = abs((speed - mean_speed) / stdev_speed) if stdev_speed > 0 else 0
             if z_score > threshold_stdev:
                 anomalies.append(i)
-                logger.debug(f"Anomaly detected at index {i}: speed={speed}, z-score={z_score:.2f}")
+                logger.debug(
+                    f"Anomaly detected at index {i}: speed={speed}, z-score={z_score:.2f}"
+                )
 
         return anomalies
 

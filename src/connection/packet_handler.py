@@ -16,33 +16,35 @@ logger = logging.getLogger(__name__)
 
 class TinySubtype(IntEnum):
     """TINY packet subtypes"""
-    TINY_NONE = 0       # No subtype
-    TINY_VER = 1        # Request version
-    TINY_CLOSE = 2      # Close InSim
-    TINY_PING = 3       # Ping
-    TINY_REPLY = 4      # Ping reply
-    TINY_VTC = 5        # Vote cancel
-    TINY_SCP = 6        # Send camera pos
-    TINY_SST = 7        # Send state
-    TINY_GTH = 8        # Get time in hundredths
-    TINY_MPE = 9        # Multi player end
-    TINY_ISM = 10       # InSim multi
-    TINY_REN = 11       # Rename
-    TINY_NCN = 12       # New connection
-    TINY_NPL = 13       # New player
-    TINY_RES = 14       # Result
-    TINY_NLP = 15       # Node and lap
-    TINY_MCI = 16       # Multi car info
-    TINY_REO = 17       # Reorder
-    TINY_RST = 18       # Race start
-    TINY_AXI = 19       # Autocross info
-    TINY_AXC = 20       # Autocross clear
-    TINY_RIP = 21       # Replay info
+
+    TINY_NONE = 0  # No subtype
+    TINY_VER = 1  # Request version
+    TINY_CLOSE = 2  # Close InSim
+    TINY_PING = 3  # Ping
+    TINY_REPLY = 4  # Ping reply
+    TINY_VTC = 5  # Vote cancel
+    TINY_SCP = 6  # Send camera pos
+    TINY_SST = 7  # Send state
+    TINY_GTH = 8  # Get time in hundredths
+    TINY_MPE = 9  # Multi player end
+    TINY_ISM = 10  # InSim multi
+    TINY_REN = 11  # Rename
+    TINY_NCN = 12  # New connection
+    TINY_NPL = 13  # New player
+    TINY_RES = 14  # Result
+    TINY_NLP = 15  # Node and lap
+    TINY_MCI = 16  # Multi car info
+    TINY_REO = 17  # Reorder
+    TINY_RST = 18  # Race start
+    TINY_AXI = 19  # Autocross info
+    TINY_AXC = 20  # Autocross clear
+    TINY_RIP = 21  # Replay info
 
 
 @dataclass
 class PacketInfo:
     """Information about an InSim packet"""
+
     size: int
     type: int
     req_id: int
@@ -52,13 +54,13 @@ class PacketInfo:
 class PacketHandler:
     """
     Handles processing of InSim packets.
-    
+
     This class is responsible for:
     - Parsing received InSim packets
     - Validating packet structure
     - Extracting data from packets
     - Managing callbacks for packet types
-    
+
     Example:
         >>> handler = PacketHandler()
         >>> handler.register_handler(PacketType.ISP_VER, handle_version)
@@ -102,24 +104,23 @@ class PacketHandler:
             # byte Type;   # Packet type (PacketType)
             # byte ReqI;   # Request ID (0 normally)
             # byte SubT;   # Subtype (depends on type)
-            
+
             size, pkt_type, req_id, sub_type = struct.unpack("=4B", data[:4])
-            
+
             # Actual size is size * 4
             actual_size = size * 4
-            
+
             if len(data) < actual_size:
-                logger.warning(f"Incomplete packet: expected {actual_size}, received {len(data)}")
+                logger.warning(
+                    f"Incomplete packet: expected {actual_size}, received {len(data)}"
+                )
                 return None
 
             # Packet counter
             self.packet_count[pkt_type] = self.packet_count.get(pkt_type, 0) + 1
 
             return PacketInfo(
-                size=actual_size,
-                type=pkt_type,
-                req_id=req_id,
-                data=data[:actual_size]
+                size=actual_size, type=pkt_type, req_id=req_id, data=data[:actual_size]
             )
 
         except struct.error as e:
@@ -163,7 +164,7 @@ class PacketHandler:
 
         Returns:
             Dict with version information or None on error
-            
+
         Reference: https://en.lfsmanual.net/wiki/InSim.txt#IS_VER
         """
         try:
@@ -176,7 +177,7 @@ class PacketHandler:
             #     char Product[6]; # Product
             #     word InSimVer;   # InSim version
             # }
-            
+
             if len(data) < 20:
                 return None
 
@@ -186,8 +187,8 @@ class PacketHandler:
 
             return {
                 "req_id": req_id,
-                "version": version.decode('utf-8').strip('\x00'),
-                "product": product.decode('utf-8').strip('\x00'),
+                "version": version.decode("utf-8").strip("\x00"),
+                "product": product.decode("utf-8").strip("\x00"),
                 "insim_version": insim_ver,
             }
 
@@ -204,7 +205,7 @@ class PacketHandler:
 
         Returns:
             Dict with state information or None on error
-            
+
         Reference: https://en.lfsmanual.net/wiki/InSim.txt#IS_STA
         """
         try:
@@ -229,7 +230,7 @@ class PacketHandler:
             #     byte Weather;        # Weather
             #     byte Wind;           # Wind
             # }
-            
+
             if len(data) < 28:
                 return None
 
@@ -247,7 +248,7 @@ class PacketHandler:
                 "race_in_progress": unpacked[11],
                 "qual_mins": unpacked[12],
                 "race_laps": unpacked[13],
-                "track": unpacked[16].decode('utf-8').strip('\x00'),
+                "track": unpacked[16].decode("utf-8").strip("\x00"),
                 "weather": unpacked[17],
                 "wind": unpacked[18],
             }
@@ -265,7 +266,7 @@ class PacketHandler:
 
         Returns:
             Dict with vehicle information or None on error
-            
+
         Reference: https://en.lfsmanual.net/wiki/InSim.txt#IS_MCI
         """
         try:
@@ -276,7 +277,7 @@ class PacketHandler:
             #     byte NumC;      # Number of cars (max 8)
             #     CompCar Info[NumC]; # Info for each car
             # }
-            
+
             if len(data) < 4:
                 return None
 
@@ -284,29 +285,31 @@ class PacketHandler:
 
             cars = []
             offset = 4
-            
+
             for i in range(num_cars):
                 if offset + 28 > len(data):
                     break
-                
+
                 # struct CompCar (28 bytes) - compact car information
-                car_data = struct.unpack("=2H4i2H4B", data[offset:offset+28])
-                
-                cars.append({
-                    "node": car_data[0],
-                    "lap": car_data[1],
-                    "plid": car_data[2],
-                    "position": {
-                        "x": car_data[3],
-                        "y": car_data[4],
-                        "z": car_data[5],
-                    },
-                    "speed": car_data[6],
-                    "direction": car_data[7],
-                    "heading": car_data[8],
-                    "angular_vel": car_data[9],
-                })
-                
+                car_data = struct.unpack("=2H4i2H4B", data[offset : offset + 28])
+
+                cars.append(
+                    {
+                        "node": car_data[0],
+                        "lap": car_data[1],
+                        "plid": car_data[2],
+                        "position": {
+                            "x": car_data[3],
+                            "y": car_data[4],
+                            "z": car_data[5],
+                        },
+                        "speed": car_data[6],
+                        "direction": car_data[7],
+                        "heading": car_data[8],
+                        "angular_vel": car_data[9],
+                    }
+                )
+
                 offset += 28
 
             return {

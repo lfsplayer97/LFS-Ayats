@@ -263,9 +263,7 @@ class InSimClient:
         except socket.error as e:
             self._change_state(ConnectionState.ERROR)
             logger.error(f"Connection error: {e}")
-            raise ConnectionError(
-                f"Cannot connect to {self.host}:{self.port}"
-            ) from e
+            raise ConnectionError(f"Cannot connect to {self.host}:{self.port}") from e
 
     def connect_with_retry(self) -> bool:
         """

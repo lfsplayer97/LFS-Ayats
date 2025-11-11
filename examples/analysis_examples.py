@@ -223,32 +223,32 @@ def example_5_alert_system():
 
     system.register_handler(ConsoleAlertHandler())
 
-    # Generar diferents tipus d'alertes
+    # Generate different types of alerts
     system.create_and_trigger(
         AlertLevel.INFO,
-        "Sessió de telemetria iniciada",
+        "Telemetry session started",
         {"timestamp": "2024-01-10 10:00:00"},
     )
 
     system.create_and_trigger(
-        AlertLevel.WARNING, "Temperatura del motor elevada: 98°C", {"temperature": 98.0}
+        AlertLevel.WARNING, "Engine temperature elevated: 98°C", {"temperature": 98.0}
     )
 
-    # Comprovar condicions automàtiques
+    # Check automatic conditions
     telemetry_data = {
         "engine_temp": 110.0,
         "fuel": 4.0,
         "tire_wear": 85.0,
     }
 
-    print("\nComprovant condicions telemètriques...")
+    print("\nChecking telemetry conditions...")
     alerts = system.check_conditions(telemetry_data)
 
-    # Obtenir estadístiques
+    # Get statistics
     stats = system.get_statistics()
-    print(f"\nEstadístiques del sistema:")
-    print(f"  Total d'alertes: {stats['total_alerts']}")
-    print(f"  Comptador per tipus: {stats['alert_counts']}")
+    print(f"\nSystem statistics:")
+    print(f"  Total alerts: {stats['total_alerts']}")
+    print(f"  Counter by type: {stats['alert_counts']}")
 
     print()
 
@@ -257,45 +257,45 @@ def example_6_metrics_calculation():
     """
     Example 6: Metrics Calculation
 
-    Demostra com calcular diferents mètriques de rendiment.
+    Demonstrates how to calculate different performance metrics.
     """
     print("=" * 70)
     print("Example 6: Metrics Calculation")
     print("=" * 70)
 
-    # Crear calculadora
+    # Create calculator
     calculator = MetricsCalculator()
 
-    # Temps de voltes d'una sessió
+    # Lap times from a session
     lap_times = [86.5, 86.2, 85.9, 85.7, 85.5, 85.6, 85.4, 85.5, 85.3, 85.4]
-    reference_time = 85.0  # Millor temps del servidor
+    reference_time = 85.0  # Best server time
 
-    # Calcular consistència
+    # Calculate consistency
     consistency = calculator.calculate_consistency(lap_times)
     print(f"\nConsistency: {consistency:.1%}")
 
-    # Calcular puntuació de ritme
+    # Calculate pace score
     pace_score = calculator.calculate_pace_score(lap_times, reference_time)
-    print(f"Puntuació de ritme: {pace_score:.1f}/100")
+    print(f"Pace score: {pace_score:.1f}/100")
 
-    # Calcular taxa de millora
+    # Calculate improvement rate
     improvement_rate = calculator.calculate_improvement_rate(lap_times)
     if improvement_rate < 0:
-        print(f"Taxa de millora: {abs(improvement_rate):.3f}s per volta (millorant)")
+        print(f"Improvement rate: {abs(improvement_rate):.3f}s per lap (improving)")
     else:
-        print(f"Taxa de millora: {improvement_rate:.3f}s per volta (empitjorant)")
+        print(f"Improvement rate: {improvement_rate:.3f}s per lap (worsening)")
 
-    # Calcular índex de rendiment compost
+    # Calculate composite performance index
     performance_index = calculator.calculate_performance_index(
         lap_times, reference_time, consistency_weight=0.3, pace_weight=0.7
     )
-    print(f"Índex de rendiment: {performance_index:.1f}/100")
+    print(f"Performance index: {performance_index:.1f}/100")
 
-    # Calcular percentil
+    # Calculate percentile
     all_times = [85.0, 85.5, 86.0, 86.5, 87.0, 85.8, 85.4]
     avg_time = sum(lap_times) / len(lap_times)
     percentile = calculator.calculate_percentile_rank(avg_time, all_times)
-    print(f"Percentil: Top {100-percentile:.1f}%")
+    print(f"Percentile: Top {100-percentile:.1f}%")
 
     print()
 
