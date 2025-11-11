@@ -1,8 +1,8 @@
 """
 Packet Handler
-Gestió i processament de paquets InSim.
+InSim packet handling and processing.
 
-Referència: https://en.lfsmanual.net/wiki/InSim.txt
+Reference: https://en.lfsmanual.net/wiki/InSim.txt
 """
 
 import struct
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class TinySubtype(IntEnum):
-    """Subtipus de paquets TINY"""
+    """TINY packet subtypes"""
     TINY_NONE = 0       # No subtype
     TINY_VER = 1        # Request version
     TINY_CLOSE = 2      # Close InSim
