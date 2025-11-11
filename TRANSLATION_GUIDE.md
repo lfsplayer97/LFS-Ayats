@@ -10,17 +10,15 @@ This guide provides detailed instructions for completing the translation of rema
 - [x] docs/development.md (430 lines)
 - [x] examples/basic_connection.py (83 lines)
 - [x] examples/data_logger.py (103 lines)
-
-### ⚠️ Partially Completed (30-50%)
-- [ ] src/connection/insim_client.py (~200 lines of Catalan remaining)
-- [ ] src/connection/packet_handler.py (~100 lines of Catalan remaining)
+- [x] **src/connection/insim_client.py (619 lines)** - Phase 2
+- [x] **src/connection/packet_handler.py (334 lines)** - Phase 2
+- [x] **src/telemetry/collector.py (345 lines)** - Phase 2
+- [x] **src/telemetry/processor.py (232 lines)** - Phase 2
+- [x] **src/telemetry/__init__.py (13 lines)** - Phase 2
+- [x] **examples/telemetry_monitor.py (102 lines)** - Phase 2
+- [x] **examples/analysis_examples.py (322 lines)** - Phase 2
 
 ### 📝 Not Started (0%)
-- [ ] examples/telemetry_monitor.py
-- [ ] examples/analysis_examples.py
-- [ ] src/telemetry/collector.py
-- [ ] src/telemetry/processor.py
-- [ ] src/telemetry/__init__.py
 - [ ] src/export/db_exporter.py
 - [ ] src/config/settings.py
 - [ ] src/analysis/sectors.py
