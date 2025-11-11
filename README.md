@@ -243,6 +243,110 @@ asyncio.run(receive_telemetry())
 
 Vegeu [docs/api_documentation.md](docs/api_documentation.md) per documentació completa de l'API.
 
+## 🔌 Integracions Externes
+
+LFS-Ayats ofereix integracions amb serveis externs per notificacions, streaming i backup automàtic.
+
+### Discord
+
+Envia notificacions automàtiques a canals de Discord:
+
+```python
+from src.integrations import DiscordIntegration
+
+discord = DiscordIntegration(webhook_url="https://discord.com/api/webhooks/...")
+
+# Notificar millor temps personal
+await discord.notify_personal_best({
+    'circuit': 'Blackwood GP',
+    'time': 98.456,
+    'vehicle': 'XF GTI',
+    'improvement': 0.234
+})
+```
+
+### Telegram
+
+Envia missatges i imatges a través d'un bot de Telegram:
+
+```python
+from src.integrations import TelegramIntegration
+
+telegram = TelegramIntegration(bot_token="YOUR_TOKEN", chat_id="YOUR_CHAT_ID")
+await telegram.send_message("<b>Sistema en línia!</b>")
+```
+
+### Streaming Overlay (OBS)
+
+Mostra telemetria en temps real en OBS Studio:
+
+```python
+from src.integrations import StreamingOverlay
+
+overlay = StreamingOverlay(port=5000)
+overlay.start()  # Accedeix a http://localhost:5000
+
+# Actualitza dades de telemetria
+overlay.update_telemetry({
+    'speed': 120.5,
+    'rpm': 6500,
+    'gear': 4,
+    'lap_time': 98.456
+})
+```
+
+### Cloud Storage (Google Drive / Dropbox)
+
+Backup automàtic a Google Drive o Dropbox:
+
+```python
+from src.integrations import GoogleDriveIntegration
+
+gdrive = GoogleDriveIntegration('./credentials.json')
+gdrive.auto_backup('./data/', folder_id='optional_folder_id')
+```
+
+**Configuració:**
+
+Afegeix a `config.yaml`:
+
+```yaml
+integrations:
+  discord:
+    enabled: true
+    webhook_url: "${DISCORD_WEBHOOK_URL}"
+    notifications:
+      personal_best: true
+      session_summary: true
+      anomalies: true
+  
+  telegram:
+    enabled: false
+    bot_token: "${TELEGRAM_BOT_TOKEN}"
+    chat_id: "${TELEGRAM_CHAT_ID}"
+  
+  streaming:
+    enabled: false
+    overlay_port: 5000
+    update_rate: 10  # Hz
+  
+  cloud_backup:
+    enabled: false
+    provider: google_drive
+    auto_backup: true
+    backup_interval: 3600  # segons
+    credentials_path: ./credentials.json
+```
+
+**Exemples complets:**
+- `examples/discord_integration_example.py`
+- `examples/telegram_integration_example.py`
+- `examples/streaming_overlay_example.py`
+- `examples/cloud_storage_example.py`
+- `examples/integrated_system_example.py`
+
+Vegeu [docs/integrations.md](docs/integrations.md) per documentació completa de les integracions.
+
 ### Visualització en Temps Real
 
 ```python
