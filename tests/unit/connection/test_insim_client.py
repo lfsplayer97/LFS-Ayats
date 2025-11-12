@@ -410,3 +410,79 @@ class TestInSimClientEnhanced:
 
         # Should return None for invalid packet
         assert packet is None
+
+
+class TestSocketCreation:
+    """Test cases for socket creation refactoring"""
+
+    @patch("socket.socket")
+    def test_create_socket_tcp(self, mock_socket):
+        """Test TCP socket creation with default timeout"""
+        client = InSimClient(udp=False)
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+
+        sock = client._create_socket()
+
+        # Verify socket was created with correct parameters
+        mock_socket.assert_called_once_with(socket.AF_INET, socket.SOCK_STREAM)
+        # Verify timeout was set (default 5.0)
+        mock_sock_instance.settimeout.assert_called_once_with(5.0)
+        assert sock == mock_sock_instance
+
+    @patch("socket.socket")
+    def test_create_socket_tcp_custom_timeout(self, mock_socket):
+        """Test TCP socket creation with custom timeout"""
+        client = InSimClient(udp=False, socket_timeout=10.0)
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+
+        sock = client._create_socket()
+
+        # Verify socket was created with correct parameters
+        mock_socket.assert_called_once_with(socket.AF_INET, socket.SOCK_STREAM)
+        # Verify custom timeout was set
+        mock_sock_instance.settimeout.assert_called_once_with(10.0)
+        assert sock == mock_sock_instance
+
+    @patch("socket.socket")
+    def test_create_socket_udp(self, mock_socket):
+        """Test UDP socket creation"""
+        client = InSimClient(udp=True)
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+
+        sock = client._create_socket()
+
+        # Verify socket was created with correct parameters
+        mock_socket.assert_called_once_with(socket.AF_INET, socket.SOCK_DGRAM)
+        # UDP socket should NOT have timeout set
+        mock_sock_instance.settimeout.assert_not_called()
+        assert sock == mock_sock_instance
+
+    def test_socket_timeout_attribute(self):
+        """Test that socket_timeout attribute is set correctly"""
+        # Test with default value
+        client = InSimClient()
+        assert client.socket_timeout == 5.0
+
+        # Test with custom value
+        client = InSimClient(socket_timeout=15.0)
+        assert client.socket_timeout == 15.0
+
+    @patch("socket.socket")
+    def test_connect_uses_create_socket(self, mock_socket):
+        """Test that connect method uses _create_socket"""
+        client = InSimClient(udp=False, socket_timeout=7.5)
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+
+        client.connect()
+
+        # Verify socket was created with correct parameters
+        mock_socket.assert_called_once_with(socket.AF_INET, socket.SOCK_STREAM)
+        # Verify custom timeout was applied
+        mock_sock_instance.settimeout.assert_called_once_with(7.5)
+        # Verify connection was made
+        mock_sock_instance.connect.assert_called_once_with((client.host, client.port))
+        assert client.connected is True

@@ -160,6 +160,7 @@ class InSimClient:
         retry_delay: float = 2.0,
         reconnect_enabled: bool = True,
         heartbeat_interval: float = 30.0,
+        socket_timeout: float = 5.0,
     ):
         """
         Initialize the InSim client.
@@ -174,12 +175,14 @@ class InSimClient:
             retry_delay: Initial delay between attempts (exponential backoff)
             reconnect_enabled: Enable automatic reconnection
             heartbeat_interval: Interval between heartbeats (seconds)
+            socket_timeout: TCP socket timeout in seconds (default 5.0)
         """
         self.host = host
         self.port = port
         self.admin_password = admin_password
         self.app_name = app_name[:16]  # Limit to 16 characters
         self.udp = udp
+        self.socket_timeout = socket_timeout
 
         # Reconnection settings
         self.max_retries = max_retries
@@ -233,27 +236,40 @@ class InSimClient:
             except Exception as e:
                 logger.error(f"Error in state callback: {e}")
 
+    def _create_socket(self) -> socket.socket:
+        """
+        Create and configure socket based on protocol type.
+
+        Handles both TCP and UDP socket creation with appropriate
+        configuration for each protocol.
+
+        Returns:
+            Configured socket instance
+        """
+        if self.udp:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            logger.debug("UDP socket created")
+        else:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(self.socket_timeout)
+            logger.debug(f"TCP socket created (timeout={self.socket_timeout}s)")
+
+        return sock
+
     def connect(self) -> bool:
         """
         Establish connection with the LFS server.
 
         Returns:
-            bool: True if connection is successful, False otherwise
+            bool: True if connection is successful
 
         Raises:
             ConnectionError: If unable to connect to the server
         """
         try:
             self._change_state(ConnectionState.CONNECTING)
-
-            if self.udp:
-                self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                self.socket.connect((self.host, self.port))
-            else:
-                self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.socket.connect((self.host, self.port))
-                self.socket.settimeout(5.0)
-
+            self.socket = self._create_socket()
+            self.socket.connect((self.host, self.port))
             self.connected = True
             self._change_state(ConnectionState.CONNECTED)
             logger.info(f"Connected to {self.host}:{self.port}")
