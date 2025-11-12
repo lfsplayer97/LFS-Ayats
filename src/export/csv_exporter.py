@@ -4,11 +4,12 @@ Exportació de dades telemètriques a format CSV.
 """
 
 import csv
-import logging
 from typing import List, Any
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
+from src.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class CSVExporter:

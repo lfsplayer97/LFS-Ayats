@@ -4,16 +4,16 @@ Configuration endpoints for system settings.
 Provides endpoints for reading and updating system configuration.
 """
 
-import logging
 from typing import List
 from fastapi import APIRouter, Depends, Body
 
+from src.utils import get_logger
 from src.api.models import ConfigResponse, ConnectionConfig, CircuitInfo, VehicleInfo
 from src.api.dependencies import get_repository, get_settings
 from src.config.settings import Settings
 from src.database.repository import TelemetryRepository
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter()
 

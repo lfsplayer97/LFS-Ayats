@@ -5,14 +5,15 @@ Manages connection heartbeat independently for InSim connections.
 Reference: https://en.lfsmanual.net/wiki/InSim.txt
 """
 
-import logging
 import threading
 from typing import TYPE_CHECKING, Optional
+
+from src.utils import get_logger
 
 if TYPE_CHECKING:
     from .insim_client import InSimClient
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class HeartbeatManager:

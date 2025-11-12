@@ -4,12 +4,13 @@ Exportació de dades telemètriques a format JSON.
 """
 
 import json
-import logging
 from typing import List, Any, Dict
 from pathlib import Path
 from datetime import datetime
 
-logger = logging.getLogger(__name__)
+from src.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class JSONExporter:

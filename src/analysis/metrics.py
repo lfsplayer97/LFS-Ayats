@@ -6,11 +6,12 @@ Aquest mòdul proporciona càlcul de diverses mètriques utilitzades
 per analitzar i avaluar el rendiment en carreres.
 """
 
-import logging
 import statistics
 from typing import List, Dict, Any, Optional
 
-logger = logging.getLogger(__name__)
+from src.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class MetricsCalculator:

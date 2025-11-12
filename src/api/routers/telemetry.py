@@ -4,17 +4,17 @@ Telemetry endpoints for real-time data streaming.
 Provides WebSocket endpoint for live telemetry and range queries.
 """
 
-import logging
 import asyncio
 from typing import Optional
 from datetime import datetime
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
 
+from src.utils import get_logger
 from src.api.models import LiveTelemetryMessage, WebSocketError, TelemetryPoint
 from src.api.dependencies import get_repository
 from src.database.repository import TelemetryRepository
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter()
 

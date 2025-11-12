@@ -6,12 +6,13 @@ Reference: https://en.lfsmanual.net/wiki/InSim.txt
 """
 
 import struct
-import logging
 from typing import Dict, Any, Optional, Callable
 from dataclasses import dataclass
 from enum import IntEnum
 
-logger = logging.getLogger(__name__)
+from src.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class TinySubtype(IntEnum):

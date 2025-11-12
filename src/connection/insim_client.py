@@ -7,15 +7,15 @@ Reference: https://en.lfsmanual.net/wiki/InSim.txt
 
 import socket
 import struct
-import logging
 import time
 from typing import Optional, Callable, Dict
 from enum import IntEnum, Enum
 from collections import defaultdict
 
+from src.utils import get_logger
 from .heartbeat import HeartbeatManager
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class InSimVersion(IntEnum):

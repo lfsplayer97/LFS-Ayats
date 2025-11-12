@@ -7,13 +7,13 @@ per identificar comportaments anòmals del vehicle que poden indicar
 problemes mecànics, errors del pilot o situacions perilloses.
 """
 
-import logging
 import statistics
 from typing import List, Dict, Any, Optional, Tuple
 
+from src.utils import get_logger
 from src.analysis.utils import Alert, AlertLevel, moving_average
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 # Constants per detecció d'anomalies

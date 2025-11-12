@@ -9,14 +9,14 @@ Reference:
     https://docs.sqlalchemy.org/en/20/
 """
 
-import logging
 from typing import List, Any, Dict, Optional
 from datetime import datetime
 from pathlib import Path
 
+from src.utils import get_logger
 from src.database.repository import TelemetryRepository, _mask_connection_string_password
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class DatabaseExporter:

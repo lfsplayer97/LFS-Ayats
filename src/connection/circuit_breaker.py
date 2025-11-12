@@ -6,12 +6,13 @@ Reference: https://martinfowler.com/bliki/CircuitBreaker.html
 """
 
 import time
-import logging
 from enum import Enum
 from typing import Callable, Any, Optional
 from functools import wraps
 
-logger = logging.getLogger(__name__)
+from src.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class CircuitState(Enum):

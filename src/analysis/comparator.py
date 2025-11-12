@@ -6,12 +6,13 @@ Aquest mòdul proporciona eines per comparar voltes en detall,
 identificar diferències de rendiment i generar suggeriments de millora.
 """
 
-import logging
 import statistics
 from typing import List, Dict, Any, Optional
+
+from src.utils import get_logger
 from src.analysis.utils import LapComparison, SectorComparison, TimeDelta
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class AdvancedComparator:

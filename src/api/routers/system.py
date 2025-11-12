@@ -5,12 +5,12 @@ Provides endpoints for checking API health, system status,
 and managing LFS connection.
 """
 
-import logging
 import time
 from datetime import datetime
 from fastapi import APIRouter, Depends, Body
 from typing import Optional
 
+from src.utils import get_logger
 from src.api.models import (
     HealthResponse,
     SystemStatusResponse,
@@ -24,7 +24,7 @@ from src.api.dependencies import (
 from src.api.exceptions import ConnectionError as ConnectionErrorException
 from src.database.repository import TelemetryRepository
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter()
 

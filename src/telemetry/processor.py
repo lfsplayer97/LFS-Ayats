@@ -3,12 +3,13 @@ Telemetry Processor
 Processing and validation of telemetry data.
 """
 
-import logging
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 import statistics
 
-logger = logging.getLogger(__name__)
+from src.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass

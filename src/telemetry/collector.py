@@ -5,14 +5,15 @@ Collection of telemetry data from Live for Speed using InSim.
 Reference: https://en.lfsmanual.net/wiki/InSim.txt
 """
 
-import logging
 import time
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from threading import Thread, Event
 
-logger = logging.getLogger(__name__)
+from src.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass

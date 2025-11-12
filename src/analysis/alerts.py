@@ -6,14 +6,14 @@ Aquest mòdul gestiona la generació, distribució i historial d'alertes
 basades en les dades d'anàlisi telemètric.
 """
 
-import logging
 from typing import List, Callable, Dict, Any, Optional
 from abc import ABC, abstractmethod
 import time
 
+from src.utils import get_logger
 from src.analysis.utils import Alert, AlertLevel
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class AlertHandler(ABC):

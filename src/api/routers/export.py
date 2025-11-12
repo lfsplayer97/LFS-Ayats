@@ -4,13 +4,13 @@ Export endpoints for data export operations.
 Provides endpoints for exporting lap and session data in various formats.
 """
 
-import logging
 import tempfile
 import os
 from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import FileResponse
 
+from src.utils import get_logger
 from src.api.models import ExportResponse
 from src.api.dependencies import get_repository
 from src.api.exceptions import LapNotFoundError, SessionNotFoundError, ExportError
@@ -18,7 +18,7 @@ from src.database.repository import TelemetryRepository
 from src.export.csv_exporter import CSVExporter
 from src.export.json_exporter import JSONExporter
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter()
 

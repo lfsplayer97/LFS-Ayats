@@ -3,13 +3,14 @@ Telemetry Buffer
 Thread-safe buffer for telemetry data during reconnections.
 """
 
-import logging
 import threading
 from collections import deque
 from typing import Any, Optional, Callable
 from datetime import datetime
 
-logger = logging.getLogger(__name__)
+from src.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class TelemetryBuffer:

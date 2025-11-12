@@ -4,12 +4,13 @@ Configuració de l'aplicació LFS-Ayats.
 """
 
 import yaml
-import logging
 from pathlib import Path
 from typing import Dict, Any, Optional
 from dataclasses import dataclass, asdict
 
-logger = logging.getLogger(__name__)
+from src.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass

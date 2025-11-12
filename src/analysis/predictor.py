@@ -7,11 +7,12 @@ per predir temps de volta, pit stops, desgast de pneumàtics i altres
 mètriques de rendiment.
 """
 
-import logging
 import statistics
 from typing import List, Dict, Any, Optional, Tuple
 
-logger = logging.getLogger(__name__)
+from src.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class PerformancePredictor:

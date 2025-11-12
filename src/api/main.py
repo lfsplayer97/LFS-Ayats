@@ -16,11 +16,11 @@ API Documentation:
     - OpenAPI JSON: http://localhost:8000/api/openapi.json
 """
 
-import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 
+from src.utils import get_logger, configure_root_logger
 from src.api import __version__
 from src.api.middleware import LoggingMiddleware, setup_cors
 from src.api.dependencies import init_dependencies
@@ -36,11 +36,8 @@ from src.api.routers import (
 )
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
+configure_root_logger()
+logger = get_logger(__name__)
 
 
 @asynccontextmanager

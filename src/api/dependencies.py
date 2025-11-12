@@ -5,15 +5,15 @@ Provides reusable dependencies for database access, configuration,
 and other shared resources.
 """
 
-import logging
 from typing import Optional
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
+from src.utils import get_logger
 from src.database.repository import TelemetryRepository
 from src.config.settings import Settings
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Global repository instance
 _repository: Optional[TelemetryRepository] = None

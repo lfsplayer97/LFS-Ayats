@@ -8,7 +8,6 @@ Reference:
     https://docs.sqlalchemy.org/en/20/orm/session_basics.html
 """
 
-import logging
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
@@ -16,9 +15,10 @@ from sqlalchemy import create_engine, select, func, and_
 from sqlalchemy.orm import sessionmaker, selectinload
 from sqlalchemy.pool import NullPool, StaticPool
 
+from src.utils import get_logger
 from src.database.models import Base, Session, Lap, TelemetryPoint, Vehicle, Circuit
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _mask_connection_string_password(connection_string: str) -> str:

@@ -6,12 +6,13 @@ Aquest mòdul proporciona eines per analitzar el rendiment en diferents
 sectors de la pista, identificar punts febles i optimitzar la línia de carrera.
 """
 
-import logging
 import statistics
 from typing import List, Dict, Any
+
+from src.utils import get_logger
 from src.analysis.utils import Sector, BrakingPoint, ThrottleAnalysis, RacingLine
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SectorAnalyzer:

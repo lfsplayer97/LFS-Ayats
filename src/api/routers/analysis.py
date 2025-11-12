@@ -4,10 +4,10 @@ Analysis endpoints for lap and session analysis.
 Provides endpoints for sector analysis, anomaly detection, and comparisons.
 """
 
-import logging
 from typing import List
 from fastapi import APIRouter, Depends, Body
 
+from src.utils import get_logger
 from src.api.models import (
     LapAnalysisResponse,
     SectorAnalysis,
@@ -20,7 +20,7 @@ from src.api.dependencies import get_repository
 from src.api.exceptions import LapNotFoundError, SessionNotFoundError
 from src.database.repository import TelemetryRepository
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter()
 

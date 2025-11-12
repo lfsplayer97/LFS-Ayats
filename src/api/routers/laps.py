@@ -4,10 +4,10 @@ Lap endpoints for managing and comparing laps.
 Provides operations for retrieving lap data and comparing performance.
 """
 
-import logging
 from typing import List
 from fastapi import APIRouter, Depends, Query
 
+from src.utils import get_logger
 from src.api.models import (
     LapResponse,
     LapListResponse,
@@ -20,7 +20,7 @@ from src.api.dependencies import get_repository
 from src.api.exceptions import LapNotFoundError, SessionNotFoundError, InvalidParameterError
 from src.database.repository import TelemetryRepository
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter()
 

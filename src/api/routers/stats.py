@@ -4,10 +4,10 @@ Statistics endpoints for performance metrics.
 Provides endpoints for best laps, driver stats, and circuit stats.
 """
 
-import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Query
 
+from src.utils import get_logger
 from src.api.models import (
     BestLapStats,
     DriverStats,
@@ -17,7 +17,7 @@ from src.api.models import (
 from src.api.dependencies import get_repository
 from src.database.repository import TelemetryRepository
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter()
 

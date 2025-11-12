@@ -58,7 +58,8 @@ def get_logger(
         if COLORLOG_AVAILABLE:
             # Colored format for colorlog
             color_format = (
-                "%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                "%(log_color)s%(asctime)s - %(name)s - "
+                "%(levelname)s - %(message)s"
             )
             formatter = colorlog.ColoredFormatter(
                 color_format,
@@ -207,5 +208,8 @@ def create_session_logger(base_name: str = "lfs_ayats") -> logging.Logger:
     log_file = f"logs/{base_name}_{timestamp}.log"
 
     return setup_logger(
-        name=f"{base_name}_{timestamp}", level="DEBUG", log_file=log_file, console=True
+        name=f"{base_name}_{timestamp}",
+        level="DEBUG",
+        log_file=log_file,
+        console=True,
     )
