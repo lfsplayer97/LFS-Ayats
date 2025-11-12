@@ -1,8 +1,8 @@
 """
-Exemples d'ús del mòdul d'anàlisi en temps real.
+Real-time analysis module usage examples.
 
-Aquest fitxer demostra com utilitzar els diferents components
-del mòdul d'anàlisi de LFS-Ayats.
+This file demonstrates how to use the different components
+of the LFS-Ayats analysis module.
 """
 
 from src.analysis import (
@@ -18,41 +18,41 @@ from src.analysis import (
 
 def example_1_anomaly_detection():
     """
-    Exemple 1: Detecció d'anomalies
+    Example 1: Anomaly Detection
 
-    Demostra com detectar diferents tipus d'anomalies en dades telemètriques.
+    Demonstrates how to detect different types of anomalies in telemetry data.
     """
     print("=" * 70)
-    print("Exemple 1: Detecció d'anomalies")
+    print("Example 1: Anomaly Detection")
     print("=" * 70)
 
-    # Crear detector d'anomalies
+    # Create anomaly detector
     detector = AnomalyDetector()
 
-    # Simular dades telemètriques
+    # Simulate telemetry data
     current_data = {
-        "engine_temp": 102.0,  # Temperatura elevada
+        "engine_temp": 102.0,  # Elevated temperature
         "linear_speed": 50.0,
-        "wheel_speed": 60.0,  # Rodes patinen
+        "wheel_speed": 60.0,  # Wheels slipping
         "steering_angle": 0.5,
-        "actual_rotation": 0.3,  # Subviratge
+        "actual_rotation": 0.3,  # Understeer
     }
 
-    # Comprovar anomalies
+    # Check anomalies
     alerts = detector.check_telemetry(current_data)
 
-    print(f"\nDades telemètriques:")
-    print(f"  - Temperatura motor: {current_data['engine_temp']}°C")
-    print(f"  - Velocitat lineal: {current_data['linear_speed']} m/s")
-    print(f"  - Velocitat rodes: {current_data['wheel_speed']} m/s")
+    print(f"\nTelemetry data:")
+    print(f"  - Engine temperature: {current_data['engine_temp']}°C")
+    print(f"  - Linear speed: {current_data['linear_speed']} m/s")
+    print(f"  - Wheel speed: {current_data['wheel_speed']} m/s")
 
-    print(f"\nAlertes detectades: {len(alerts)}")
+    print(f"\nDetected alerts: {len(alerts)}")
     for alert in alerts:
         print(f"  {alert}")
 
-    # Comprovar combustible
-    fuel_level = 12.0  # 12% de combustible
-    fuel_per_lap = 2.5  # 2.5% per volta
+    # Check fuel
+    fuel_level = 12.0  # 12% fuel
+    fuel_per_lap = 2.5  # 2.5% per lap
     laps_remaining = 10
 
     detected, alert = detector.detect_fuel_warning(
@@ -67,68 +67,68 @@ def example_1_anomaly_detection():
 
 def example_2_performance_prediction():
     """
-    Exemple 2: Predicció de rendiment
+    Example 2: Performance Prediction
 
-    Demostra com predir temps de volta i gestionar estratègies.
+    Demonstrates how to predict lap times and manage strategies.
     """
     print("=" * 70)
-    print("Exemple 2: Predicció de rendiment")
+    print("Example 2: Performance Prediction")
     print("=" * 70)
 
-    # Crear predictor
+    # Create predictor
     predictor = PerformancePredictor()
 
-    # Dades històriques de voltes anteriors
+    # Historical data from previous laps
     historical_data = [
-        {"sector_times": [28.5, 31.2, 25.8]},  # Volta 1: 85.5s
-        {"sector_times": [28.3, 31.5, 25.6]},  # Volta 2: 85.4s
-        {"sector_times": [28.4, 31.1, 25.7]},  # Volta 3: 85.2s
+        {"sector_times": [28.5, 31.2, 25.8]},  # Lap 1: 85.5s
+        {"sector_times": [28.3, 31.5, 25.6]},  # Lap 2: 85.4s
+        {"sector_times": [28.4, 31.1, 25.7]},  # Lap 3: 85.2s
     ]
 
-    # Sectors completats de la volta actual
+    # Completed sectors of current lap
     current_sectors = [28.2, 31.0]
 
-    # Predir temps final
+    # Predict final time
     predicted_time = predictor.predict_lap_time(current_sectors, historical_data)
 
-    print(f"\nSectors completats: S1={current_sectors[0]}s, S2={current_sectors[1]}s")
-    print(f"Temps de volta predit: {predicted_time:.3f}s")
+    print(f"\nCompleted sectors: S1={current_sectors[0]}s, S2={current_sectors[1]}s")
+    print(f"Predicted lap time: {predicted_time:.3f}s")
 
-    # Calcular millor temps teòric
+    # Calculate theoretical best time
     all_sector_times = [lap["sector_times"] for lap in historical_data]
     theoretical, best_sectors = predictor.calculate_theoretical_best(all_sector_times)
 
-    print(f"\nMillor temps teòric: {theoretical:.3f}s")
-    print(f"Millors sectors: {[f'{s:.3f}s' for s in best_sectors]}")
+    print(f"\nTheoretical best time: {theoretical:.3f}s")
+    print(f"Best sectors: {[f'{s:.3f}s' for s in best_sectors]}")
 
-    # Predir pit window
-    fuel_consumption = 2.5  # % per volta
-    tire_wear = 1.8  # % per volta
+    # Predict pit window
+    fuel_consumption = 2.5  # % per lap
+    tire_wear = 1.8  # % per lap
     laps_remaining = 20
 
     pit_lap, reason = predictor.predict_pit_window(
         fuel_consumption, tire_wear, laps_remaining
     )
 
-    print(f"\nPit stop recomanat en {pit_lap} voltes per {reason}")
+    print(f"\nRecommended pit stop in {pit_lap} laps due to {reason}")
 
     print()
 
 
 def example_3_sector_analysis():
     """
-    Exemple 3: Anàlisi de sectors
+    Example 3: Sector Analysis
 
-    Demostra com analitzar el rendiment per sectors i identificar àrees de millora.
+    Demonstrates how to analyze performance by sectors and identify areas for improvement.
     """
     print("=" * 70)
-    print("Exemple 3: Anàlisi de sectors")
+    print("Example 3: Sector Analysis")
     print("=" * 70)
 
-    # Crear analitzador
+    # Create analyzer
     analyzer = SectorAnalyzer()
 
-    # Simular dades de múltiples voltes
+    # Simulate data from multiple laps
     session_data = [
         {"sector_times": [28.5, 31.2, 25.8]},
         {"sector_times": [28.3, 31.5, 25.6]},
@@ -137,20 +137,20 @@ def example_3_sector_analysis():
         {"sector_times": [28.2, 31.9, 25.5]},
     ]
 
-    # Identificar sectors febles
+    # Identify weak sectors
     weak_sectors = analyzer.identify_weak_sectors(session_data)
 
-    print("\nSectors on es perd més temps:")
+    print("\nSectors where most time is lost:")
     for sector in weak_sectors:
-        print(f"  Sector {sector.number}: perdent {sector.time_lost:.3f}s")
-        print(f"    Temps mitjà: {sector.time:.3f}s")
-        print(f"    Millor temps: {sector.best_time:.3f}s")
-        print(f"    Consistència: {sector.consistency:.1%}")
+        print(f"  Sector {sector.number}: losing {sector.time_lost:.3f}s")
+        print(f"    Average time: {sector.time:.3f}s")
+        print(f"    Best time: {sector.best_time:.3f}s")
+        print(f"    Consistency: {sector.consistency:.1%}")
 
-    # Calcular consistència per sector
+    # Calculate consistency per sector
     consistency = analyzer.calculate_sector_consistency(session_data)
 
-    print("\nConsistència per sector:")
+    print("\nConsistency per sector:")
     for sector_num, score in consistency.items():
         print(f"  Sector {sector_num}: {score:.1%}")
 
@@ -159,15 +159,15 @@ def example_3_sector_analysis():
 
 def example_4_lap_comparison():
     """
-    Exemple 4: Comparació de voltes
+    Example 4: Lap Comparison
 
     Demostra com comparar dues voltes en detall.
     """
     print("=" * 70)
-    print("Exemple 4: Comparació de voltes")
+    print("Example 4: Lap Comparison")
     print("=" * 70)
 
-    # Crear comparador
+    # Create comparator
     comparator = AdvancedComparator()
 
     # Dades de dues voltes
@@ -185,11 +185,11 @@ def example_4_lap_comparison():
         "max_speed": 182.0,
     }
 
-    # Comparar voltes
+    # Compare laps
     comparison = comparator.compare_laps(lap1, lap2)
 
     print(f"\nComparació: Volta {lap1['lap_id']} vs Volta {lap2['lap_id']}")
-    print(f"Diferència total: {comparison.time_difference:+.3f}s")
+    print(f"Total difference: {comparison.time_difference:+.3f}s")
 
     print("\nComparació per sectors:")
     for sector_comp in comparison.sector_comparisons:
@@ -207,15 +207,15 @@ def example_4_lap_comparison():
 
 def example_5_alert_system():
     """
-    Exemple 5: Sistema d'alertes
+    Example 5: Alert System
 
-    Demostra com configurar i utilitzar el sistema d'alertes.
+    Demonstrates how to configure and use the alert system.
     """
     print("=" * 70)
-    print("Exemple 5: Sistema d'alertes")
+    print("Example 5: Alert System")
     print("=" * 70)
 
-    # Crear sistema d'alertes
+    # Create alert system
     system = AlertSystem()
 
     # Afegir gestor de consola per veure alertes
@@ -223,79 +223,79 @@ def example_5_alert_system():
 
     system.register_handler(ConsoleAlertHandler())
 
-    # Generar diferents tipus d'alertes
+    # Generate different types of alerts
     system.create_and_trigger(
         AlertLevel.INFO,
-        "Sessió de telemetria iniciada",
+        "Telemetry session started",
         {"timestamp": "2024-01-10 10:00:00"},
     )
 
     system.create_and_trigger(
-        AlertLevel.WARNING, "Temperatura del motor elevada: 98°C", {"temperature": 98.0}
+        AlertLevel.WARNING, "Engine temperature elevated: 98°C", {"temperature": 98.0}
     )
 
-    # Comprovar condicions automàtiques
+    # Check automatic conditions
     telemetry_data = {
         "engine_temp": 110.0,
         "fuel": 4.0,
         "tire_wear": 85.0,
     }
 
-    print("\nComprovant condicions telemètriques...")
+    print("\nChecking telemetry conditions...")
     alerts = system.check_conditions(telemetry_data)
 
-    # Obtenir estadístiques
+    # Get statistics
     stats = system.get_statistics()
-    print(f"\nEstadístiques del sistema:")
-    print(f"  Total d'alertes: {stats['total_alerts']}")
-    print(f"  Comptador per tipus: {stats['alert_counts']}")
+    print(f"\nSystem statistics:")
+    print(f"  Total alerts: {stats['total_alerts']}")
+    print(f"  Counter by type: {stats['alert_counts']}")
 
     print()
 
 
 def example_6_metrics_calculation():
     """
-    Exemple 6: Càlcul de mètriques
+    Example 6: Metrics Calculation
 
-    Demostra com calcular diferents mètriques de rendiment.
+    Demonstrates how to calculate different performance metrics.
     """
     print("=" * 70)
-    print("Exemple 6: Càlcul de mètriques")
+    print("Example 6: Metrics Calculation")
     print("=" * 70)
 
-    # Crear calculadora
+    # Create calculator
     calculator = MetricsCalculator()
 
-    # Temps de voltes d'una sessió
+    # Lap times from a session
     lap_times = [86.5, 86.2, 85.9, 85.7, 85.5, 85.6, 85.4, 85.5, 85.3, 85.4]
-    reference_time = 85.0  # Millor temps del servidor
+    reference_time = 85.0  # Best server time
 
-    # Calcular consistència
+    # Calculate consistency
     consistency = calculator.calculate_consistency(lap_times)
-    print(f"\nConsistència: {consistency:.1%}")
+    print(f"\nConsistency: {consistency:.1%}")
 
-    # Calcular puntuació de ritme
+    # Calculate pace score
     pace_score = calculator.calculate_pace_score(lap_times, reference_time)
-    print(f"Puntuació de ritme: {pace_score:.1f}/100")
+    print(f"Pace score: {pace_score:.1f}/100")
 
-    # Calcular taxa de millora
+    # Calculate improvement rate
     improvement_rate = calculator.calculate_improvement_rate(lap_times)
     if improvement_rate < 0:
-        print(f"Taxa de millora: {abs(improvement_rate):.3f}s per volta (millorant)")
+        print(f"Improvement rate: {abs(improvement_rate):.3f}s per lap (improving)")
     else:
-        print(f"Taxa de millora: {improvement_rate:.3f}s per volta (empitjorant)")
+        print(f"Improvement rate: {improvement_rate:.3f}s per lap (worsening)")
 
-    # Calcular índex de rendiment compost
+    # Calculate composite performance index
     performance_index = calculator.calculate_performance_index(
         lap_times, reference_time, consistency_weight=0.3, pace_weight=0.7
     )
-    print(f"Índex de rendiment: {performance_index:.1f}/100")
+    print(f"Performance index: {performance_index:.1f}/100")
 
-    # Calcular percentil
+    # Calculate percentile
     all_times = [85.0, 85.5, 86.0, 86.5, 87.0, 85.8, 85.4]
     avg_time = sum(lap_times) / len(lap_times)
     percentile = calculator.calculate_percentile_rank(avg_time, all_times)
-    print(f"Percentil: Top {100-percentile:.1f}%")
+    print(f"Percentile: Top {100-percentile:.1f}%")
 
     print()
 

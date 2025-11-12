@@ -11,7 +11,7 @@ from .circuit_breaker import CircuitBreaker, CircuitBreakerOpenError, CircuitSta
 
 __all__ = [
     "InSimClient",
-    "ConnectionState", 
+    "ConnectionState",
     "TinySubtype",
     "PacketHandler",
     "CircuitBreaker",
