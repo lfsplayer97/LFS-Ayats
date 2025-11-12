@@ -9,10 +9,11 @@ import socket
 import struct
 import logging
 import time
-import threading
 from typing import Optional, Callable, Dict
 from enum import IntEnum, Enum
 from collections import defaultdict
+
+from .heartbeat import HeartbeatManager
 
 logger = logging.getLogger(__name__)
 
@@ -186,10 +187,8 @@ class InSimClient:
         self.retry_count = 0
         self.reconnect_enabled = reconnect_enabled
 
-        # Heartbeat settings
-        self.heartbeat_interval = heartbeat_interval
-        self.heartbeat_thread: Optional[threading.Thread] = None
-        self._stop_heartbeat = threading.Event()
+        # Heartbeat manager
+        self.heartbeat = HeartbeatManager(self, heartbeat_interval)
 
         # Connection state
         self.socket: Optional[socket.socket] = None
@@ -321,8 +320,8 @@ class InSimClient:
         if self.connect_with_retry():
             logger.info("Reconnection successful")
             # Restart heartbeat if it was active
-            if self.heartbeat_thread and not self._stop_heartbeat.is_set():
-                self.start_heartbeat(self.heartbeat_interval)
+            if self.heartbeat.thread and not self.heartbeat._stop.is_set():
+                self.start_heartbeat(self.heartbeat.interval)
         else:
             logger.error("Reconnection failed after all attempts")
             self._change_state(ConnectionState.ERROR)
@@ -534,46 +533,15 @@ class InSimClient:
 
         Args:
             interval: Interval between heartbeats (seconds).
-                     If None, uses self.heartbeat_interval
+                     If None, uses current interval
         """
         if interval is not None:
-            self.heartbeat_interval = interval
-
-        # Stop previous heartbeat if exists
-        self.stop_heartbeat()
-
-        self._stop_heartbeat.clear()
-
-        def heartbeat_loop():
-            logger.info(f"Heartbeat started (interval={self.heartbeat_interval}s)")
-
-            while not self._stop_heartbeat.is_set() and self.connected:
-                try:
-                    self.send_tiny(TinySubtype.TINY_NONE)
-                    logger.debug("Heartbeat sent")
-                except Exception as e:
-                    logger.error(f"Heartbeat failed: {e}")
-                    if self.reconnect_enabled:
-                        self.trigger_reconnect()
-                    break
-
-                # Wait for interval or until stopped
-                self._stop_heartbeat.wait(timeout=self.heartbeat_interval)
-
-            logger.info("Heartbeat stopped")
-
-        self.heartbeat_thread = threading.Thread(
-            target=heartbeat_loop, daemon=True, name="InSimHeartbeat"
-        )
-        self.heartbeat_thread.start()
+            self.heartbeat.interval = interval
+        self.heartbeat.start()
 
     def stop_heartbeat(self) -> None:
         """Stop the heartbeat system."""
-        if self.heartbeat_thread and self.heartbeat_thread.is_alive():
-            logger.info("Stopping heartbeat...")
-            self._stop_heartbeat.set()
-            self.heartbeat_thread.join(timeout=2.0)
-            self.heartbeat_thread = None
+        self.heartbeat.stop()
 
     def register_callback(self, packet_type: int, callback: Callable) -> None:
         """

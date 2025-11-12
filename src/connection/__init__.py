@@ -8,6 +8,7 @@ __version__ = "0.1.0"
 from .insim_client import InSimClient, ConnectionState, TinySubtype
 from .packet_handler import PacketHandler
 from .circuit_breaker import CircuitBreaker, CircuitBreakerOpenError, CircuitState
+from .heartbeat import HeartbeatManager
 
 __all__ = [
     "InSimClient",
@@ -17,4 +18,5 @@ __all__ = [
     "CircuitBreaker",
     "CircuitBreakerOpenError",
     "CircuitState",
+    "HeartbeatManager",
 ]
