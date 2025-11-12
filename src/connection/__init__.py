@@ -1,6 +1,6 @@
 """
 InSim Connection Module
-Gestió de connexions al servidor Live for Speed mitjançant el protocol InSim
+Management of connections to the Live for Speed server via the InSim protocol
 """
 
 __version__ = "0.1.0"

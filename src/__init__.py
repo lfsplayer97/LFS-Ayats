@@ -1,6 +1,6 @@
 """
 LFS-Ayats Package
-Sistema modular de telemetria per Live for Speed
+Modular telemetry system for Live for Speed
 """
 
 __version__ = "0.1.0"
