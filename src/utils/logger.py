@@ -1,6 +1,8 @@
 """
-Logger
-Sistema de logging per a LFS-Ayats amb suport per colorlog.
+Logger utility module.
+
+Provides factory functions for consistent logger configuration
+across all modules in the LFS-Ayats system.
 """
 
 import logging
@@ -17,6 +19,100 @@ except ImportError:
     COLORLOG_AVAILABLE = False
 
 
+def get_logger(
+    name: Optional[str] = None,
+    level: int = logging.DEBUG,
+    log_file: Optional[str] = None,
+) -> logging.Logger:
+    """
+    Get or create a logger with standard configuration.
+
+    This function ensures consistent logging setup across
+    all modules in the LFS-Ayats system.
+
+    Args:
+        name: Logger name. If None, uses calling module name.
+        level: Logging level (default: DEBUG)
+        log_file: Optional file path for file logging
+
+    Returns:
+        Configured logger instance
+
+    Example:
+        >>> from src.utils import get_logger
+        >>> logger = get_logger(__name__)
+        >>> logger.info("System initialized")
+    """
+    if name is None:
+        import inspect
+
+        name = inspect.currentframe().f_back.f_globals["__name__"]
+
+    logger = logging.getLogger(name)
+
+    # Configure only if not already configured
+    if not logger.handlers:
+        # Console handler with colors if available
+        handler = logging.StreamHandler(sys.stdout)
+
+        if COLORLOG_AVAILABLE:
+            # Colored format for colorlog
+            color_format = (
+                "%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
+            formatter = colorlog.ColoredFormatter(
+                color_format,
+                datefmt="%Y-%m-%d %H:%M:%S",
+                log_colors={
+                    "DEBUG": "cyan",
+                    "INFO": "green",
+                    "WARNING": "yellow",
+                    "ERROR": "red",
+                    "CRITICAL": "red,bg_white",
+                },
+            )
+        else:
+            # Fallback to standard formatter
+            formatter = logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
+
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.setLevel(level)
+
+        # Add file handler if log_file is specified
+        if log_file:
+            log_path = Path(log_file)
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+
+            file_formatter = logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
+            file_handler = logging.FileHandler(log_path, encoding="utf-8")
+            file_handler.setFormatter(file_formatter)
+            logger.addHandler(file_handler)
+
+    return logger
+
+
+def configure_root_logger(level: int = logging.INFO) -> None:
+    """
+    Configure the root logger for the entire application.
+
+    Args:
+        level: Default logging level
+    """
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        force=True,  # Force reconfiguration
+    )
+
+
 def setup_logger(
     name: str = "lfs_ayats",
     level: str = "INFO",
@@ -26,40 +122,42 @@ def setup_logger(
     use_colors: bool = True,
 ) -> logging.Logger:
     """
-    Configura el sistema de logging amb colorlog.
+    Configure the logging system with colorlog (legacy function).
+
+    DEPRECATED: Use get_logger() instead for new code.
 
     Args:
-        name: Nom del logger
-        level: Nivell de logging (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        log_file: Fitxer de log (None per no usar fitxer)
-        console: Mostrar logs a la consola
-        log_format: Format dels logs
-        use_colors: Usar colors a la consola (requereix colorlog)
+        name: Logger name
+        level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        log_file: Log file (None to not use file)
+        console: Show logs on console
+        log_format: Log format
+        use_colors: Use colors on console (requires colorlog)
 
     Returns:
-        logging.Logger: Logger configurat
+        logging.Logger: Configured logger
 
-    Exemple:
+    Example:
         >>> logger = setup_logger("lfs_ayats", "DEBUG", "app.log")
-        >>> logger.info("Aplicació iniciada")
+        >>> logger.info("Application started")
     """
     logger = logging.getLogger(name)
     logger.setLevel(getattr(logging, level.upper()))
 
-    # Evitar duplicats
+    # Avoid duplicates
     if logger.handlers:
         logger.handlers.clear()
 
-    # Format per defecte
+    # Default format
     if log_format is None:
         log_format = "%(asctime)s - %(name)s - %(levelname)-8s - %(message)s"
 
-    # Handler de consola amb colors
+    # Console handler with colors
     if console:
         console_handler = logging.StreamHandler(sys.stdout)
 
         if use_colors and COLORLOG_AVAILABLE:
-            # Format amb colors per colorlog
+            # Format with colors for colorlog
             color_format = (
                 "%(log_color)s%(levelname)-8s%(reset)s "
                 "%(asctime)s - %(cyan)s%(name)s%(reset)s - %(message)s"
@@ -82,7 +180,7 @@ def setup_logger(
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
-    # Handler de fitxer (sense colors)
+    # File handler (without colors)
     if log_file:
         log_path = Path(log_file)
         log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -95,28 +193,15 @@ def setup_logger(
     return logger
 
 
-def get_logger(name: str = "lfs_ayats") -> logging.Logger:
-    """
-    Obté un logger existent.
-
-    Args:
-        name: Nom del logger
-
-    Returns:
-        logging.Logger: Logger
-    """
-    return logging.getLogger(name)
-
-
 def create_session_logger(base_name: str = "lfs_ayats") -> logging.Logger:
     """
-    Crea un logger per a una sessió amb timestamp.
+    Create a logger for a session with timestamp.
 
     Args:
-        base_name: Nom base del logger
+        base_name: Base logger name
 
     Returns:
-        logging.Logger: Logger de sessió
+        logging.Logger: Session logger
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_file = f"logs/{base_name}_{timestamp}.log"
