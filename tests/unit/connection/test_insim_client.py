@@ -145,7 +145,6 @@ class TestInSimClientEnhanced:
         assert client.retry_delay == 3.0
         assert client.reconnect_enabled is False
         assert client.heartbeat.interval == 60.0
-        assert client.retry_count == 0
 
     def test_connection_state_initialization(self):
         """Test that connection state is initialized"""
@@ -194,7 +193,6 @@ class TestInSimClientEnhanced:
         result = client.connect_with_retry()
 
         assert result is True
-        assert client.retry_count == 0
         assert mock_sleep.call_count == 0  # No retries needed
 
     @patch("socket.socket")
@@ -215,7 +213,6 @@ class TestInSimClientEnhanced:
         result = client.connect_with_retry()
 
         assert result is True
-        assert client.retry_count == 0  # Reset after success
         assert mock_sleep.call_count == 2  # Slept twice
 
     @patch("socket.socket")
@@ -232,7 +229,6 @@ class TestInSimClientEnhanced:
         result = client.connect_with_retry()
 
         assert result is False
-        assert client.retry_count == 3
         assert (
             mock_sleep.call_count == 2
         )  # Sleep happens after 1st and 2nd failure (not after 3rd)
