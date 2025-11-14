@@ -1,5 +1,11 @@
 # LFS-Ayats: Live for Speed InSim Telemetry System
 
+[![Python 3.8+](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+**A professional, modular telemetry collection system for Live for Speed racing simulator.**
+
 A modular and complete system for collecting, processing, and visualizing telemetry data from the Live for Speed racing simulator using the InSim protocol.
 
 ## 📋 Description
