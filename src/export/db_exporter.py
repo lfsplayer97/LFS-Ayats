@@ -163,13 +163,13 @@ class DatabaseExporter:
                     )
 
             logger.info(
-                f"Session exportada amb ID {session_id} "
-                f"({len(laps_data) if laps_data else 0} voltes)"
+                f"Session exported with ID {session_id} "
+                f"({len(laps_data) if laps_data else 0} laps)"
             )
             return session_id
 
         except Exception as e:
-            logger.error(f"Error exportant sessió: {e}")
+            logger.error(f"Error exporting session: {e}")
             raise
 
     def export_telemetry(
@@ -247,11 +247,11 @@ class DatabaseExporter:
             # Batch save
             count = self.repository.save_telemetry_points(lap_id, telemetry_points)
 
-            logger.info(f"Exportades {count} mostres telemètriques a lap {lap_id}")
+            logger.info(f"Exported {count} telemetry samples to lap {lap_id}")
             return count
 
         except Exception as e:
-            logger.error(f"Error exportant telemetria: {e}")
+            logger.error(f"Error exporting telemetry: {e}")
             raise
 
     def export_complete_session(
@@ -316,14 +316,14 @@ class DatabaseExporter:
                     total_telemetry += count
 
             logger.info(
-                f"Session completa exportada: ID {session_id}, "
-                f"{len(laps_with_telemetry)} voltes, "
-                f"{total_telemetry} punts de telemetria"
+                f"Complete session exported: ID {session_id}, "
+                f"{len(laps_with_telemetry)} laps, "
+                f"{total_telemetry} telemetry points"
             )
             return session_id
 
         except Exception as e:
-            logger.error(f"Error exportant sessió completa: {e}")
+            logger.error(f"Error exporting complete session: {e}")
             raise
 
     def setup_circuits_and_vehicles(
@@ -365,7 +365,7 @@ class DatabaseExporter:
                     )
 
             logger.info(
-                f"Setup completat: {len(circuits or [])} circuits, "
+                f"Setup completed: {len(circuits or [])} circuits, "
                 f"{len(vehicles or [])} vehicles"
             )
 

@@ -89,11 +89,11 @@ class CSVExporter:
                     }
                     writer.writerow(row)
 
-            logger.info(f"Exportades {len(telemetry_data)} mostres a {self.filename}")
+            logger.info(f"Exported {len(telemetry_data)} samples to {self.filename}")
             return True
 
         except Exception as e:
-            logger.error(f"Error exportant a CSV: {e}")
+            logger.error(f"Error exporting to CSV: {e}")
             return False
 
     def export_processed(self, processed_data: Any) -> bool:
@@ -110,7 +110,7 @@ class CSVExporter:
             with open(self.filename, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f, delimiter=self.delimiter)
                 
-                # Escriure estadístiques
+                # Write statistics
                 writer.writerow(['Metric', 'Value'])
                 writer.writerow(['Average Speed (m/s)', f"{processed_data.avg_speed:.2f}"])
                 writer.writerow(['Max Speed (m/s)', f"{processed_data.max_speed:.2f}"])
@@ -118,9 +118,9 @@ class CSVExporter:
                 writer.writerow(['Total Distance (m)', f"{processed_data.total_distance:.2f}"])
                 writer.writerow(['Sample Count', processed_data.sample_count])
 
-            logger.info(f"Dades processades exportades a {self.filename}")
+            logger.info(f"Processed data exported to {self.filename}")
             return True
 
         except Exception as e:
-            logger.error(f"Error exportant dades processades: {e}")
+            logger.error(f"Error exporting processed data: {e}")
             return False

@@ -1,9 +1,9 @@
 """
 Alert System
-Sistema d'alertes en temps real per esdeveniments de telemetria.
+Real-time alert system for telemetry events.
 
-Aquest mòdul gestiona la generació, distribució i historial d'alertes
-basades en les dades d'anàlisi telemètric.
+This module manages alert generation, distribution, and history
+based on telemetry analysis data.
 """
 
 import logging

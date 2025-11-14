@@ -261,13 +261,13 @@ class SectorAnalyzer:
 
     def analyze_braking_points(self, laps: List[Dict[str, Any]]) -> List[BrakingPoint]:
         """
-        Analitza punts de frenada òptims.
+        Analyze optimal braking points.
 
         Args:
-            laps: Llista de dades de voltes amb telemetria
+            laps: List of lap data with telemetry
 
         Returns:
-            Llista de punts de frenada analitzats
+            List of analyzed braking points
 
         Example:
             >>> analyzer = SectorAnalyzer()

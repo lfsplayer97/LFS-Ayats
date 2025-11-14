@@ -1,6 +1,6 @@
 """
 Configuration Module
-Gestió de configuració de l'aplicació
+Application configuration management
 """
 
 __version__ = "0.1.0"

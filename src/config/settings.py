@@ -1,6 +1,6 @@
 """
 Settings
-Configuració de l'aplicació LFS-Ayats.
+LFS-Ayats application configuration.
 """
 
 import yaml
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ConnectionSettings:
-    """Configuració de connexió InSim"""
+    """InSim connection configuration"""
     host: str = "127.0.0.1"
     port: int = 29999
     admin_password: str = ""
@@ -25,16 +25,16 @@ class ConnectionSettings:
 
 @dataclass
 class TelemetrySettings:
-    """Configuració de telemetria"""
+    """Telemetry configuration"""
     interval: int = 100  # ms
-    max_history: int = 10000  # mostres
+    max_history: int = 10000  # samples
     auto_export: bool = False
-    export_interval: int = 60  # segons
+    export_interval: int = 60  # seconds
 
 
 @dataclass
 class ExportSettings:
-    """Configuració d'exportació"""
+    """Export configuration"""
     format: str = "csv"  # csv, json, both
     output_dir: str = "data"
     filename_template: str = "telemetry_{timestamp}"
@@ -43,15 +43,15 @@ class ExportSettings:
 
 @dataclass
 class VisualizationSettings:
-    """Configuració de visualització"""
+    """Visualization configuration"""
     refresh_rate: int = 10  # Hz
     show_realtime: bool = True
-    plot_history: int = 100  # mostres
+    plot_history: int = 100  # samples
 
 
 @dataclass
 class LoggingSettings:
-    """Configuració de logging"""
+    """Logging configuration"""
     level: str = "INFO"
     format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     file: Optional[str] = None

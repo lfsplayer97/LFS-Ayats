@@ -19,24 +19,24 @@ logger = logging.getLogger(__name__)
 # Constants per detecció d'anomalies
 TEMP_WARNING_THRESHOLD = 95.0  # Celsius
 TEMP_CRITICAL_THRESHOLD = 105.0  # Celsius
-WHEEL_SPIN_THRESHOLD = 0.15  # 15% de diferència
-STEERING_ROTATION_THRESHOLD = 0.3  # 30% de diferència
-FLAT_SPOT_WEAR_THRESHOLD = 0.2  # 20% de desgast irregular
-BRAKING_CONSISTENCY_THRESHOLD = 0.1  # 10% de variació
-FUEL_WARNING_LAPS = 3  # Avís amb 3 voltes de marge
+WHEEL_SPIN_THRESHOLD = 0.15  # 15% difference
+STEERING_ROTATION_THRESHOLD = 0.3  # 30% difference
+FLAT_SPOT_WEAR_THRESHOLD = 0.2  # 20% irregular wear
+BRAKING_CONSISTENCY_THRESHOLD = 0.1  # 10% variation
+FUEL_WARNING_LAPS = 3  # Warning with 3 lap margin
 
 
 class AnomalyDetector:
     """
-    Detector d'anomalies en telemetria de carreres.
+    Race telemetry anomaly detector.
 
-    Aquesta classe utilitza tècniques estadístiques i umbral per detectar
-    comportaments anòmals en les dades telemètriques.
+    This class uses statistical techniques and thresholds to detect
+    abnormal behaviors in telemetry data.
 
-    Exemple:
+    Example:
         >>> detector = AnomalyDetector()
         >>> if detector.detect_overheating(engine_temp):
-        ...     print("Motor sobreescalfat!")
+        ...     print("Engine overheating!")
     """
 
     def __init__(

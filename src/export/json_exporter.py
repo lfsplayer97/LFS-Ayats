@@ -73,20 +73,20 @@ class JSONExporter:
                 'telemetry': data_list
             }
 
-            # Escriure a fitxer
+            # Write to file
             with open(self.filename, 'w', encoding='utf-8') as f:
                 json.dump(output, f, indent=self.indent, ensure_ascii=False)
 
-            logger.info(f"Exportades {len(telemetry_data)} mostres a {self.filename}")
+            logger.info(f"Exported {len(telemetry_data)} samples to {self.filename}")
             return True
 
         except Exception as e:
-            logger.error(f"Error exportant a JSON: {e}")
+            logger.error(f"Error exporting to JSON: {e}")
             return False
 
     def export_processed(self, processed_data: Any, metadata: Dict[str, Any] = None) -> bool:
         """
-        Exporta dades processades a JSON.
+        Export processed data to JSON.
 
         Args:
             processed_data: Objecte ProcessedTelemetry
@@ -112,16 +112,16 @@ class JSONExporter:
             with open(self.filename, 'w', encoding='utf-8') as f:
                 json.dump(output, f, indent=self.indent, ensure_ascii=False)
 
-            logger.info(f"Dades processades exportades a {self.filename}")
+            logger.info(f"Processed data exported to {self.filename}")
             return True
 
         except Exception as e:
-            logger.error(f"Error exportant dades processades: {e}")
+            logger.error(f"Error exporting processed data: {e}")
             return False
 
     def append(self, telemetry_data: List[Any]) -> bool:
         """
-        Afegeix dades a un fitxer JSON existent.
+        Append data to an existing JSON file.
 
         Args:
             telemetry_data: Llista d'objectes CarTelemetry
@@ -155,11 +155,11 @@ class JSONExporter:
             existing_data['metadata']['last_update'] = datetime.now().isoformat()
             existing_data['metadata']['sample_count'] = len(existing_data['telemetry'])
 
-            # Escriure de nou
+            # Write again
             with open(self.filename, 'w', encoding='utf-8') as f:
                 json.dump(existing_data, f, indent=self.indent, ensure_ascii=False)
 
-            logger.info(f"Afegides {len(telemetry_data)} mostres a {self.filename}")
+            logger.info(f"Added {len(telemetry_data)} samples to {self.filename}")
             return True
 
         except Exception as e:
