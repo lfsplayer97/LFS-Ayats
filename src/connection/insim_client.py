@@ -187,7 +187,6 @@ class InSimClient:
         # Reconnection settings
         self.max_retries = max_retries
         self.retry_delay = retry_delay
-        self.retry_count = 0
         self.reconnect_enabled = reconnect_enabled
 
         # Heartbeat manager
@@ -282,34 +281,30 @@ class InSimClient:
 
     def connect_with_retry(self) -> bool:
         """
-        Attempt to connect with exponential retries.
+        Attempt to connect with exponential backoff retries.
 
         Implements exponential backoff to avoid server overload.
 
         Returns:
             bool: True if connection is successful, False after max_retries
         """
-        self.retry_count = 0
-
-        while self.retry_count < self.max_retries:
+        for attempt in range(1, self.max_retries + 1):
             try:
                 self.connect()
-                self.retry_count = 0  # Reset on success
                 logger.info("Connection established successfully")
                 return True
-            except ConnectionError:  # noqa: F841
-                self.retry_count += 1
 
-                if self.retry_count >= self.max_retries:
+            except ConnectionError:
+                if attempt == self.max_retries:
                     logger.error(
                         f"Maximum connection attempts reached ({self.max_retries})"
                     )
                     return False
 
-                # Exponential backoff: delay * (2 ^ retry_count)
-                delay = self.retry_delay * (2 ** (self.retry_count - 1))
+                # Exponential backoff: delay * (2 ^ (attempt - 1))
+                delay = self.retry_delay * (2 ** (attempt - 1))
                 logger.warning(
-                    f"Attempt {self.retry_count}/{self.max_retries} failed. "
+                    f"Attempt {attempt}/{self.max_retries} failed. "
                     f"Retrying in {delay:.1f}s..."
                 )
                 time.sleep(delay)
