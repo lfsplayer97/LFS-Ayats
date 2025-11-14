@@ -1,6 +1,6 @@
 """
 Logger
-Sistema de logging per a LFS-Ayats amb suport per colorlog.
+Logging system for LFS-Ayats with colorlog support.
 """
 
 import logging
@@ -26,40 +26,40 @@ def setup_logger(
     use_colors: bool = True,
 ) -> logging.Logger:
     """
-    Configura el sistema de logging amb colorlog.
+    Configure the logging system with colorlog.
 
     Args:
-        name: Nom del logger
-        level: Nivell de logging (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        log_file: Fitxer de log (None per no usar fitxer)
-        console: Mostrar logs a la consola
-        log_format: Format dels logs
-        use_colors: Usar colors a la consola (requereix colorlog)
+        name: Logger name
+        level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        log_file: Log file (None to not use file)
+        console: Show logs in console
+        log_format: Log format
+        use_colors: Use colors in console (requires colorlog)
 
     Returns:
-        logging.Logger: Logger configurat
+        logging.Logger: Configured logger
 
-    Exemple:
+    Example:
         >>> logger = setup_logger("lfs_ayats", "DEBUG", "app.log")
         >>> logger.info("Application started")
     """
     logger = logging.getLogger(name)
     logger.setLevel(getattr(logging, level.upper()))
 
-    # Evitar duplicats
+    # Avoid duplicates
     if logger.handlers:
         logger.handlers.clear()
 
-    # Format by default
+    # Default format
     if log_format is None:
         log_format = "%(asctime)s - %(name)s - %(levelname)-8s - %(message)s"
 
-    # Handler de consola amb colors
+    # Console handler with colors
     if console:
         console_handler = logging.StreamHandler(sys.stdout)
 
         if use_colors and COLORLOG_AVAILABLE:
-            # Format amb colors per colorlog
+            # Format with colors for colorlog
             color_format = (
                 "%(log_color)s%(levelname)-8s%(reset)s "
                 "%(asctime)s - %(cyan)s%(name)s%(reset)s - %(message)s"
@@ -82,7 +82,7 @@ def setup_logger(
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
-    # Handler de fitxer (sense colors)
+    # File handler (without colors)
     if log_file:
         log_path = Path(log_file)
         log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -97,10 +97,10 @@ def setup_logger(
 
 def get_logger(name: str = "lfs_ayats") -> logging.Logger:
     """
-    Obté un logger existent.
+    Get an existing logger.
 
     Args:
-        name: Nom del logger
+        name: Logger name
 
     Returns:
         logging.Logger: Logger
@@ -113,7 +113,7 @@ def create_session_logger(base_name: str = "lfs_ayats") -> logging.Logger:
     Create a logger for a session with timestamp.
 
     Args:
-        base_name: Nom base del logger
+        base_name: Base logger name
 
     Returns:
         logging.Logger: Session logger
