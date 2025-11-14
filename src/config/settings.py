@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ConnectionSettings:
     """InSim connection configuration"""
+
     host: str = "127.0.0.1"
     port: int = 29999
     admin_password: str = ""
@@ -26,6 +27,7 @@ class ConnectionSettings:
 @dataclass
 class TelemetrySettings:
     """Telemetry configuration"""
+
     interval: int = 100  # ms
     max_history: int = 10000  # samples
     auto_export: bool = False
@@ -35,6 +37,7 @@ class TelemetrySettings:
 @dataclass
 class ExportSettings:
     """Export configuration"""
+
     format: str = "csv"  # csv, json, both
     output_dir: str = "data"
     filename_template: str = "telemetry_{timestamp}"
@@ -44,6 +47,7 @@ class ExportSettings:
 @dataclass
 class VisualizationSettings:
     """Visualization configuration"""
+
     refresh_rate: int = 10  # Hz
     show_realtime: bool = True
     plot_history: int = 100  # samples
@@ -52,6 +56,7 @@ class VisualizationSettings:
 @dataclass
 class LoggingSettings:
     """Logging configuration"""
+
     level: str = "INFO"
     format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     file: Optional[str] = None
@@ -62,12 +67,13 @@ class LoggingSettings:
 class Settings:
     """
     Main application configuration.
-    
+
     Exemple:
         >>> settings = Settings()
         >>> settings.connection.host = "192.168.1.100"
         >>> save_config(settings, "config.yaml")
     """
+
     connection: ConnectionSettings = None
     telemetry: TelemetrySettings = None
     export: ExportSettings = None
@@ -90,22 +96,22 @@ class Settings:
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary"""
         return {
-            'connection': asdict(self.connection),
-            'telemetry': asdict(self.telemetry),
-            'export': asdict(self.export),
-            'visualization': asdict(self.visualization),
-            'logging': asdict(self.logging),
+            "connection": asdict(self.connection),
+            "telemetry": asdict(self.telemetry),
+            "export": asdict(self.export),
+            "visualization": asdict(self.visualization),
+            "logging": asdict(self.logging),
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Settings':
+    def from_dict(cls, data: Dict[str, Any]) -> "Settings":
         """Create configuration from dictionary"""
         return cls(
-            connection=ConnectionSettings(**data.get('connection', {})),
-            telemetry=TelemetrySettings(**data.get('telemetry', {})),
-            export=ExportSettings(**data.get('export', {})),
-            visualization=VisualizationSettings(**data.get('visualization', {})),
-            logging=LoggingSettings(**data.get('logging', {})),
+            connection=ConnectionSettings(**data.get("connection", {})),
+            telemetry=TelemetrySettings(**data.get("telemetry", {})),
+            export=ExportSettings(**data.get("export", {})),
+            visualization=VisualizationSettings(**data.get("visualization", {})),
+            logging=LoggingSettings(**data.get("logging", {})),
         )
 
 
@@ -123,16 +129,16 @@ def load_config(filename: str = "config.yaml") -> Settings:
         FileNotFoundError: Si el fitxer no existeix
     """
     config_path = Path(filename)
-    
+
     if not config_path.exists():
         logger.warning(f"Configuration file not found: {filename}")
         logger.info("Using default configuration")
         return Settings()
 
     try:
-        with open(config_path, 'r', encoding='utf-8') as f:
+        with open(config_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
-        
+
         settings = Settings.from_dict(data)
         logger.info(f"Configuration loaded from {filename}")
         return settings
@@ -158,13 +164,15 @@ def save_config(settings: Settings, filename: str = "config.yaml") -> bool:
     """
     try:
         config_path = Path(filename)
-        
+
         # Crear directori si no existeix
         config_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(config_path, 'w', encoding='utf-8') as f:
-            yaml.dump(settings.to_dict(), f, default_flow_style=False, allow_unicode=True)
-        
+        with open(config_path, "w", encoding="utf-8") as f:
+            yaml.dump(
+                settings.to_dict(), f, default_flow_style=False, allow_unicode=True
+            )
+
         logger.info(f"Configuration saved to {filename}")
         return True
 
