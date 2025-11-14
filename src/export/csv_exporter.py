@@ -1,6 +1,6 @@
 """
 CSV Exporter
-Exportació de dades telemètriques a format CSV.
+Export telemetry data to CSV format.
 """
 
 import csv
@@ -13,20 +13,20 @@ logger = logging.getLogger(__name__)
 
 class CSVExporter:
     """
-    Exporta dades telemètriques a format CSV.
-    
+    Export telemetry data to CSV format.
+
     Exemple:
         >>> exporter = CSVExporter('telemetry.csv')
         >>> exporter.export(telemetry_data)
     """
 
-    def __init__(self, filename: str, delimiter: str = ','):
+    def __init__(self, filename: str, delimiter: str = ","):
         """
         Inicialitza l'exportador CSV.
 
         Args:
             filename: Nom del fitxer de sortida
-            delimiter: Delimitador CSV (per defecte ',')
+            delimiter: Delimitador CSV (by default ',')
         """
         self.filename = Path(filename)
         self.delimiter = delimiter
@@ -34,66 +34,72 @@ class CSVExporter:
 
     def export(self, telemetry_data: List[Any], overwrite: bool = True) -> bool:
         """
-        Exporta dades telemètriques a CSV.
+        Export telemetry data to CSV.
 
         Args:
             telemetry_data: Llista d'objectes CarTelemetry
             overwrite: Sobreescriure fitxer existent
 
         Returns:
-            bool: True si l'exportació és exitosa
+            bool: True if export is successful
         """
         if not telemetry_data:
             logger.warning("No hi ha dades per exportar")
             return False
 
         try:
-            mode = 'w' if overwrite else 'a'
+            mode = "w" if overwrite else "a"
             file_exists = self.filename.exists() and not overwrite
 
-            with open(self.filename, mode, newline='', encoding='utf-8') as f:
+            with open(self.filename, mode, newline="", encoding="utf-8") as f:
                 # Obtenir camps del primer objecte
                 first_item = telemetry_data[0]
-                
-                # Camps bàsics
+
+                # Basic fields
                 fieldnames = [
-                    'timestamp', 'plid', 'node', 'lap',
-                    'position_x', 'position_y', 'position_z',
-                    'speed', 'direction', 'heading', 'angular_velocity'
+                    "timestamp",
+                    "plid",
+                    "node",
+                    "lap",
+                    "position_x",
+                    "position_y",
+                    "position_z",
+                    "speed",
+                    "direction",
+                    "heading",
+                    "angular_velocity",
                 ]
 
                 writer = csv.DictWriter(
-                    f, 
-                    fieldnames=fieldnames,
-                    delimiter=self.delimiter
+                    f, fieldnames=fieldnames, delimiter=self.delimiter
                 )
 
-                # Escriure encapçalament si és fitxer nou
+                # Write header if new file
                 if not file_exists:
                     writer.writeheader()
 
                 # Escriure dades
                 for item in telemetry_data:
                     row = {
-                        'timestamp': item.timestamp,
-                        'plid': item.plid,
-                        'node': item.node,
-                        'lap': item.lap,
-                        'position_x': item.position.get('x', 0),
-                        'position_y': item.position.get('y', 0),
-                        'position_z': item.position.get('z', 0),
-                        'speed': item.speed,
-                        'direction': item.direction,
-                        'heading': item.heading,
-                        'angular_velocity': item.angular_velocity,
+                        "timestamp": item.timestamp,
+                        "plid": item.plid,
+                        "node": item.node,
+                        "lap": item.lap,
+                        "position_x": item.position.get("x", 0),
+                        "position_y": item.position.get("y", 0),
+                        "position_z": item.position.get("z", 0),
+                        "speed": item.speed,
+                        "direction": item.direction,
+                        "heading": item.heading,
+                        "angular_velocity": item.angular_velocity,
                     }
                     writer.writerow(row)
 
-            logger.info(f"Exportades {len(telemetry_data)} mostres a {self.filename}")
+            logger.info(f"Exported {len(telemetry_data)} samples to {self.filename}")
             return True
 
         except Exception as e:
-            logger.error(f"Error exportant a CSV: {e}")
+            logger.error(f"Error exporting to CSV: {e}")
             return False
 
     def export_processed(self, processed_data: Any) -> bool:
@@ -104,23 +110,27 @@ class CSVExporter:
             processed_data: Objecte ProcessedTelemetry
 
         Returns:
-            bool: True si l'exportació és exitosa
+            bool: True if export is successful
         """
         try:
-            with open(self.filename, 'w', newline='', encoding='utf-8') as f:
+            with open(self.filename, "w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f, delimiter=self.delimiter)
-                
-                # Escriure estadístiques
-                writer.writerow(['Metric', 'Value'])
-                writer.writerow(['Average Speed (m/s)', f"{processed_data.avg_speed:.2f}"])
-                writer.writerow(['Max Speed (m/s)', f"{processed_data.max_speed:.2f}"])
-                writer.writerow(['Min Speed (m/s)', f"{processed_data.min_speed:.2f}"])
-                writer.writerow(['Total Distance (m)', f"{processed_data.total_distance:.2f}"])
-                writer.writerow(['Sample Count', processed_data.sample_count])
 
-            logger.info(f"Dades processades exportades a {self.filename}")
+                # Write statistics
+                writer.writerow(["Metric", "Value"])
+                writer.writerow(
+                    ["Average Speed (m/s)", f"{processed_data.avg_speed:.2f}"]
+                )
+                writer.writerow(["Max Speed (m/s)", f"{processed_data.max_speed:.2f}"])
+                writer.writerow(["Min Speed (m/s)", f"{processed_data.min_speed:.2f}"])
+                writer.writerow(
+                    ["Total Distance (m)", f"{processed_data.total_distance:.2f}"]
+                )
+                writer.writerow(["Sample Count", processed_data.sample_count])
+
+            logger.info(f"Processed data exported to {self.filename}")
             return True
 
         except Exception as e:
-            logger.error(f"Error exportant dades processades: {e}")
+            logger.error(f"Error exporting processed data: {e}")
             return False

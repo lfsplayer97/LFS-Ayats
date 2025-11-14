@@ -1,9 +1,9 @@
 """
 Anomaly Detector
-Detecció d'anomalies en dades telemètriques de Live for Speed.
+Anomaly detection in Live for Speed telemetry data.
 
-Aquest mòdul implementa diversos algorismes de detecció d'anomalies
-per identificar comportaments anòmals del vehicle que poden indicar
+This module implements various anomaly detection algorithms
+to identify abnormal vehicle behaviors that may indicate
 problemes mecànics, errors del pilot o situacions perilloses.
 """
 
@@ -16,27 +16,27 @@ from src.analysis.utils import Alert, AlertLevel, moving_average
 logger = logging.getLogger(__name__)
 
 
-# Constants per detecció d'anomalies
+# Constants for anomaly detection
 TEMP_WARNING_THRESHOLD = 95.0  # Celsius
 TEMP_CRITICAL_THRESHOLD = 105.0  # Celsius
-WHEEL_SPIN_THRESHOLD = 0.15  # 15% de diferència
-STEERING_ROTATION_THRESHOLD = 0.3  # 30% de diferència
-FLAT_SPOT_WEAR_THRESHOLD = 0.2  # 20% de desgast irregular
-BRAKING_CONSISTENCY_THRESHOLD = 0.1  # 10% de variació
-FUEL_WARNING_LAPS = 3  # Avís amb 3 voltes de marge
+WHEEL_SPIN_THRESHOLD = 0.15  # 15% difference
+STEERING_ROTATION_THRESHOLD = 0.3  # 30% difference
+FLAT_SPOT_WEAR_THRESHOLD = 0.2  # 20% irregular wear
+BRAKING_CONSISTENCY_THRESHOLD = 0.1  # 10% variation
+FUEL_WARNING_LAPS = 3  # Warning with 3 lap margin
 
 
 class AnomalyDetector:
     """
-    Detector d'anomalies en telemetria de carreres.
+    Race telemetry anomaly detector.
 
-    Aquesta classe utilitza tècniques estadístiques i umbral per detectar
-    comportaments anòmals en les dades telemètriques.
+    This class uses statistical techniques and thresholds to detect
+    abnormal behaviors in telemetry data.
 
-    Exemple:
+    Example:
         >>> detector = AnomalyDetector()
         >>> if detector.detect_overheating(engine_temp):
-        ...     print("Motor sobreescalfat!")
+        ...     print("Engine overheating!")
     """
 
     def __init__(
@@ -46,28 +46,28 @@ class AnomalyDetector:
         z_score_threshold: float = 3.0,
     ):
         """
-        Inicialitza el detector d'anomalies.
+        Initialize the anomaly detector.
 
         Args:
-            temp_warning: Temperatura d'avís (Celsius)
-            temp_critical: Temperatura crítica (Celsius)
-            z_score_threshold: Llindar per z-score (desviacions estàndard)
+            temp_warning: Warning temperature (Celsius)
+            temp_critical: Critical temperature (Celsius)
+            z_score_threshold: Threshold for z-score (standard deviations)
         """
         self.temp_warning = temp_warning
         self.temp_critical = temp_critical
         self.z_score_threshold = z_score_threshold
         self.anomaly_history: List[Alert] = []
-        logger.info("AnomalyDetector inicialitzat")
+        logger.info("AnomalyDetector initialized")
 
     def detect_overheating(self, engine_temp: float) -> Tuple[bool, Optional[Alert]]:
         """
-        Detecta sobreescalfament del motor.
+        Detect engine overheating.
 
         Args:
-            engine_temp: Temperatura del motor (Celsius)
+            engine_temp: Engine temperature (Celsius)
 
         Returns:
-            Tuple amb (bool de detecció, Alert opcional)
+            Tuple with (detection bool, optional Alert)
 
         Example:
             >>> detector = AnomalyDetector()
@@ -78,7 +78,7 @@ class AnomalyDetector:
         if engine_temp >= self.temp_critical:
             alert = Alert(
                 level=AlertLevel.CRITICAL,
-                message=f"Sobreescalfament crític del motor: {engine_temp:.1f}°C",
+                message=f"Critical engine overheating: {engine_temp:.1f}°C",
                 data={"temperature": engine_temp, "threshold": self.temp_critical},
             )
             self.anomaly_history.append(alert)
@@ -87,7 +87,7 @@ class AnomalyDetector:
         elif engine_temp >= self.temp_warning:
             alert = Alert(
                 level=AlertLevel.WARNING,
-                message=f"Temperatura del motor elevada: {engine_temp:.1f}°C",
+                message=f"High engine temperature: {engine_temp:.1f}°C",
                 data={"temperature": engine_temp, "threshold": self.temp_warning},
             )
             self.anomaly_history.append(alert)
@@ -100,22 +100,22 @@ class AnomalyDetector:
         self, linear_speed: float, wheel_speed: float
     ) -> Tuple[bool, Optional[Alert]]:
         """
-        Detecta pèrdua de grip (rodes patinen).
+        Detect loss of grip (wheels slipping).
 
-        Compara la velocitat lineal del vehicle amb la velocitat de rotació
-        de les rodes per detectar patinatge.
+        Compare vehicle linear speed with rotational speed
+        of wheels to detect slipping.
 
         Args:
-            linear_speed: Velocitat lineal del vehicle (m/s)
-            wheel_speed: Velocitat de rotació de les rodes (m/s equivalent)
+            linear_speed: Vehicle linear speed (m/s)
+            wheel_speed: Wheel rotational speed (m/s equivalent)
 
         Returns:
-            Tuple amb (bool de detecció, Alert opcional)
+            Tuple with (detection bool, optional Alert)
         """
         if linear_speed == 0:
             return False, None
 
-        # Calcular diferència relativa
+        # Calculate relative difference
         speed_diff = abs(wheel_speed - linear_speed) / max(linear_speed, 0.001)
 
         if speed_diff > WHEEL_SPIN_THRESHOLD:
@@ -138,22 +138,22 @@ class AnomalyDetector:
         self, steering_angle: float, actual_rotation: float
     ) -> Tuple[bool, Optional[Alert]]:
         """
-        Detecta subviratge.
+        Detect understeer.
 
         El subviratge ocorre quan l'angle de direcció és major que
-        la rotació real del vehicle.
+        actual vehicle rotation.
 
         Args:
-            steering_angle: Angle del volant (radiants)
-            actual_rotation: Rotació real del vehicle (radiants)
+            steering_angle: Angle del volant (radians)
+            actual_rotation: Actual vehicle rotation (radians)
 
         Returns:
-            Tuple amb (bool de detecció, Alert opcional)
+            Tuple with (detection bool, optional Alert)
         """
         if steering_angle == 0:
             return False, None
 
-        # Normalitzar i comparar
+        # Normalize and compare
         ratio = actual_rotation / max(abs(steering_angle), 0.001)
 
         if ratio < (1.0 - STEERING_ROTATION_THRESHOLD) and abs(steering_angle) > 0.1:
@@ -176,22 +176,22 @@ class AnomalyDetector:
         self, steering_angle: float, actual_rotation: float
     ) -> Tuple[bool, Optional[Alert]]:
         """
-        Detecta sobreviratge.
+        Detect oversteer.
 
-        El sobreviratge ocorre quan la rotació real del vehicle és major
+        El sobreviratge ocorre quan actual vehicle rotation és major
         que l'angle de direcció aplicat.
 
         Args:
-            steering_angle: Angle del volant (radiants)
-            actual_rotation: Rotació real del vehicle (radiants)
+            steering_angle: Angle del volant (radians)
+            actual_rotation: Actual vehicle rotation (radians)
 
         Returns:
-            Tuple amb (bool de detecció, Alert opcional)
+            Tuple with (detection bool, optional Alert)
         """
         if steering_angle == 0:
             return False, None
 
-        # Normalitzar i comparar
+        # Normalize and compare
         ratio = actual_rotation / max(abs(steering_angle), 0.001)
 
         if ratio > (1.0 + STEERING_ROTATION_THRESHOLD) and abs(steering_angle) > 0.1:
@@ -216,30 +216,30 @@ class AnomalyDetector:
         """
         Detecta flat spots als pneumàtics.
 
-        Analitza el patró de desgast de les rodes per detectar zones
-        amb desgast excessiu (flat spots).
+        Analyze wheel wear pattern to detect zones
+        with excessive wear (flat spots).
 
         Args:
-            wheel_wear_pattern: Llista de valors de desgast al voltant de la roda
+            wheel_wear_pattern: List of values de desgast al voltant de la roda
 
         Returns:
-            Tuple amb (bool de detecció, Alert opcional)
+            Tuple with (detection bool, optional Alert)
         """
         if not wheel_wear_pattern or len(wheel_wear_pattern) < 3:
             return False, None
 
-        # Calcular estadístiques del desgast
+        # Calculate wear statistics
         mean_wear = statistics.mean(wheel_wear_pattern)
         if mean_wear == 0:
             return False, None
 
-        # Detectar pics de desgast
+        # Detect wear peaks
         for wear in wheel_wear_pattern:
             relative_wear = abs(wear - mean_wear) / mean_wear
             if relative_wear > FLAT_SPOT_WEAR_THRESHOLD:
                 alert = Alert(
                     level=AlertLevel.WARNING,
-                    message=f"Flat spot detectat: desgast irregular de {relative_wear*100:.1f}%",
+                    message=f"Flat spot detected: irregular wear de {relative_wear*100:.1f}%",
                     data={
                         "wear_pattern": wheel_wear_pattern,
                         "mean_wear": mean_wear,
@@ -256,16 +256,16 @@ class AnomalyDetector:
         self, lap_data: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """
-        Detecta frenades inconsistents entre voltes.
+        Detect inconsistent braking between laps.
 
-        Analitza els punts de frenada a través de múltiples voltes
+        Analyze braking points across multiple laps
         per identificar inconsistències.
 
         Args:
-            lap_data: Llista de dades de voltes amb informació de frenades
+            lap_data: List of lap data with braking information
 
         Returns:
-            Llista de punts de frenada inconsistents
+            List of points de frenada inconsistents
 
         Example:
             >>> detector = AnomalyDetector()
@@ -277,7 +277,7 @@ class AnomalyDetector:
 
         inconsistent_points = []
 
-        # Agrupar punts de frenada per posició aproximada
+        # Group braking points by approximate position
         braking_zones: Dict[int, List[float]] = {}
 
         for lap in lap_data:
@@ -291,7 +291,7 @@ class AnomalyDetector:
                     braking_zones[zone] = []
                 braking_zones[zone].append(point)
 
-        # Analitzar consistència de cada zona
+        # Analyze consistency of each zone
         for zone, points in braking_zones.items():
             if len(points) < 2:
                 continue
@@ -328,23 +328,23 @@ class AnomalyDetector:
             laps_remaining: Voltes restants a la cursa
 
         Returns:
-            Tuple amb (bool de detecció, Alert opcional)
+            Tuple with (detection bool, optional Alert)
         """
         if laps_remaining <= 0 or fuel_per_lap <= 0:
             return False, None
 
-        # Calcular voltes possibles amb el combustible actual
+        # Calculate possible laps with current fuel
         laps_possible = fuel_level / fuel_per_lap
 
-        # Afegir marge de seguretat
+        # Add safety margin
         if laps_possible < (laps_remaining + FUEL_WARNING_LAPS):
             shortage = (laps_remaining + FUEL_WARNING_LAPS) - laps_possible
             level = AlertLevel.CRITICAL if shortage > 5 else AlertLevel.WARNING
 
             alert = Alert(
                 level=level,
-                message=f"Combustible insuficient: {laps_possible:.1f} voltes possibles, "
-                f"{laps_remaining} necessàries",
+                message=f"Insufficient fuel: {laps_possible:.1f} possible laps, "
+                f"{laps_remaining} needed",
                 data={
                     "fuel_level": fuel_level,
                     "fuel_per_lap": fuel_per_lap,
@@ -362,10 +362,10 @@ class AnomalyDetector:
         self, data: List[float], threshold: Optional[float] = None
     ) -> List[int]:
         """
-        Detecta outliers utilitzant z-score.
+        Detect outliers using z-score.
 
         Args:
-            data: Llista de valors a analitzar
+            data: List of values a analitzar
             threshold: Llindar personalitzat (None per usar el per defecte)
 
         Returns:
@@ -391,10 +391,10 @@ class AnomalyDetector:
 
     def detect_outliers_iqr(self, data: List[float]) -> List[int]:
         """
-        Detecta outliers utilitzant el mètode IQR (Interquartile Range).
+        Detect outliers using the IQR method (Interquartile Range).
 
         Args:
-            data: Llista de valors a analitzar
+            data: List of values a analitzar
 
         Returns:
             Llista d'índexs que són outliers
@@ -405,7 +405,7 @@ class AnomalyDetector:
         sorted_data = sorted(data)
         n = len(sorted_data)
 
-        # Calcular quartils
+        # Calculate quartiles
         q1_idx = n // 4
         q3_idx = 3 * n // 4
         q1 = sorted_data[q1_idx]
@@ -427,10 +427,10 @@ class AnomalyDetector:
         self, data: List[float], window_size: int = 5, sensitivity: float = 2.0
     ) -> List[int]:
         """
-        Detecta canvis sobtats en les dades utilitzant mitjanes mòbils.
+        Detect sudden changes in data using moving averages.
 
         Args:
-            data: Llista de valors a analitzar
+            data: List of values a analitzar
             window_size: Mida de la finestra per la mitjana mòbil
             sensitivity: Sensibilitat de detecció (múltiple de desviació)
 
@@ -440,10 +440,10 @@ class AnomalyDetector:
         if len(data) < window_size + 1:
             return []
 
-        # Calcular mitjana mòbil
+        # Calculate moving average
         ma = moving_average(data, window_size)
 
-        # Calcular desviacions
+        # Calculate deviations
         deviations = [abs(data[i] - ma[i]) for i in range(len(data))]
 
         if len(deviations) < 2:
@@ -467,10 +467,10 @@ class AnomalyDetector:
 
     def check_telemetry(self, telemetry_data: Dict[str, Any]) -> List[Alert]:
         """
-        Comprova múltiples condicions en dades telemètriques.
+        Check multiple conditions in telemetry data.
 
         Args:
-            telemetry_data: Diccionari amb dades telemètriques
+            telemetry_data: Dictionary with telemetry data
 
         Returns:
             Llista d'alertes detectades
@@ -519,7 +519,7 @@ class AnomalyDetector:
         Retorna l'historial d'anomalies detectades.
 
         Returns:
-            Llista d'alertes històriques
+            List of historical alerts
         """
         return self.anomaly_history.copy()
 

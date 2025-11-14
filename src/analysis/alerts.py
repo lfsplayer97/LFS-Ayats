@@ -1,9 +1,9 @@
 """
 Alert System
-Sistema d'alertes en temps real per esdeveniments de telemetria.
+Real-time alert system for telemetry events.
 
-Aquest mòdul gestiona la generació, distribució i historial d'alertes
-basades en les dades d'anàlisi telemètric.
+This module manages alert generation, distribution, and history
+based on telemetry analysis data.
 """
 
 import logging
@@ -36,7 +36,7 @@ class AlertHandler(ABC):
 
 
 class ConsoleAlertHandler(AlertHandler):
-    """Gestor que imprimeix alertes a la consola."""
+    """Handler that prints alerts to console."""
 
     def handle(self, alert: Alert) -> None:
         """Imprimeix l'alerta a la consola."""
@@ -53,7 +53,7 @@ class ConsoleAlertHandler(AlertHandler):
 
 
 class LogAlertHandler(AlertHandler):
-    """Gestor que registra alertes al sistema de logging."""
+    """Handler that logs alerts to the logging system."""
 
     def handle(self, alert: Alert) -> None:
         """Registra l'alerta al sistema de logging."""
@@ -69,11 +69,11 @@ class LogAlertHandler(AlertHandler):
 
 
 class CallbackAlertHandler(AlertHandler):
-    """Gestor que crida una funció callback."""
+    """Handler that calls a callback function."""
 
     def __init__(self, callback: Callable[[Alert], None]):
         """
-        Inicialitza el gestor amb un callback.
+        Initialize the handler with a callback.
 
         Args:
             callback: Funció a cridar amb l'alerta
@@ -90,9 +90,9 @@ class CallbackAlertHandler(AlertHandler):
 
 class AlertSystem:
     """
-    Sistema de gestió d'alertes.
+    Alert management system.
 
-    Gestiona la creació, distribució i historial d'alertes
+    Manages creation, distribution and alert history
     del sistema d'anàlisi telemètric.
 
     Exemple:
@@ -104,10 +104,10 @@ class AlertSystem:
 
     def __init__(self, max_history: int = 1000, enable_filtering: bool = True):
         """
-        Inicialitza el sistema d'alertes.
+        Initialize the alert system.
 
         Args:
-            max_history: Nombre màxim d'alertes a l'historial
+            max_history: Maximum number of alerts in history
             enable_filtering: Habilitar filtratge d'alertes duplicades
         """
         self.alert_handlers: List[AlertHandler] = []
@@ -117,17 +117,17 @@ class AlertSystem:
         self.last_alert_time: Dict[str, float] = {}
         self.alert_counts: Dict[str, int] = {}
 
-        # Registrar gestor de log per defecte
+        # Register default log handler
         self.register_handler(LogAlertHandler())
 
-        logger.info("AlertSystem inicialitzat")
+        logger.info("AlertSystem initialized")
 
     def register_handler(self, handler: AlertHandler) -> None:
         """
-        Registra un gestor d'alertes.
+        Register an alert handler.
 
         Args:
-            handler: Gestor a registrar
+            handler: Handler to register
 
         Example:
             >>> system = AlertSystem()
@@ -135,18 +135,18 @@ class AlertSystem:
         """
         if handler not in self.alert_handlers:
             self.alert_handlers.append(handler)
-            logger.debug(f"Gestor d'alertes registrat: {type(handler).__name__}")
+            logger.debug(f"Alert handler registered: {type(handler).__name__}")
 
     def unregister_handler(self, handler: AlertHandler) -> None:
         """
-        Desregistra un gestor d'alertes.
+        Unregister an alert handler.
 
         Args:
-            handler: Gestor a desregistrar
+            handler: Handler to unregister
         """
         if handler in self.alert_handlers:
             self.alert_handlers.remove(handler)
-            logger.debug(f"Gestor d'alertes desregistrat: {type(handler).__name__}")
+            logger.debug(f"Alert handler unregistered: {type(handler).__name__}")
 
     def trigger_alert(self, alert: Alert, min_interval: float = 0.0) -> bool:
         """
@@ -154,7 +154,7 @@ class AlertSystem:
 
         Args:
             alert: Alerta a disparar
-            min_interval: Interval mínim entre alertes del mateix tipus (segons)
+            min_interval: Minimum interval between alerts of the same type (seconds)
 
         Returns:
             True si l'alerta s'ha processat, False si s'ha filtrat
@@ -178,10 +178,10 @@ class AlertSystem:
 
             self.last_alert_time[alert_key] = current_time
 
-        # Afegir a l'historial
+        # Add to history
         self.alert_history.append(alert)
 
-        # Mantenir mida màxima de l'historial
+        # Maintain maximum history size
         if len(self.alert_history) > self.max_history:
             self.alert_history.pop(0)
 
@@ -194,7 +194,7 @@ class AlertSystem:
             try:
                 handler.handle(alert)
             except Exception as e:
-                logger.error(f"Error en gestor d'alertes: {e}")
+                logger.error(f"Error in alert handler: {e}")
 
         return True
 
@@ -211,7 +211,7 @@ class AlertSystem:
         Args:
             level: Nivell de l'alerta
             message: Missatge de l'alerta
-            data: Dades addicionals
+            data: Additional data
             min_interval: Interval mínim entre alertes
 
         Returns:
@@ -230,16 +230,16 @@ class AlertSystem:
 
     def check_conditions(self, telemetry_data: Dict[str, Any]) -> List[Alert]:
         """
-        Comprova condicions i genera alertes automàtiques.
+        Check conditions and generate automatic alerts.
 
-        Aquest mètode pot ser utilitzat per integrar amb detectors
+        This method can be used to integrate with detectors
         d'anomalies i altres sistemes d'anàlisi.
 
         Args:
-            telemetry_data: Dades telemètriques a analitzar
+            telemetry_data: Telemetry data to analyze
 
         Returns:
-            Llista d'alertes generades
+            List of generated alerts
 
         Example:
             >>> system = AlertSystem()
@@ -248,7 +248,7 @@ class AlertSystem:
         """
         generated_alerts = []
 
-        # Exemple de condicions automàtiques
+        # Example of automatic conditions
         # En una implementació real, aquests serien més complexos
 
         # Check engine temperature
@@ -289,7 +289,7 @@ class AlertSystem:
             if wear > 80:
                 alert = Alert(
                     level=AlertLevel.WARNING,
-                    message=f"Pneumàtics molt desgastats: {wear:.1f}%",
+                    message=f"Tires very worn: {wear:.1f}%",
                     data={"wear": wear},
                 )
                 if self.trigger_alert(alert, min_interval=30.0):
@@ -301,14 +301,14 @@ class AlertSystem:
         self, level: Optional[AlertLevel] = None, limit: Optional[int] = None
     ) -> List[Alert]:
         """
-        Obté l'historial d'alertes.
+        Get alert history.
 
         Args:
             level: Filtrar per nivell (None = tots)
-            limit: Nombre màxim d'alertes (None = totes)
+            limit: Maximum number of alerts (None = all)
 
         Returns:
-            Llista d'alertes històriques
+            List of historical alerts
 
         Example:
             >>> system = AlertSystem()
@@ -328,10 +328,10 @@ class AlertSystem:
 
     def get_statistics(self) -> Dict[str, Any]:
         """
-        Obté estadístiques del sistema d'alertes.
+        Get alert system statistics.
 
         Returns:
-            Diccionari amb estadístiques
+            Dictionary with statistics
 
         Example:
             >>> system = AlertSystem()
@@ -348,7 +348,7 @@ class AlertSystem:
 
     def clear_history(self) -> None:
         """
-        Neteja l'historial d'alertes.
+        Clear alert history.
 
         Example:
             >>> system = AlertSystem()
@@ -357,7 +357,7 @@ class AlertSystem:
         self.alert_history.clear()
         self.last_alert_time.clear()
         self.alert_counts.clear()
-        logger.debug("Historial d'alertes netejat")
+        logger.debug("Alert history cleared")
 
     def set_filtering(self, enabled: bool) -> None:
         """

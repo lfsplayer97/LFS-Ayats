@@ -1,6 +1,6 @@
 """
 Export Module
-Exportació de dades telemètriques a diferents formats
+Export telemetry data to different formats
 """
 
 __version__ = "0.1.0"

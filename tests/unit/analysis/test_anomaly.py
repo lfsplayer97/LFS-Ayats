@@ -40,7 +40,7 @@ class TestAnomalyDetector:
         assert detected is True
         assert alert is not None
         assert alert.level == AlertLevel.WARNING
-        assert "Temperatura" in alert.message
+        assert "temperature" in alert.message.lower()
 
     def test_detect_overheating_critical(self):
         """Test overheating detection with critical temperature"""
@@ -49,7 +49,7 @@ class TestAnomalyDetector:
         assert detected is True
         assert alert is not None
         assert alert.level == AlertLevel.CRITICAL
-        assert "crític" in alert.message
+        assert "critical" in alert.message.lower()
 
     def test_detect_wheel_spin_no_spin(self):
         """Test wheel spin detection with no spin"""
@@ -159,7 +159,7 @@ class TestAnomalyDetector:
         detected, alert = detector.detect_fuel_warning(10.0, 2.0, 10)
         assert detected is True
         assert alert is not None
-        assert "Combustible" in alert.message
+        assert "fuel" in alert.message.lower()
 
     def test_detect_outliers_zscore_no_outliers(self):
         """Test z-score outlier detection with no outliers"""

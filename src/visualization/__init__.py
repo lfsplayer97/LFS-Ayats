@@ -1,6 +1,6 @@
 """
 Visualization Module
-Visualització de dades telemètriques
+Telemetry data visualization
 
 This module provides comprehensive visualization capabilities for LFS telemetry data:
 - Real-time dashboard with live gauges and charts

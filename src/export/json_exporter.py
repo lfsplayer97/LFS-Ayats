@@ -1,6 +1,6 @@
 """
 JSON Exporter
-Exportació de dades telemètriques a format JSON.
+Export telemetry data to JSON format.
 """
 
 import json
@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 class JSONExporter:
     """
-    Exporta dades telemètriques a format JSON.
-    
+    Export telemetry data to JSON format.
+
     Exemple:
         >>> exporter = JSONExporter('telemetry.json')
         >>> exporter.export(telemetry_data)
@@ -27,22 +27,24 @@ class JSONExporter:
 
         Args:
             filename: Nom del fitxer de sortida
-            indent: Indentació del JSON (per defecte 2)
+            indent: JSON indentation (by default 2)
         """
         self.filename = Path(filename)
         self.indent = indent
         logger.info(f"JSONExporter inicialitzat: {filename}")
 
-    def export(self, telemetry_data: List[Any], metadata: Dict[str, Any] = None) -> bool:
+    def export(
+        self, telemetry_data: List[Any], metadata: Dict[str, Any] = None
+    ) -> bool:
         """
-        Exporta dades telemètriques a JSON.
+        Export telemetry data to JSON.
 
         Args:
             telemetry_data: Llista d'objectes CarTelemetry
             metadata: Metadades opcionals
 
         Returns:
-            bool: True si l'exportació és exitosa
+            bool: True if export is successful
         """
         if not telemetry_data:
             logger.warning("No hi ha dades per exportar")
@@ -52,114 +54,122 @@ class JSONExporter:
             # Convertir objectes a diccionaris
             data_list = []
             for item in telemetry_data:
-                data_list.append({
-                    'timestamp': item.timestamp,
-                    'plid': item.plid,
-                    'node': item.node,
-                    'lap': item.lap,
-                    'position': item.position,
-                    'speed': item.speed,
-                    'direction': item.direction,
-                    'heading': item.heading,
-                    'angular_velocity': item.angular_velocity,
-                })
+                data_list.append(
+                    {
+                        "timestamp": item.timestamp,
+                        "plid": item.plid,
+                        "node": item.node,
+                        "lap": item.lap,
+                        "position": item.position,
+                        "speed": item.speed,
+                        "direction": item.direction,
+                        "heading": item.heading,
+                        "angular_velocity": item.angular_velocity,
+                    }
+                )
 
             # Estructura final
             output = {
-                'metadata': metadata or {
-                    'export_time': datetime.now().isoformat(),
-                    'sample_count': len(telemetry_data),
+                "metadata": metadata
+                or {
+                    "export_time": datetime.now().isoformat(),
+                    "sample_count": len(telemetry_data),
                 },
-                'telemetry': data_list
+                "telemetry": data_list,
             }
 
-            # Escriure a fitxer
-            with open(self.filename, 'w', encoding='utf-8') as f:
+            # Write to file
+            with open(self.filename, "w", encoding="utf-8") as f:
                 json.dump(output, f, indent=self.indent, ensure_ascii=False)
 
-            logger.info(f"Exportades {len(telemetry_data)} mostres a {self.filename}")
+            logger.info(f"Exported {len(telemetry_data)} samples to {self.filename}")
             return True
 
         except Exception as e:
-            logger.error(f"Error exportant a JSON: {e}")
+            logger.error(f"Error exporting to JSON: {e}")
             return False
 
-    def export_processed(self, processed_data: Any, metadata: Dict[str, Any] = None) -> bool:
+    def export_processed(
+        self, processed_data: Any, metadata: Dict[str, Any] = None
+    ) -> bool:
         """
-        Exporta dades processades a JSON.
+        Export processed data to JSON.
 
         Args:
             processed_data: Objecte ProcessedTelemetry
             metadata: Metadades opcionals
 
         Returns:
-            bool: True si l'exportació és exitosa
+            bool: True if export is successful
         """
         try:
             output = {
-                'metadata': metadata or {
-                    'export_time': datetime.now().isoformat(),
+                "metadata": metadata
+                or {
+                    "export_time": datetime.now().isoformat(),
                 },
-                'statistics': {
-                    'avg_speed': processed_data.avg_speed,
-                    'max_speed': processed_data.max_speed,
-                    'min_speed': processed_data.min_speed,
-                    'total_distance': processed_data.total_distance,
-                    'sample_count': processed_data.sample_count,
-                }
+                "statistics": {
+                    "avg_speed": processed_data.avg_speed,
+                    "max_speed": processed_data.max_speed,
+                    "min_speed": processed_data.min_speed,
+                    "total_distance": processed_data.total_distance,
+                    "sample_count": processed_data.sample_count,
+                },
             }
 
-            with open(self.filename, 'w', encoding='utf-8') as f:
+            with open(self.filename, "w", encoding="utf-8") as f:
                 json.dump(output, f, indent=self.indent, ensure_ascii=False)
 
-            logger.info(f"Dades processades exportades a {self.filename}")
+            logger.info(f"Processed data exported to {self.filename}")
             return True
 
         except Exception as e:
-            logger.error(f"Error exportant dades processades: {e}")
+            logger.error(f"Error exporting processed data: {e}")
             return False
 
     def append(self, telemetry_data: List[Any]) -> bool:
         """
-        Afegeix dades a un fitxer JSON existent.
+        Append data to an existing JSON file.
 
         Args:
             telemetry_data: Llista d'objectes CarTelemetry
 
         Returns:
-            bool: True si l'operació és exitosa
+            bool: True if operation is successful
         """
         try:
             # Llegir dades existents
             if self.filename.exists():
-                with open(self.filename, 'r', encoding='utf-8') as f:
+                with open(self.filename, "r", encoding="utf-8") as f:
                     existing_data = json.load(f)
             else:
-                existing_data = {'metadata': {}, 'telemetry': []}
+                existing_data = {"metadata": {}, "telemetry": []}
 
             # Afegir noves dades
             for item in telemetry_data:
-                existing_data['telemetry'].append({
-                    'timestamp': item.timestamp,
-                    'plid': item.plid,
-                    'node': item.node,
-                    'lap': item.lap,
-                    'position': item.position,
-                    'speed': item.speed,
-                    'direction': item.direction,
-                    'heading': item.heading,
-                    'angular_velocity': item.angular_velocity,
-                })
+                existing_data["telemetry"].append(
+                    {
+                        "timestamp": item.timestamp,
+                        "plid": item.plid,
+                        "node": item.node,
+                        "lap": item.lap,
+                        "position": item.position,
+                        "speed": item.speed,
+                        "direction": item.direction,
+                        "heading": item.heading,
+                        "angular_velocity": item.angular_velocity,
+                    }
+                )
 
             # Actualitzar metadades
-            existing_data['metadata']['last_update'] = datetime.now().isoformat()
-            existing_data['metadata']['sample_count'] = len(existing_data['telemetry'])
+            existing_data["metadata"]["last_update"] = datetime.now().isoformat()
+            existing_data["metadata"]["sample_count"] = len(existing_data["telemetry"])
 
-            # Escriure de nou
-            with open(self.filename, 'w', encoding='utf-8') as f:
+            # Write again
+            with open(self.filename, "w", encoding="utf-8") as f:
                 json.dump(existing_data, f, indent=self.indent, ensure_ascii=False)
 
-            logger.info(f"Afegides {len(telemetry_data)} mostres a {self.filename}")
+            logger.info(f"Added {len(telemetry_data)} samples to {self.filename}")
             return True
 
         except Exception as e:

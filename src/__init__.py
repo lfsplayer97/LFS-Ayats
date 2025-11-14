@@ -6,7 +6,7 @@ Modular telemetry system for Live for Speed
 __version__ = "0.1.0"
 __author__ = "lfsplayer97"
 
-# Exportar mòduls principals
+# Export main modules
 from . import connection
 from . import telemetry
 from . import export

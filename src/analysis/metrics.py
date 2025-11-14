@@ -1,9 +1,9 @@
 """
 Metrics Calculator
-Càlcul de mètriques de rendiment per carreres.
+Performance metrics calculation for racing.
 
-Aquest mòdul proporciona càlcul de diverses mètriques utilitzades
-per analitzar i avaluar el rendiment en carreres.
+This module provides calculation of various metrics used
+to analyze and evaluate racing performance.
 """
 
 import logging
@@ -15,36 +15,36 @@ logger = logging.getLogger(__name__)
 
 class MetricsCalculator:
     """
-    Calculadora de mètriques de rendiment.
+    Performance metrics calculator.
 
-    Proporciona càlcul de:
-    - Mètriques de consistència
-    - Mètriques de velocitat
-    - Mètriques de rendiment
-    - Índexs compostos
+    Provides calculation of:
+    - Consistency metrics
+    - Speed metrics
+    - Performance metrics
+    - Composite indexes
 
-    Exemple:
+    Example:
         >>> calculator = MetricsCalculator()
         >>> consistency = calculator.calculate_consistency([85.5, 85.6, 85.4, 85.7])
-        >>> print(f"Consistència: {consistency:.1%}")
+        >>> print(f"Consistency: {consistency:.1%}")
     """
 
     def __init__(self):
-        """Inicialitza la calculadora de mètriques."""
-        logger.info("MetricsCalculator inicialitzat")
+        """Initialize the metrics calculator."""
+        logger.info("MetricsCalculator initialized")
 
     def calculate_consistency(self, lap_times: List[float]) -> float:
         """
-        Calcula la consistència dels temps de volta.
+        Calculate lap time consistency.
 
-        La consistència es mesura com 1 - CV (coeficient de variació),
-        on 1.0 = perfectament consistent, 0.0 = molt inconsistent.
+        Consistency is measured as 1 - CV (coefficient of variation),
+        where 1.0 = perfectly consistent, 0.0 = very inconsistent.
 
         Args:
-            lap_times: Llista de temps de volta
+            lap_times: List of lap times
 
         Returns:
-            Puntuació de consistència (0-1)
+            Consistency score (0-1)
 
         Example:
             >>> calculator = MetricsCalculator()
@@ -60,10 +60,10 @@ class MetricsCalculator:
         if mean_time == 0:
             return 0.0
 
-        # Coeficient de variació
+        # Coefficient of variation
         cv = stdev_time / mean_time
 
-        # Consistència (1 = perfecte, 0 = molt inconsistent)
+        # Consistency (1 = perfect, 0 = very inconsistent)
         consistency = max(0.0, 1.0 - cv)
 
         return consistency
@@ -72,19 +72,19 @@ class MetricsCalculator:
         self, lap_times: List[float], reference_time: Optional[float] = None
     ) -> float:
         """
-        Calcula una puntuació de ritme.
+        Calculate a pace score.
 
         Args:
-            lap_times: Llista de temps de volta
-            reference_time: Temps de referència (None = millor temps de la sessió)
+            lap_times: List of lap times
+            reference_time: Reference time (None = best time of the session)
 
         Returns:
-            Puntuació de ritme (0-100, on 100 = millor possible)
+            Pace score (0-100, where 100 = best possible)
 
         Example:
             >>> calculator = MetricsCalculator()
             >>> score = calculator.calculate_pace_score([85.5, 85.6], 85.0)
-            >>> print(f"Ritme: {score:.1f}/100")
+            >>> print(f"Pace: {score:.1f}/100")
         """
         if not lap_times:
             return 0.0
@@ -92,43 +92,43 @@ class MetricsCalculator:
         mean_time = statistics.mean(lap_times)
         best_time = min(lap_times)
 
-        # Si no hi ha referència, usar el millor temps propi
+        # If no reference, use own best time
         if reference_time is None:
             reference_time = best_time
 
         if reference_time == 0:
             return 0.0
 
-        # Calcular puntuació (100 = al nivell de referència)
+        # Calculate score (100 = at reference level)
         score = (reference_time / mean_time) * 100
 
         return min(100.0, max(0.0, score))
 
     def calculate_improvement_rate(self, lap_times: List[float]) -> float:
         """
-        Calcula la taxa de millora al llarg de la sessió.
+        Calculate improvement rate throughout the session.
 
         Args:
-            lap_times: Llista de temps de volta (ordenats cronològicament)
+            lap_times: List of lap times (sorted chronologically)
 
         Returns:
-            Taxa de millora (segons/volta), negatiu = millorant
+            Improvement rate (seconds/lap), negative = improving
 
         Example:
             >>> calculator = MetricsCalculator()
             >>> rate = calculator.calculate_improvement_rate([86.0, 85.5, 85.2, 85.0])
-            >>> print(f"Millorant {abs(rate):.3f}s per volta")
+            >>> print(f"Improving {abs(rate):.3f}s per lap")
         """
         if len(lap_times) < 2:
             return 0.0
 
-        # Regressió lineal simple
+        # Simple linear regression
         n = len(lap_times)
         x = list(range(n))
         x_mean = statistics.mean(x)
         y_mean = statistics.mean(lap_times)
 
-        # Calcular pendent
+        # Calculate slope
         numerator = sum((x[i] - x_mean) * (lap_times[i] - y_mean) for i in range(n))
         denominator = sum((x[i] - x_mean) ** 2 for i in range(n))
 
@@ -147,16 +147,16 @@ class MetricsCalculator:
         laps_completed: int,
     ) -> float:
         """
-        Calcula una puntuació de "racecraft" (habilitat de carrera).
+        Calculate a racecraft score (racing skill).
 
         Args:
-            overtakes: Nombre d'avançaments realitzats
-            defended_positions: Posicions defensades amb èxit
-            incidents: Nombre d'incidents (tocs, sortides, etc.)
-            laps_completed: Voltes completades
+            overtakes: Number of overtakes performed
+            defended_positions: Successfully defended positions
+            incidents: Number of incidents (contacts, offs, etc.)
+            laps_completed: Laps completed
 
         Returns:
-            Puntuació de racecraft (0-100)
+            Racecraft score (0-100)
 
         Example:
             >>> calculator = MetricsCalculator()
@@ -166,30 +166,30 @@ class MetricsCalculator:
         if laps_completed == 0:
             return 0.0
 
-        # Puntuació base per avançaments i defenses
+        # Base score for overtakes and defenses
         positive_actions = overtakes * 10 + defended_positions * 5
 
-        # Penalització per incidents
+        # Penalty for incidents
         penalty = incidents * 15
 
-        # Normalitzar per voltes
+        # Normalize per lap
         score = (positive_actions - penalty) / laps_completed * 10
 
-        # Limitar entre 0 i 100
-        return min(100.0, max(0.0, score + 50.0))  # +50 per centrar al voltant de 50
+        # Limit between 0 and 100
+        return min(100.0, max(0.0, score + 50.0))  # +50 to center around 50
 
     def calculate_fuel_efficiency(
         self, fuel_used: float, distance_covered: float
     ) -> float:
         """
-        Calcula l'eficiència de combustible.
+        Calculate fuel efficiency.
 
         Args:
             fuel_used: Combustible utilitzat (%)
-            distance_covered: Distància coberta (metres)
+            distance_covered: Distance covered (metres)
 
         Returns:
-            Eficiència (metres per % de combustible)
+            Efficiency (meters per % of fuel)
 
         Example:
             >>> calculator = MetricsCalculator()
@@ -205,20 +205,20 @@ class MetricsCalculator:
         self, initial_pace: float, current_pace: float, laps_on_tires: int
     ) -> float:
         """
-        Calcula la taxa de degradació dels pneumàtics.
+        Calculate tire degradation rate.
 
         Args:
-            initial_pace: Ritme inicial amb pneumàtics nous (segons)
+            initial_pace: Initial pace with new tires (segons)
             current_pace: Ritme actual (segons)
-            laps_on_tires: Voltes amb aquests pneumàtics
+            laps_on_tires: Laps on these tires
 
         Returns:
-            Taxa de degradació (segons perduts per volta)
+            Degradation rate (seconds lost per lap)
 
         Example:
             >>> calculator = MetricsCalculator()
             >>> degradation = calculator.calculate_tire_degradation_rate(85.0, 86.5, 10)
-            >>> print(f"Degradació: {degradation:.3f}s per volta")
+            >>> print(f"Degradation: {degradation:.3f}s per volta")
         """
         if laps_on_tires == 0:
             return 0.0
@@ -234,7 +234,7 @@ class MetricsCalculator:
         """
         Calcula l'equilibri de rendiment entre sectors.
 
-        Identifica si un pilot és consistentment més ràpid
+        Identify if a driver is consistently faster
         en alguns sectors que en d'altres.
 
         Args:
@@ -281,13 +281,13 @@ class MetricsCalculator:
         pace_weight: float = 0.7,
     ) -> float:
         """
-        Calcula un índex compost de rendiment.
+        Calculate a composite performance index.
 
-        Combina consistència i ritme en una sola mètrica.
+        Combine consistency and pace into a single metric.
 
         Args:
             lap_times: Llista de temps de volta
-            reference_time: Temps de referència (e.g., millor del servidor)
+            reference_time: Reference time (e.g., best on server)
             consistency_weight: Pes de la consistència (0-1)
             pace_weight: Pes del ritme (0-1)
 
