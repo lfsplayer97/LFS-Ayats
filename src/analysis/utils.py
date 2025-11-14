@@ -1,7 +1,7 @@
 """
 Utility classes and data models for analysis module.
 
-Aquest fitxer conté les estructures de dades i models utilitzats
+This file contains les data structures and models used
 pels diferents components del mòdul d'anàlisi.
 """
 
@@ -29,7 +29,7 @@ class Alert:
         level: Nivell de gravetat de l'alerta
         timestamp: Marca temporal de l'alerta
         message: Missatge descriptiu
-        data: Dades addicionals relacionades amb l'alerta
+        data: Additional data related amb l'alerta
     """
 
     level: AlertLevel
@@ -44,14 +44,14 @@ class Alert:
 @dataclass
 class SectorComparison:
     """
-    Comparació de temps de sector entre dues voltes.
+    Sector time comparison between two laps.
 
     Attributes:
         sector_number: Número del sector (1, 2, 3, etc.)
-        lap1_time: Temps del sector a la volta 1 (segons)
-        lap2_time: Temps del sector a la volta 2 (segons)
-        difference: Diferència de temps (lap1 - lap2, segons)
-        percentage_diff: Diferència percentual
+        lap1_time: Sector time on lap 1 (seconds)
+        lap2_time: Sector time on lap 2 (seconds)
+        difference: Time difference (lap1 - lap2, seconds)
+        percentage_diff: Percentage difference
     """
 
     sector_number: int
@@ -64,15 +64,15 @@ class SectorComparison:
 @dataclass
 class LapComparison:
     """
-    Comparació completa entre dues voltes.
+    Complete comparison between two laps.
 
     Attributes:
         lap1_id: ID de la primera volta
         lap2_id: ID de la segona volta
-        time_difference: Diferència de temps total (segons)
-        sector_comparisons: Llista de comparacions per sector
+        time_difference: Time difference total (seconds)
+        sector_comparisons: List of comparisons per sector
         speed_trace_comparison: Comparació de traces de velocitat
-        racing_line_difference: Diferència en la línia de carrera
+        racing_line_difference: Difference in racing line
         suggestions: Suggeriments de millora
     """
 
@@ -88,16 +88,16 @@ class LapComparison:
 @dataclass
 class BrakingPoint:
     """
-    Punt de frenada detectat.
+    Detected braking point.
 
     Attributes:
-        position: Posició del punt de frenada (x, y)
+        position: Braking point position (x, y)
         lap: Número de volta
         distance: Distància des de l'inici del sector
         speed_before: Velocitat abans de frenar
         speed_after: Velocitat després de frenar
-        brake_duration: Duració de la frenada (segons)
-        consistency_score: Puntuació de consistència (0-1)
+        brake_duration: Braking duration (seconds)
+        consistency_score: Consistency score (0-1)
     """
 
     position: Dict[str, float]
@@ -115,13 +115,13 @@ class ThrottleAnalysis:
     Anàlisi d'aplicació de gas en corbes.
 
     Attributes:
-        corner_id: Identificador de la corba
+        corner_id: Corner identifier
         entry_speed: Velocitat d'entrada
         apex_speed: Velocitat a l'apex
         exit_speed: Velocitat de sortida
-        throttle_application_point: Punt on s'aplica gas (% de la corba)
-        full_throttle_point: Punt de gas a fons (% de la corba)
-        time_in_corner: Temps total a la corba (segons)
+        throttle_application_point: Throttle application point (% de la corba)
+        full_throttle_point: Full throttle point (% de la corba)
+        time_in_corner: Total time in corner (seconds)
     """
 
     corner_id: int
@@ -136,14 +136,14 @@ class ThrottleAnalysis:
 @dataclass
 class TimeDelta:
     """
-    Delta de temps punt a punt entre dues voltes.
+    Point-to-point time delta between two laps.
 
     Attributes:
-        distance_points: Llista de distàncies
-        time_deltas: Llista de deltes de temps corresponents
-        max_gain: Màxim guany de temps
-        max_loss: Màxima pèrdua de temps
-        average_delta: Delta mitjà
+        distance_points: List of distances
+        time_deltas: List of corresponding time deltas
+        max_gain: Maximum time gain
+        max_loss: Maximum time loss
+        average_delta: Average delta
     """
 
     distance_points: List[float] = field(default_factory=list)
@@ -159,10 +159,10 @@ class RacingLine:
     Línia de carrera òptima.
 
     Attributes:
-        points: Llista de punts (x, y) de la trajectòria
+        points: List of points (x, y) of the trajectory
         speeds: Velocitats corresponents a cada punt
         sector: Número de sector
-        lap_time: Temps de volta associat
+        lap_time: Associated lap time
     """
 
     points: List[Dict[str, float]] = field(default_factory=list)
@@ -174,14 +174,14 @@ class RacingLine:
 @dataclass
 class Sector:
     """
-    Informació d'un sector.
+    Sector information.
 
     Attributes:
         number: Número del sector
-        time: Temps del sector (segons)
-        time_lost: Temps perdut respecte a l'òptim (segons)
-        consistency: Consistència del sector (0-1)
-        best_time: Millor temps del sector
+        time: Sector time (seconds)
+        time_lost: Time lost relative to optimal (seconds)
+        consistency: Sector consistency (0-1)
+        best_time: Best sector time
     """
 
     number: int
@@ -193,14 +193,14 @@ class Sector:
 
 def calculate_percentage_difference(value1: float, value2: float) -> float:
     """
-    Calcula la diferència percentual entre dos valors.
+    Calculate the percentage difference between two values.
 
     Args:
         value1: Primer valor
         value2: Segon valor (referència)
 
     Returns:
-        Diferència percentual ((value1 - value2) / value2 * 100)
+        Percentage difference ((value1 - value2) / value2 * 100)
     """
     if value2 == 0:
         return 0.0
@@ -209,14 +209,14 @@ def calculate_percentage_difference(value1: float, value2: float) -> float:
 
 def moving_average(data: List[float], window_size: int) -> List[float]:
     """
-    Calcula la mitjana mòbil d'una sèrie de dades.
+    Calculate the moving average of a data series.
 
     Args:
-        data: Llista de valors
+        data: List of values
         window_size: Mida de la finestra
 
     Returns:
-        Llista amb les mitjanes mòbils
+        List with moving averages
     """
     if window_size <= 0 or window_size > len(data):
         return data.copy()

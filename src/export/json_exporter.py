@@ -1,6 +1,6 @@
 """
 JSON Exporter
-Exportació de dades telemètriques a format JSON.
+Export telemetry data to JSON format.
 """
 
 import json
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class JSONExporter:
     """
-    Exporta dades telemètriques a format JSON.
+    Export telemetry data to JSON format.
     
     Exemple:
         >>> exporter = JSONExporter('telemetry.json')
@@ -27,7 +27,7 @@ class JSONExporter:
 
         Args:
             filename: Nom del fitxer de sortida
-            indent: Indentació del JSON (per defecte 2)
+            indent: JSON indentation (by default 2)
         """
         self.filename = Path(filename)
         self.indent = indent
@@ -35,14 +35,14 @@ class JSONExporter:
 
     def export(self, telemetry_data: List[Any], metadata: Dict[str, Any] = None) -> bool:
         """
-        Exporta dades telemètriques a JSON.
+        Export telemetry data to JSON.
 
         Args:
             telemetry_data: Llista d'objectes CarTelemetry
             metadata: Metadades opcionals
 
         Returns:
-            bool: True si l'exportació és exitosa
+            bool: True if export is successful
         """
         if not telemetry_data:
             logger.warning("No hi ha dades per exportar")
@@ -93,7 +93,7 @@ class JSONExporter:
             metadata: Metadades opcionals
 
         Returns:
-            bool: True si l'exportació és exitosa
+            bool: True if export is successful
         """
         try:
             output = {
@@ -127,7 +127,7 @@ class JSONExporter:
             telemetry_data: Llista d'objectes CarTelemetry
 
         Returns:
-            bool: True si l'operació és exitosa
+            bool: True if operation is successful
         """
         try:
             # Llegir dades existents

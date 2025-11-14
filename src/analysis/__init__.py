@@ -1,16 +1,16 @@
 """
 Analysis Module
-Mòdul d'anàlisi en temps real i detecció d'anomalies per LFS-Ayats.
+Real-time analysis and anomaly detection module for LFS-Ayats.
 
-Aquest mòdul proporciona:
-- Detecció d'anomalies en dades telemètriques
-- Predicció de rendiment i temps de volta
-- Anàlisi de sectors i trajectòries
-- Comparació avançada de voltes
-- Sistema d'alertes en temps real
-- Càlcul de mètriques de rendiment
+This module provides:
+- Anomaly detection in telemetry data
+- Performance and lap time prediction
+- Sector and trajectory analysis
+- Advanced lap comparison
+- Real-time alert system
+- Performance metrics calculation
 
-Exemple:
+Example:
     >>> from src.analysis import AnomalyDetector, PerformancePredictor
     >>> detector = AnomalyDetector()
     >>> predictor = PerformancePredictor()

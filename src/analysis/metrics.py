@@ -182,14 +182,14 @@ class MetricsCalculator:
         self, fuel_used: float, distance_covered: float
     ) -> float:
         """
-        Calcula l'eficiència de combustible.
+        Calculate fuel efficiency.
 
         Args:
             fuel_used: Combustible utilitzat (%)
-            distance_covered: Distància coberta (metres)
+            distance_covered: Distance covered (metres)
 
         Returns:
-            Eficiència (metres per % de combustible)
+            Efficiency (meters per % of fuel)
 
         Example:
             >>> calculator = MetricsCalculator()
@@ -205,20 +205,20 @@ class MetricsCalculator:
         self, initial_pace: float, current_pace: float, laps_on_tires: int
     ) -> float:
         """
-        Calcula la taxa de degradació dels pneumàtics.
+        Calculate tire degradation rate.
 
         Args:
-            initial_pace: Ritme inicial amb pneumàtics nous (segons)
+            initial_pace: Initial pace with new tires (segons)
             current_pace: Ritme actual (segons)
-            laps_on_tires: Voltes amb aquests pneumàtics
+            laps_on_tires: Laps on these tires
 
         Returns:
-            Taxa de degradació (segons perduts per volta)
+            Degradation rate (seconds lost per lap)
 
         Example:
             >>> calculator = MetricsCalculator()
             >>> degradation = calculator.calculate_tire_degradation_rate(85.0, 86.5, 10)
-            >>> print(f"Degradació: {degradation:.3f}s per volta")
+            >>> print(f"Degradation: {degradation:.3f}s per volta")
         """
         if laps_on_tires == 0:
             return 0.0
@@ -234,7 +234,7 @@ class MetricsCalculator:
         """
         Calcula l'equilibri de rendiment entre sectors.
 
-        Identifica si un pilot és consistentment més ràpid
+        Identify if a driver is consistently faster
         en alguns sectors que en d'altres.
 
         Args:
@@ -281,13 +281,13 @@ class MetricsCalculator:
         pace_weight: float = 0.7,
     ) -> float:
         """
-        Calcula un índex compost de rendiment.
+        Calculate a composite performance index.
 
-        Combina consistència i ritme en una sola mètrica.
+        Combine consistency and pace into a single metric.
 
         Args:
             lap_times: Llista de temps de volta
-            reference_time: Temps de referència (e.g., millor del servidor)
+            reference_time: Reference time (e.g., best on server)
             consistency_weight: Pes de la consistència (0-1)
             pace_weight: Pes del ritme (0-1)
 

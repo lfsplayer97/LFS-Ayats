@@ -1,6 +1,6 @@
 """
 CSV Exporter
-Exportació de dades telemètriques a format CSV.
+Export telemetry data to CSV format.
 """
 
 import csv
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class CSVExporter:
     """
-    Exporta dades telemètriques a format CSV.
+    Export telemetry data to CSV format.
     
     Exemple:
         >>> exporter = CSVExporter('telemetry.csv')
@@ -26,7 +26,7 @@ class CSVExporter:
 
         Args:
             filename: Nom del fitxer de sortida
-            delimiter: Delimitador CSV (per defecte ',')
+            delimiter: Delimitador CSV (by default ',')
         """
         self.filename = Path(filename)
         self.delimiter = delimiter
@@ -34,14 +34,14 @@ class CSVExporter:
 
     def export(self, telemetry_data: List[Any], overwrite: bool = True) -> bool:
         """
-        Exporta dades telemètriques a CSV.
+        Export telemetry data to CSV.
 
         Args:
             telemetry_data: Llista d'objectes CarTelemetry
             overwrite: Sobreescriure fitxer existent
 
         Returns:
-            bool: True si l'exportació és exitosa
+            bool: True if export is successful
         """
         if not telemetry_data:
             logger.warning("No hi ha dades per exportar")
@@ -55,7 +55,7 @@ class CSVExporter:
                 # Obtenir camps del primer objecte
                 first_item = telemetry_data[0]
                 
-                # Camps bàsics
+                # Basic fields
                 fieldnames = [
                     'timestamp', 'plid', 'node', 'lap',
                     'position_x', 'position_y', 'position_z',
@@ -68,7 +68,7 @@ class CSVExporter:
                     delimiter=self.delimiter
                 )
 
-                # Escriure encapçalament si és fitxer nou
+                # Write header if new file
                 if not file_exists:
                     writer.writeheader()
 
@@ -104,7 +104,7 @@ class CSVExporter:
             processed_data: Objecte ProcessedTelemetry
 
         Returns:
-            bool: True si l'exportació és exitosa
+            bool: True if export is successful
         """
         try:
             with open(self.filename, 'w', newline='', encoding='utf-8') as f:

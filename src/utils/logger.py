@@ -41,7 +41,7 @@ def setup_logger(
 
     Exemple:
         >>> logger = setup_logger("lfs_ayats", "DEBUG", "app.log")
-        >>> logger.info("Aplicació iniciada")
+        >>> logger.info("Application started")
     """
     logger = logging.getLogger(name)
     logger.setLevel(getattr(logging, level.upper()))
@@ -50,7 +50,7 @@ def setup_logger(
     if logger.handlers:
         logger.handlers.clear()
 
-    # Format per defecte
+    # Format by default
     if log_format is None:
         log_format = "%(asctime)s - %(name)s - %(levelname)-8s - %(message)s"
 
@@ -110,13 +110,13 @@ def get_logger(name: str = "lfs_ayats") -> logging.Logger:
 
 def create_session_logger(base_name: str = "lfs_ayats") -> logging.Logger:
     """
-    Crea un logger per a una sessió amb timestamp.
+    Create a logger for a session with timestamp.
 
     Args:
         base_name: Nom base del logger
 
     Returns:
-        logging.Logger: Logger de sessió
+        logging.Logger: Session logger
     """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_file = f"logs/{base_name}_{timestamp}.log"

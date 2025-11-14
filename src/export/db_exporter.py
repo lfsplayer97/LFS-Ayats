@@ -1,6 +1,6 @@
 """
 Database Exporter
-Exportació de dades telemètriques a base de dades.
+Export telemetry data to database.
 
 Provides efficient database export functionality with support for
 SQLite and PostgreSQL databases.
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class DatabaseExporter:
     """
-    Exporta dades telemètriques a base de dades.
+    Export telemetry data to database.
 
     Supports SQLite (development) and PostgreSQL (production) with
     connection pooling and batch inserts for optimal performance.

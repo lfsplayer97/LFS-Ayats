@@ -61,7 +61,7 @@ class LoggingSettings:
 @dataclass
 class Settings:
     """
-    Configuració principal de l'aplicació.
+    Main application configuration.
     
     Exemple:
         >>> settings = Settings()
@@ -75,7 +75,7 @@ class Settings:
     logging: LoggingSettings = None
 
     def __post_init__(self):
-        """Inicialitza subconfiguracions si són None"""
+        """Initialize sub-configurations if None"""
         if self.connection is None:
             self.connection = ConnectionSettings()
         if self.telemetry is None:
@@ -88,7 +88,7 @@ class Settings:
             self.logging = LoggingSettings()
 
     def to_dict(self) -> Dict[str, Any]:
-        """Converteix la configuració a diccionari"""
+        """Convert configuration to dictionary"""
         return {
             'connection': asdict(self.connection),
             'telemetry': asdict(self.telemetry),
@@ -99,7 +99,7 @@ class Settings:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Settings':
-        """Crea una configuració des d'un diccionari"""
+        """Create configuration from dictionary"""
         return cls(
             connection=ConnectionSettings(**data.get('connection', {})),
             telemetry=TelemetrySettings(**data.get('telemetry', {})),
@@ -111,13 +111,13 @@ class Settings:
 
 def load_config(filename: str = "config.yaml") -> Settings:
     """
-    Carrega la configuració des d'un fitxer YAML.
+    Load configuration from YAML file.
 
     Args:
-        filename: Nom del fitxer de configuració
+        filename: Configuration file name
 
     Returns:
-        Settings: Objecte de configuració
+        Settings: Configuration object
 
     Raises:
         FileNotFoundError: Si el fitxer no existeix
@@ -125,8 +125,8 @@ def load_config(filename: str = "config.yaml") -> Settings:
     config_path = Path(filename)
     
     if not config_path.exists():
-        logger.warning(f"Fitxer de configuració no trobat: {filename}")
-        logger.info("Utilitzant configuració per defecte")
+        logger.warning(f"Configuration file not found: {filename}")
+        logger.info("Using default configuration")
         return Settings()
 
     try:
@@ -134,23 +134,23 @@ def load_config(filename: str = "config.yaml") -> Settings:
             data = yaml.safe_load(f)
         
         settings = Settings.from_dict(data)
-        logger.info(f"Configuració carregada des de {filename}")
+        logger.info(f"Configuration loaded from {filename}")
         return settings
 
     except yaml.YAMLError as e:
         logger.error(f"Error llegint YAML: {e}")
         raise
     except Exception as e:
-        logger.error(f"Error carregant configuració: {e}")
+        logger.error(f"Error loading configuration: {e}")
         raise
 
 
 def save_config(settings: Settings, filename: str = "config.yaml") -> bool:
     """
-    Desa la configuració a un fitxer YAML.
+    Save configuration to YAML file.
 
     Args:
-        settings: Objecte de configuració
+        settings: Configuration object
         filename: Nom del fitxer de sortida
 
     Returns:
@@ -165,25 +165,25 @@ def save_config(settings: Settings, filename: str = "config.yaml") -> bool:
         with open(config_path, 'w', encoding='utf-8') as f:
             yaml.dump(settings.to_dict(), f, default_flow_style=False, allow_unicode=True)
         
-        logger.info(f"Configuració desada a {filename}")
+        logger.info(f"Configuration saved to {filename}")
         return True
 
     except Exception as e:
-        logger.error(f"Error desant configuració: {e}")
+        logger.error(f"Error saving configuration: {e}")
         return False
 
 
 def create_default_config(filename: str = "config.yaml") -> Settings:
     """
-    Crea un fitxer de configuració per defecte.
+    Create a default configuration file.
 
     Args:
         filename: Nom del fitxer de sortida
 
     Returns:
-        Settings: Configuració per defecte
+        Settings: Default configuration
     """
     settings = Settings()
     save_config(settings, filename)
-    logger.info(f"Configuració per defecte creada: {filename}")
+    logger.info(f"Default configuration creada: {filename}")
     return settings
