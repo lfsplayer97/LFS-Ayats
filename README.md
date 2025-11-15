@@ -3,6 +3,9 @@
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Tests](https://github.com/lfsplayer97/LFS-Ayats/actions/workflows/tests.yml/badge.svg)](https://github.com/lfsplayer97/LFS-Ayats/actions/workflows/tests.yml)
+[![Code Quality](https://github.com/lfsplayer97/LFS-Ayats/actions/workflows/code-quality.yml/badge.svg)](https://github.com/lfsplayer97/LFS-Ayats/actions/workflows/code-quality.yml)
+[![codecov](https://codecov.io/gh/lfsplayer97/LFS-Ayats/branch/main/graph/badge.svg)](https://codecov.io/gh/lfsplayer97/LFS-Ayats)
 
 **A professional, modular telemetry collection system for Live for Speed racing simulator.**
 
@@ -511,6 +514,39 @@ To start contributing, see:
 - Document code with docstrings (Google style)
 - Update documentation as needed
 - Maintain modularity and separation of concerns
+
+## 🔄 Continuous Integration
+
+This project uses GitHub Actions for automated testing and quality checks:
+
+### Workflows
+
+- **Tests**: Runs on every push and PR to `main` and `develop`
+  - Tests across Python 3.8, 3.9, 3.10, 3.11, 3.12
+  - Generates coverage reports and uploads to Codecov
+  - Must pass before merging
+
+- **Code Quality**: Runs on every push and PR
+  - Black formatting check
+  - Flake8 linting
+  - MyPy type checking
+  - Bandit security scanning
+
+- **Release**: Triggers on version tags (v*.*.*)
+  - Runs full test suite
+  - Builds Python package
+  - Creates GitHub release with artifacts
+
+### Pre-commit Hooks
+
+Install pre-commit hooks for local development:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+This will automatically check your code before each commit.
 
 ## 📄 License
 

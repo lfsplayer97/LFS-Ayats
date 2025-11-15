@@ -144,9 +144,7 @@ class TestLifespan:
 
         # Verify startup logging occurred
         assert mock_logger.info.called
-        calls = [
-            call[0][0] for call in mock_logger.info.call_args_list
-        ]
+        calls = [call[0][0] for call in mock_logger.info.call_args_list]
         assert any("Starting" in msg for msg in calls)
 
     @patch("src.api.main.logger")

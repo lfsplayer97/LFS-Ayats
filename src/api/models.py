@@ -39,7 +39,9 @@ class SessionResponse(SessionBase):
     datetime: DateTime = Field(..., description="Session datetime")
     duration: int = Field(..., description="Session duration in seconds")
     total_laps: int = Field(0, description="Total number of laps")
-    best_lap_time: Optional[float] = Field(default=None, description="Best lap time in seconds")
+    best_lap_time: Optional[float] = Field(
+        default=None, description="Best lap time in seconds"
+    )
 
 
 class SessionListResponse(BaseModel):
@@ -66,9 +68,15 @@ class LapResponse(LapBase):
 
     id: int = Field(..., description="Lap ID")
     session_id: int = Field(..., description="Parent session ID")
-    sector1_time: Optional[float] = Field(default=None, description="Sector 1 time in seconds")
-    sector2_time: Optional[float] = Field(default=None, description="Sector 2 time in seconds")
-    sector3_time: Optional[float] = Field(default=None, description="Sector 3 time in seconds")
+    sector1_time: Optional[float] = Field(
+        default=None, description="Sector 1 time in seconds"
+    )
+    sector2_time: Optional[float] = Field(
+        default=None, description="Sector 2 time in seconds"
+    )
+    sector3_time: Optional[float] = Field(
+        default=None, description="Sector 3 time in seconds"
+    )
     valid: bool = Field(True, description="Whether lap is valid")
 
 
@@ -111,7 +119,9 @@ class SectorAnalysis(BaseModel):
 
     sector_number: int = Field(..., ge=1, le=3, description="Sector number")
     time: float = Field(..., description="Sector time in seconds")
-    delta: Optional[float] = Field(default=None, description="Delta to best sector time")
+    delta: Optional[float] = Field(
+        default=None, description="Delta to best sector time"
+    )
     speed_avg: float = Field(..., description="Average speed in sector")
     speed_max: float = Field(..., description="Maximum speed in sector")
 
@@ -173,9 +183,13 @@ class DriverStats(BaseModel):
     driver_name: str = Field(..., description="Driver name")
     total_sessions: int = Field(..., description="Total sessions")
     total_laps: int = Field(..., description="Total laps driven")
-    best_lap_time: Optional[float] = Field(default=None, description="Best lap time overall")
+    best_lap_time: Optional[float] = Field(
+        default=None, description="Best lap time overall"
+    )
     avg_lap_time: Optional[float] = Field(default=None, description="Average lap time")
-    total_distance: Optional[float] = Field(default=None, description="Total distance in km")
+    total_distance: Optional[float] = Field(
+        default=None, description="Total distance in km"
+    )
 
 
 class CircuitStats(BaseModel):
@@ -184,8 +198,12 @@ class CircuitStats(BaseModel):
     circuit_name: str = Field(..., description="Circuit name")
     total_sessions: int = Field(..., description="Total sessions on circuit")
     total_laps: int = Field(..., description="Total laps on circuit")
-    best_lap_time: Optional[float] = Field(default=None, description="Best lap time on circuit")
-    best_lap_driver: Optional[str] = Field(default=None, description="Driver with best lap")
+    best_lap_time: Optional[float] = Field(
+        default=None, description="Best lap time on circuit"
+    )
+    best_lap_driver: Optional[str] = Field(
+        default=None, description="Driver with best lap"
+    )
 
 
 # Configuration models
@@ -213,7 +231,9 @@ class CircuitInfo(BaseModel):
 
     name: str = Field(..., description="Circuit full name")
     short_name: str = Field(..., description="Circuit short code")
-    length: Optional[float] = Field(default=None, description="Circuit length in meters")
+    length: Optional[float] = Field(
+        default=None, description="Circuit length in meters"
+    )
 
 
 class VehicleInfo(BaseModel):
@@ -249,9 +269,7 @@ class ExportFormat(BaseModel):
     """Export format specification."""
 
     format: str = Field(..., description="Export format (csv, json, excel)")
-    include_telemetry: bool = Field(
-        True, description="Include telemetry data points"
-    )
+    include_telemetry: bool = Field(True, description="Include telemetry data points")
 
 
 class ExportResponse(BaseModel):

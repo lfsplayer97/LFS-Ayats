@@ -24,10 +24,10 @@ logger = logging.getLogger(__name__)
 def _mask_connection_string_password(connection_string: str) -> str:
     """
     Mask password in database connection string for safe logging.
-    
+
     Args:
         connection_string: Original connection string
-        
+
     Returns:
         Connection string with password masked as '***'
     """
@@ -532,7 +532,7 @@ class TelemetryRepository:
             query = select(Session).options(
                 selectinload(Session.circuit),
                 selectinload(Session.vehicle),
-                selectinload(Session.laps)
+                selectinload(Session.laps),
             )
 
             # Apply filters
@@ -592,7 +592,7 @@ class TelemetryRepository:
                 db.commit()
                 db.refresh(circuit)
                 logger.info(f"Circuit created: {name}")
-            
+
             return circuit
 
     def get_or_create_vehicle(
@@ -615,12 +615,14 @@ class TelemetryRepository:
             ).scalar_one_or_none()
 
             if not vehicle:
-                vehicle = Vehicle(name=name, short_name=short_name, class_type=class_type)
+                vehicle = Vehicle(
+                    name=name, short_name=short_name, class_type=class_type
+                )
                 db.add(vehicle)
                 db.commit()
                 db.refresh(vehicle)
                 logger.info(f"Vehicle created: {name}")
-            
+
             return vehicle
 
     def delete_session(self, session_id: int) -> None:

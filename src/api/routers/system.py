@@ -105,9 +105,7 @@ async def connect_to_lfs(config: ConnectionConfig = Body(...)):
         ConnectionErrorException: If connection fails
     """
     try:
-        logger.info(
-            f"Attempting connection to LFS at {config.host}:{config.port}"
-        )
+        logger.info(f"Attempting connection to LFS at {config.host}:{config.port}")
 
         # In a real implementation, this would use InSimClient
         # For now, just set the status

@@ -57,14 +57,42 @@ To suggest new features:
 
 ```bash
 # Format code
-black src/ tests/
+black src/ tests/ examples/
 
 # Check style
-flake8 src/ tests/
+flake8 src/ tests/ examples/ --max-line-length=100 --extend-ignore=E203,W503
 
 # Type checking
-mypy src/
+mypy src/ --ignore-missing-imports
+
+# Security scan (optional)
+bandit -r src/ --skip B101
 ```
+
+**Pre-commit Hooks (Recommended)**
+
+To automatically check code quality before committing:
+
+```bash
+# Install pre-commit
+pip install pre-commit
+
+# Install git hooks
+pre-commit install
+
+# Run hooks manually on all files
+pre-commit run --all-files
+```
+
+#### Continuous Integration
+
+All pull requests automatically run through our CI/CD pipeline:
+
+- **Tests Workflow**: Runs tests across Python 3.8, 3.9, 3.10, 3.11, 3.12
+- **Code Quality Workflow**: Checks formatting (Black), linting (Flake8), type checking (MyPy), and security (Bandit)
+- **Coverage Report**: Uploaded to Codecov for Python 3.11
+
+Your PR must pass all required checks before it can be merged. The workflows will automatically comment on your PR if issues are found.
 
 #### Commit
 

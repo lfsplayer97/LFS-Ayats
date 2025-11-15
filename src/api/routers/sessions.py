@@ -72,15 +72,16 @@ async def list_sessions(
                 duration=session.duration,
                 total_laps=len(session.laps) if session.laps else 0,
                 best_lap_time=(
-                    min(lap.lap_time for lap in session.laps)
-                    if session.laps
-                    else None
+                    min(lap.lap_time for lap in session.laps) if session.laps else None
                 ),
             )
         )
 
     return SessionListResponse(
-        total=len(session_responses), items=session_responses, page=offset // limit, page_size=limit
+        total=len(session_responses),
+        items=session_responses,
+        page=offset // limit,
+        page_size=limit,
     )
 
 

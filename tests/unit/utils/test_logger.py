@@ -59,15 +59,11 @@ class TestSetupLogger:
         """Test logger creation with file handler."""
         with tempfile.TemporaryDirectory() as tmpdir:
             log_file = Path(tmpdir) / "test.log"
-            logger = setup_logger(
-                name="test_file", log_file=str(log_file)
-            )
+            logger = setup_logger(name="test_file", log_file=str(log_file))
 
             # Check file handler exists
             file_handlers = [
-                h
-                for h in logger.handlers
-                if isinstance(h, logging.FileHandler)
+                h for h in logger.handlers if isinstance(h, logging.FileHandler)
             ]
             assert len(file_handlers) == 1
 
