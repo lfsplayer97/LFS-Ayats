@@ -3,6 +3,9 @@
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Tests](https://github.com/lfsplayer97/LFS-Ayats/actions/workflows/tests.yml/badge.svg)](https://github.com/lfsplayer97/LFS-Ayats/actions/workflows/tests.yml)
+[![Code Quality](https://github.com/lfsplayer97/LFS-Ayats/actions/workflows/code-quality.yml/badge.svg)](https://github.com/lfsplayer97/LFS-Ayats/actions/workflows/code-quality.yml)
+[![codecov](https://codecov.io/gh/lfsplayer97/LFS-Ayats/branch/main/graph/badge.svg)](https://codecov.io/gh/lfsplayer97/LFS-Ayats)
 
 **A professional, modular telemetry collection system for Live for Speed racing simulator.**
 
