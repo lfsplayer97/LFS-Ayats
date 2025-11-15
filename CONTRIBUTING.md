@@ -1,13 +1,170 @@
-# Contribution Guide
+# Contributing to LFS-Ayats
 
 Thank you for your interest in contributing to LFS-Ayats! This document provides guidelines for contributing to the project.
 
 ## Code of Conduct
 
-- Be respectful and professional
-- Accept constructive criticism
-- Focus on what's best for the community
-- Show empathy towards other members
+Please read and adhere to our [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). We are committed to providing a welcoming and inclusive environment for all contributors.
+
+## Community Guidelines
+
+### Be Respectful
+- Value others' opinions and experiences
+- Disagree constructively
+- Assume good intent
+- Be patient with newcomers
+
+### Be Inclusive
+- Welcome contributors from all backgrounds
+- Use inclusive language
+- Help others learn and grow
+- Provide mentorship when possible
+
+### Be Professional
+- Focus on code quality
+- Provide constructive feedback
+- Respect others' time
+- Maintain confidentiality where needed
+
+## Getting Started as a Contributor
+
+### Your First Contribution
+
+1. Fork the repository
+2. Clone your fork locally
+3. Create a feature branch
+4. Make your changes
+5. Run tests locally
+6. Push to your fork
+7. Open a pull request
+
+### Types of Contributions
+
+#### Code
+- Bug fixes
+- New features
+- Performance improvements
+- Code refactoring
+
+#### Documentation
+- README improvements
+- Tutorial writing
+- API documentation
+- Example code
+
+#### Testing
+- New tests
+- Test coverage improvements
+- Integration tests
+- Performance tests
+
+#### Community
+- Issue triage
+- Answer questions
+- Improve discussions
+- Community moderation
+
+## Pull Request Process
+
+### Before Opening a PR
+
+1. Create an issue first (or find an existing one)
+2. Discuss your approach in the issue
+3. Wait for feedback before starting work
+4. Fork and create a feature branch
+
+### Opening a PR
+
+1. Follow the PR template
+2. Link the related issue
+3. Describe your changes clearly
+4. Include screenshots/examples if relevant
+5. Ensure tests pass
+6. Request review from maintainers
+
+### PR Guidelines
+
+- One feature/fix per PR
+- Keep PRs focused and manageable
+- Write clear commit messages
+- Update documentation
+- Add tests for new features
+- Run linters and formatters
+
+### Review Process
+
+1. Maintainers review your PR
+2. You address feedback
+3. Re-review after changes
+4. Approval and merge
+
+## Development Setup
+
+See [docs/contributing/development-setup.md](docs/contributing/development-setup.md) for detailed setup instructions.
+
+## Testing
+
+See [docs/contributing/testing-guide.md](docs/contributing/testing-guide.md) for testing guidelines.
+
+## Code Style
+
+- PEP 8 with Black formatter
+- Google-style docstrings
+- Type hints for functions
+- Clear variable names
+
+Run formatters:
+```bash
+black src/ tests/ examples/
+flake8 src/ tests/ examples/ --max-line-length=100 --extend-ignore=E203,W503
+mypy src/ --ignore-missing-imports
+```
+
+## Commit Messages
+
+### Format
+
+Use descriptive commit messages with conventional commit prefixes:
+
+```
+<type>: <subject>
+
+<body>
+
+<footer>
+```
+
+### Examples
+
+```
+feat: Add support for IS_NEW packet
+
+- Implement parser for IS_NEW
+- Add unit tests
+- Update documentation
+
+Refs: #123
+```
+
+```
+fix: Resolve socket timeout on slow connections
+
+Increase default timeout from 5s to 10s to handle slower connections.
+
+Fixes: #456
+```
+
+### Commit Types
+
+Recommended prefixes:
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation changes
+- `test:` Add or modify tests
+- `refactor:` Code refactoring
+- `style:` Format changes (don't affect functionality)
+- `perf:` Performance improvements
+- `chore:` Maintenance tasks (dependency updates, etc.)
 
 ## How to Contribute
 
