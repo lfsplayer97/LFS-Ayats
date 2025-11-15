@@ -2,9 +2,8 @@
 Unit tests for TelemetryProcessor
 """
 
-import pytest
 from dataclasses import dataclass, field
-from src.telemetry.processor import TelemetryProcessor, ProcessedTelemetry
+from src.telemetry.processor import TelemetryProcessor
 
 
 # Mock CarTelemetry for testing

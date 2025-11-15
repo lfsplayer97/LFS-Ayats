@@ -2,7 +2,6 @@
 Unit tests for visualization components (gauges, charts, layout).
 """
 
-import pytest
 from src.visualization.components.gauges import (
     create_gauge,
     create_speed_gauge,
