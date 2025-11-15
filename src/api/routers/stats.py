@@ -43,7 +43,9 @@ async def get_best_laps(
     Returns:
         List[BestLapStats]: Best lap statistics
     """
-    logger.info(f"Getting best laps: circuit={circuit}, vehicle={vehicle}, limit={limit}")
+    logger.info(
+        f"Getting best laps: circuit={circuit}, vehicle={vehicle}, limit={limit}"
+    )
 
     # Get sessions with filters
     sessions = repo.get_sessions(circuit=circuit, vehicle=vehicle, limit=100)

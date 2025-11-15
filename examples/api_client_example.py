@@ -107,9 +107,7 @@ class LFSAyatsClient:
         response.raise_for_status()
         return response.json()
 
-    def create_session(
-        self, circuit: str, vehicle: str, driver: str
-    ) -> Dict[str, Any]:
+    def create_session(self, circuit: str, vehicle: str, driver: str) -> Dict[str, Any]:
         """
         Create a new session.
 
@@ -150,9 +148,7 @@ class LFSAyatsClient:
         response.raise_for_status()
         return response.json()
 
-    def get_lap_telemetry(
-        self, lap_id: int, sample_rate: int = None
-    ) -> Dict[str, Any]:
+    def get_lap_telemetry(self, lap_id: int, sample_rate: int = None) -> Dict[str, Any]:
         """
         Get lap telemetry data.
 
@@ -167,9 +163,7 @@ class LFSAyatsClient:
         if sample_rate:
             params["sample_rate"] = sample_rate
 
-        response = requests.get(
-            f"{self.base_url}/{lap_id}/telemetry", params=params
-        )
+        response = requests.get(f"{self.base_url}/{lap_id}/telemetry", params=params)
         response.raise_for_status()
         return response.json()
 
@@ -268,9 +262,7 @@ class LFSAyatsClient:
         with open(filename, "wb") as f:
             f.write(response.content)
 
-    async def stream_telemetry(
-        self, callback, duration: int = None
-    ):
+    async def stream_telemetry(self, callback, duration: int = None):
         """
         Stream live telemetry via WebSocket.
 
@@ -282,7 +274,10 @@ class LFSAyatsClient:
             start_time = asyncio.get_event_loop().time()
 
             while True:
-                if duration and (asyncio.get_event_loop().time() - start_time) > duration:
+                if (
+                    duration
+                    and (asyncio.get_event_loop().time() - start_time) > duration
+                ):
                     break
 
                 try:
@@ -334,7 +329,9 @@ def main():
     print(f"   Total sessions: {sessions['total']}")
     print(f"   Showing: {len(sessions['items'])} sessions")
     for session in sessions["items"][:3]:
-        print(f"   - Session {session['id']}: {session['driver']} @ {session['circuit']}")
+        print(
+            f"   - Session {session['id']}: {session['driver']} @ {session['circuit']}"
+        )
 
     # 4. Create a test session
     print("\n4. Create Test Session")
@@ -357,7 +354,9 @@ def main():
         print(f"   Found {len(best_laps)} best laps")
         for lap_stats in best_laps[:3]:
             lap = lap_stats["lap"]
-            print(f"   - {lap_stats['driver']}: {lap['lap_time']:.2f}s @ {lap_stats['circuit']}")
+            print(
+                f"   - {lap_stats['driver']}: {lap['lap_time']:.2f}s @ {lap_stats['circuit']}"
+            )
     except Exception as e:
         print(f"   No best laps available yet: {e}")
 

@@ -17,7 +17,11 @@ from src.api.models import (
     ComparisonResponse,
 )
 from src.api.dependencies import get_repository
-from src.api.exceptions import LapNotFoundError, SessionNotFoundError, InvalidParameterError
+from src.api.exceptions import (
+    LapNotFoundError,
+    SessionNotFoundError,
+    InvalidParameterError,
+)
 from src.database.repository import TelemetryRepository
 
 logger = logging.getLogger(__name__)

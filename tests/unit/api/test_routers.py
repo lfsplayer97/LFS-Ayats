@@ -82,9 +82,7 @@ class TestSystemRouterStatus:
         mock_repo.get_sessions.side_effect = Exception("Database error")
 
         # Should not raise exception
-        result = await system.get_status(
-            repo=mock_repo, connected=False
-        )
+        result = await system.get_status(repo=mock_repo, connected=False)
 
         assert isinstance(result, SystemStatusResponse)
         assert result.sessions_count == 0
@@ -107,9 +105,7 @@ class TestSystemRouterConnection:
     @pytest.mark.asyncio
     async def test_connect_success(self):
         """Test successful connection."""
-        config = ConnectionConfig(
-            host="127.0.0.1", port=29999, app_name="TestApp"
-        )
+        config = ConnectionConfig(host="127.0.0.1", port=29999, app_name="TestApp")
 
         mock_set = "src.api.routers.system.set_connection_status"
         with patch(mock_set) as mock_set_status:
@@ -184,9 +180,7 @@ class TestRouterModels:
 
     def test_connection_config_custom_values(self):
         """Test ConnectionConfig accepts custom values."""
-        config = ConnectionConfig(
-            host="192.168.1.1", port=30000, app_name="MyApp"
-        )
+        config = ConnectionConfig(host="192.168.1.1", port=30000, app_name="MyApp")
 
         assert config.host == "192.168.1.1"
         assert config.port == 30000
