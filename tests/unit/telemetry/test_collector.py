@@ -4,7 +4,7 @@ Unit tests for Telemetry Collector
 
 import pytest
 import time
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from src.telemetry.collector import (
     TelemetryCollector,
     CarTelemetry,
