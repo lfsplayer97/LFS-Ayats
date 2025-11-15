@@ -5,6 +5,7 @@ Modular telemetry system for Live for Speed
 
 __version__ = "0.1.0"
 __author__ = "lfsplayer97"
+__license__ = "MIT"
 
 # Export main modules
 from . import connection
