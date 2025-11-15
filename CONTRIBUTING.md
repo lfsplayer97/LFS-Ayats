@@ -305,6 +305,126 @@ Reference: https://en.lfsmanual.net/wiki/InSim.txt#IS_MCI
 """
 ```
 
+## Changelog and Versioning
+
+### Updating the CHANGELOG
+
+All notable changes must be documented in `CHANGELOG.md` following the [Keep a Changelog](https://keepachangelog.com/) format.
+
+#### When to Update
+
+Update the CHANGELOG when:
+- Adding new features
+- Changing existing functionality
+- Deprecating features
+- Removing features
+- Fixing bugs
+- Addressing security vulnerabilities
+
+#### How to Update
+
+Add your changes to the `[Unreleased]` section under the appropriate category:
+
+```markdown
+## [Unreleased]
+
+### Added
+- New TelemetryAnalyzer class for advanced data analysis
+- WebSocket support for real-time streaming
+
+### Changed
+- Improved InSimClient connection handling
+- Updated documentation with more examples
+
+### Deprecated
+- `export_csv()` method (use `CSVExporter` class instead)
+
+### Fixed
+- Fixed socket timeout issue on slow connections
+- Fixed memory leak in telemetry buffer
+
+### Security
+- Updated dependencies to patch vulnerabilities
+```
+
+**Categories:**
+- **Added**: New features
+- **Changed**: Changes in existing functionality
+- **Deprecated**: Features soon to be removed
+- **Removed**: Features removed in this version
+- **Fixed**: Bug fixes
+- **Security**: Security vulnerability fixes
+
+### Semantic Versioning
+
+This project follows [Semantic Versioning](https://semver.org/):
+
+**Format:** `MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]`
+
+Examples:
+- `0.1.0` → `0.1.1`: Bug fix (PATCH)
+- `0.1.0` → `0.2.0`: New feature (MINOR)
+- `0.1.0` → `1.0.0`: Breaking changes (MAJOR)
+- `1.0.0-rc.1`: Release candidate
+- `1.0.0-beta.1`: Beta version
+
+**Version Increments:**
+- **MAJOR** (X.0.0): Breaking changes, incompatible API changes
+- **MINOR** (0.X.0): New features, backward compatible
+- **PATCH** (0.0.X): Bug fixes, backward compatible
+
+### Release Process
+
+When preparing a release, follow this checklist:
+
+1. **Verify Completion**
+   - [ ] All issues for milestone are closed
+   - [ ] All tests pass
+   - [ ] Code coverage is acceptable
+   - [ ] No breaking changes (or documented if MAJOR)
+
+2. **Update Documentation**
+   - [ ] Move `[Unreleased]` changes to new version section in CHANGELOG.md
+   - [ ] Update version in `setup.py`
+   - [ ] Update version in `src/__init__.py`
+   - [ ] Update README if needed
+
+3. **Version the Changes**
+   ```bash
+   # Example for version 1.2.0
+   VERSION="1.2.0"
+   
+   # Update version in files
+   sed -i "s/__version__ = .*/__version__ = \"$VERSION\"/" src/__init__.py
+   sed -i "s/version=.*/version='$VERSION',/" setup.py
+   
+   # Update CHANGELOG.md manually with release date
+   # Change ## [Unreleased] to ## [1.2.0] - 2025-11-15
+   ```
+
+4. **Commit and Tag**
+   ```bash
+   git add src/__init__.py setup.py CHANGELOG.md
+   git commit -m "chore: bump version to $VERSION"
+   git tag -a "v$VERSION" -m "Release version $VERSION"
+   git push origin main
+   git push origin "v$VERSION"
+   ```
+
+5. **Create GitHub Release**
+   - GitHub Actions will create a release from the tag
+   - Add release notes from CHANGELOG.md
+   - Attach any relevant assets
+
+### Version File Locations
+
+Ensure version is updated in these files:
+- `setup.py` - Line 16: `version='0.1.0'`
+- `src/__init__.py` - Line 6: `__version__ = "0.1.0"`
+- `CHANGELOG.md` - New section with version and date
+
+**Note:** Keep all version numbers in sync to avoid confusion.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the project's MIT license.
