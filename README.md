@@ -515,6 +515,39 @@ To start contributing, see:
 - Update documentation as needed
 - Maintain modularity and separation of concerns
 
+## 🔄 Continuous Integration
+
+This project uses GitHub Actions for automated testing and quality checks:
+
+### Workflows
+
+- **Tests**: Runs on every push and PR to `main` and `develop`
+  - Tests across Python 3.8, 3.9, 3.10, 3.11, 3.12
+  - Generates coverage reports and uploads to Codecov
+  - Must pass before merging
+
+- **Code Quality**: Runs on every push and PR
+  - Black formatting check
+  - Flake8 linting
+  - MyPy type checking
+  - Bandit security scanning
+
+- **Release**: Triggers on version tags (v*.*.*)
+  - Runs full test suite
+  - Builds Python package
+  - Creates GitHub release with artifacts
+
+### Pre-commit Hooks
+
+Install pre-commit hooks for local development:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+This will automatically check your code before each commit.
+
 ## 📄 License
 
 This project is licensed under the MIT License. See the `LICENSE` file for more details.
