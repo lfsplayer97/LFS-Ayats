@@ -6,7 +6,7 @@ Reference: https://plotly.com/python/indicator/
 """
 
 import plotly.graph_objects as go
-from typing import Optional, Dict, Any
+from typing import Optional
 
 
 def create_gauge(

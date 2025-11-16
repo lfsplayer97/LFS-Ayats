@@ -6,7 +6,6 @@ Provides WebSocket endpoint for live telemetry and range queries.
 
 import logging
 import asyncio
-from typing import Optional
 from datetime import datetime
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
 
@@ -113,7 +112,7 @@ async def telemetry_websocket(websocket: WebSocket):
         error_message = WebSocketError(type="error", error=str(e), code=500)
         try:
             await websocket.send_json(error_message.model_dump())
-        except:
+        except Exception:
             pass
 
 

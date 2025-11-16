@@ -9,7 +9,7 @@ Reference:
 """
 
 from datetime import datetime as DateTime
-from typing import List, Optional, Union
+from typing import List, Optional
 from pydantic import BaseModel, Field, ConfigDict
 
 

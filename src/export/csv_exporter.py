@@ -53,7 +53,7 @@ class CSVExporter:
 
             with open(self.filename, mode, newline="", encoding="utf-8") as f:
                 # Obtenir camps del primer objecte
-                first_item = telemetry_data[0]
+                telemetry_data[0]
 
                 # Basic fields
                 fieldnames = [

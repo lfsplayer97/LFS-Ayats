@@ -2,9 +2,7 @@
 Unit tests for CSVExporter
 """
 
-import pytest
 import csv
-from pathlib import Path
 from dataclasses import dataclass, field
 from src.export.csv_exporter import CSVExporter
 

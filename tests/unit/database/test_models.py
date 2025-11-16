@@ -2,7 +2,6 @@
 Unit tests for SQLAlchemy models.
 """
 
-import pytest
 from datetime import datetime
 
 from src.database.models import Base, Circuit, Vehicle, Session, Lap, TelemetryPoint
@@ -33,8 +32,6 @@ class TestCircuitModel:
 
     def test_circuit_default_sector_count(self):
         """Test default sector count"""
-        circuit = Circuit(name="Test Circuit", short_name="TC1")
-
         # Default is only set when inserted into database
         # Check the default value in the column definition
         assert Circuit.sector_count.default.arg == 3
@@ -87,8 +84,6 @@ class TestSessionModel:
 
     def test_session_default_total_laps(self):
         """Test default total laps"""
-        session = Session(datetime=datetime.now())
-
         # Default is only set when inserted into database
         # Check the default value in the column definition
         assert Session.total_laps.default.arg == 0
@@ -128,8 +123,6 @@ class TestLapModel:
 
     def test_lap_default_valid(self):
         """Test default valid flag"""
-        lap = Lap(session_id=1, lap_number=1)
-
         # Default is only set when inserted into database
         # Check the default value in the column definition
         assert Lap.valid.default.arg is True

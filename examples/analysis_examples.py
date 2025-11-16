@@ -41,7 +41,7 @@ def example_1_anomaly_detection():
     # Check anomalies
     alerts = detector.check_telemetry(current_data)
 
-    print(f"\nTelemetry data:")
+    print("\nTelemetry data:")
     print(f"  - Engine temperature: {current_data['engine_temp']}°C")
     print(f"  - Linear speed: {current_data['linear_speed']} m/s")
     print(f"  - Wheel speed: {current_data['wheel_speed']} m/s")
@@ -195,7 +195,9 @@ def example_4_lap_comparison():
     for sector_comp in comparison.sector_comparisons:
         symbol = "✓" if sector_comp.difference < 0 else "✗"
         print(
-            f"  {symbol} Sector {sector_comp.sector_number}: {sector_comp.difference:+.3f}s ({sector_comp.percentage_diff:+.1f}%)"
+            f"  {symbol} Sector {sector_comp.sector_number}: "
+            f"{sector_comp.difference:+.3f}s "
+            f"({sector_comp.percentage_diff:+.1f}%)"
         )
 
     print("\nSuggeriments de millora:")
@@ -242,11 +244,11 @@ def example_5_alert_system():
     }
 
     print("\nChecking telemetry conditions...")
-    alerts = system.check_conditions(telemetry_data)
+    system.check_conditions(telemetry_data)
 
     # Get statistics
     stats = system.get_statistics()
-    print(f"\nSystem statistics:")
+    print("\nSystem statistics:")
     print(f"  Total alerts: {stats['total_alerts']}")
     print(f"  Counter by type: {stats['alert_counts']}")
 

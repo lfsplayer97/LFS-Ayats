@@ -207,7 +207,7 @@ async def compare_laps(
     ]
 
     # Find fastest lap
-    fastest_lap = min(laps, key=lambda l: l.lap_time)
+    fastest_lap = min(laps, key=lambda lap_item: lap_item.lap_time)
 
     # Calculate deltas
     time_deltas = {}

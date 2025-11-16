@@ -32,7 +32,6 @@ class AlertHandler(ABC):
         Args:
             alert: Alerta a gestionar
         """
-        pass
 
 
 class ConsoleAlertHandler(AlertHandler):

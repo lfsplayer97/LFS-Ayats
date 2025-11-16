@@ -2,7 +2,6 @@
 Unit tests for Telemetry Buffer
 """
 
-import pytest
 from unittest.mock import Mock
 from src.telemetry.buffer import TelemetryBuffer
 

@@ -4,7 +4,6 @@ Unit tests for Settings Configuration
 
 import pytest
 import yaml
-from pathlib import Path
 from src.config.settings import (
     Settings,
     ConnectionSettings,

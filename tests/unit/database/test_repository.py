@@ -4,10 +4,8 @@ Unit tests for TelemetryRepository.
 
 import pytest
 from datetime import datetime
-from unittest.mock import Mock, patch
 
 from src.database.repository import TelemetryRepository
-from src.database.models import Base, Session, Lap, TelemetryPoint, Circuit, Vehicle
 
 
 @pytest.fixture
@@ -127,7 +125,7 @@ class TestSessionOperations:
     def test_get_sessions_by_circuit(self, in_memory_repo):
         """Test getting sessions by circuit"""
         # Create circuit
-        circuit_id = in_memory_repo.create_circuit("Blackwood GP", "BL1", 3290.0)
+        in_memory_repo.create_circuit("Blackwood GP", "BL1", 3290.0)
 
         # Create multiple sessions
         session_id1 = in_memory_repo.save_session(datetime.now(), circuit_name="BL1")
@@ -187,9 +185,9 @@ class TestLapOperations:
         """Test getting best lap"""
         # Create session and laps
         session_id = in_memory_repo.save_session(datetime.now())
-        lap1_id = in_memory_repo.save_lap(session_id, 1, lap_time=95000, valid=True)
+        in_memory_repo.save_lap(session_id, 1, lap_time=95000, valid=True)
         lap2_id = in_memory_repo.save_lap(session_id, 2, lap_time=93000, valid=True)
-        lap3_id = in_memory_repo.save_lap(session_id, 3, lap_time=94000, valid=True)
+        in_memory_repo.save_lap(session_id, 3, lap_time=94000, valid=True)
 
         # Get best lap
         best_lap = in_memory_repo.get_best_lap(session_id)
@@ -326,8 +324,8 @@ class TestCompareAndStatistics:
             datetime.now(), driver_name="Player1", duration=600
         )
         lap1_id = in_memory_repo.save_lap(session_id, 1, lap_time=95000, valid=True)
-        lap2_id = in_memory_repo.save_lap(session_id, 2, lap_time=93000, valid=True)
-        lap3_id = in_memory_repo.save_lap(session_id, 3, lap_time=94000, valid=False)
+        in_memory_repo.save_lap(session_id, 2, lap_time=93000, valid=True)
+        in_memory_repo.save_lap(session_id, 3, lap_time=94000, valid=False)
 
         # Add telemetry
         points = [{"timestamp": i * 100, "speed": float(i)} for i in range(10)]

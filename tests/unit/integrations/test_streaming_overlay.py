@@ -3,7 +3,7 @@ Tests for Streaming Overlay
 """
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from src.integrations.streaming_overlay import StreamingOverlay
 
 
@@ -125,7 +125,7 @@ class TestStreamingOverlay:
 
     def test_start_server(self, overlay):
         """Test starting the server."""
-        with patch.object(overlay.socketio, "run") as mock_run:
+        with patch.object(overlay.socketio, "run"):
             with patch("threading.Thread") as mock_thread:
                 overlay.start()
 

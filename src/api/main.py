@@ -118,10 +118,20 @@ async def api_root():
             "sessions": "/api/v1/sessions",
             "laps": "/api/v1/{session_id}/laps, /api/v1/{lap_id}",
             "telemetry": "/api/v1/telemetry/live (WebSocket), /api/v1/telemetry/range",
-            "analysis": "/api/v1/analysis/sectors, /api/v1/analysis/anomalies, /api/v1/analysis/compare",
-            "statistics": "/api/v1/stats/best-laps, /api/v1/stats/driver, /api/v1/stats/circuit",
-            "export": "/api/v1/export/csv, /api/v1/export/json, /api/v1/export/session",
-            "config": "/api/v1/config, /api/v1/config/circuits, /api/v1/config/vehicles",
+            "analysis": (
+                "/api/v1/analysis/sectors, /api/v1/analysis/anomalies, "
+                "/api/v1/analysis/compare"
+            ),
+            "statistics": (
+                "/api/v1/stats/best-laps, /api/v1/stats/driver, "
+                "/api/v1/stats/circuit"
+            ),
+            "export": (
+                "/api/v1/export/csv, /api/v1/export/json, " "/api/v1/export/session"
+            ),
+            "config": (
+                "/api/v1/config, /api/v1/config/circuits, " "/api/v1/config/vehicles"
+            ),
         },
     }
 

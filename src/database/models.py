@@ -26,8 +26,6 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 class Base(DeclarativeBase):
     """Base class for all database models."""
 
-    pass
-
 
 class Circuit(Base):
     """
@@ -185,7 +183,10 @@ class Lap(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<Lap(id={self.id}, session_id={self.session_id}, lap_number={self.lap_number}, lap_time={self.lap_time})>"
+        return (
+            f"<Lap(id={self.id}, session_id={self.session_id}, "
+            f"lap_number={self.lap_number}, lap_time={self.lap_time})>"
+        )
 
 
 # Create index for lap queries
@@ -238,7 +239,10 @@ class TelemetryPoint(Base):
     lap: Mapped["Lap"] = relationship("Lap", back_populates="telemetry_points")
 
     def __repr__(self) -> str:
-        return f"<TelemetryPoint(id={self.id}, lap_id={self.lap_id}, timestamp={self.timestamp}, speed={self.speed})>"
+        return (
+            f"<TelemetryPoint(id={self.id}, lap_id={self.lap_id}, "
+            f"timestamp={self.timestamp}, speed={self.speed})>"
+        )
 
 
 # Create index for telemetry queries

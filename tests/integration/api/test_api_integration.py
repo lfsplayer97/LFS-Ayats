@@ -5,7 +5,6 @@ Tests complete API functionality with real FastAPI test client.
 """
 
 import pytest
-from datetime import datetime
 from fastapi.testclient import TestClient
 
 from src.api.main import app
