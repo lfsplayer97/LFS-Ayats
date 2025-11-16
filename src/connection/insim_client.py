@@ -9,6 +9,7 @@ import socket
 import struct
 import logging
 import time
+import threading
 from typing import Optional, Callable, Dict
 from enum import IntEnum, Enum
 from collections import defaultdict
@@ -198,6 +199,9 @@ class InSimClient:
         self.state = ConnectionState.DISCONNECTED
         self.state_callbacks: Dict[ConnectionState, list] = defaultdict(list)
 
+        # Thread safety for send operations
+        self._send_lock = threading.Lock()
+
         # Packet handling
         self.callbacks: Dict[int, Callable] = {}
 
@@ -383,42 +387,62 @@ class InSimClient:
         self.send_packet(packet)
         logger.info("IS_ISI packet sent")
 
-    def send_packet(self, packet: bytes) -> None:
+    def send_packet(self, packet: bytes, retry: bool = False) -> bool:
         """
-        Send a packet to the LFS server.
+        Send a packet to the LFS server with atomic connection check.
+
+        Uses a lock to prevent race conditions between connection check
+        and actual send operation. Distinguishes between timeout and
+        connection errors for better error handling.
 
         Args:
             packet: Packet in bytes format
+            retry: If True, trigger reconnection on errors
+
+        Returns:
+            bool: True if packet was sent successfully, False otherwise
 
         Raises:
             ConnectionError: If no active connection
         """
-        if not self.connected or not self.socket:
-            raise ConnectionError("Not connected to server")
+        with self._send_lock:
+            if not self.connected or not self.socket:
+                raise ConnectionError("Not connected to server")
 
-        try:
-            self.socket.sendall(packet)
-            logger.debug(f"Packet sent: {len(packet)} bytes")
-        except socket.error as e:
-            logger.error(f"Error sending packet: {e}")
-            if self.reconnect_enabled:
-                self.trigger_reconnect()
-            raise
+            try:
+                self.socket.sendall(packet)
+                logger.debug(f"Packet sent: {len(packet)} bytes")
+                return True
+            except socket.timeout:
+                logger.warning("Send timeout - connection may be slow or unresponsive")
+                if retry and self.reconnect_enabled:
+                    self.trigger_reconnect()
+                return False
+            except socket.error as e:
+                logger.error(f"Error sending packet: {e}")
+                if retry and self.reconnect_enabled:
+                    self.trigger_reconnect()
+                return False
 
-    def send_tiny(self, subtype: int) -> None:
+    def send_tiny(self, subtype: int, retry: bool = False) -> bool:
         """
-        Send a TINY packet (small control).
+        Send a TINY packet (small control) with atomic connection check.
 
         TINY packets are used for keepalive and basic control.
+        Uses a lock to prevent race conditions.
 
         Args:
             subtype: TINY packet subtype (TinySubtype)
+            retry: If True, trigger reconnection on errors
+
+        Returns:
+            bool: True if packet was sent successfully, False otherwise
+
+        Raises:
+            ConnectionError: If no active connection
 
         Reference: https://en.lfsmanual.net/wiki/InSim.txt#IS_TINY
         """
-        if not self.connected or not self.socket:
-            raise ConnectionError("Not connected to server")
-
         # struct IS_TINY {
         #     byte Size;   # 4
         #     byte Type;   # ISP_TINY
@@ -427,14 +451,27 @@ class InSimClient:
         # }
         packet = struct.pack("=4B", 4, PacketType.ISP_TINY, 0, subtype)
 
-        try:
-            self.socket.sendall(packet)
-            logger.debug(f"TINY packet sent: subtype={subtype}")
-        except socket.error as e:
-            logger.error(f"Error sending TINY packet: {e}")
-            if self.reconnect_enabled:
-                self.trigger_reconnect()
-            raise
+        with self._send_lock:
+            if not self.connected or not self.socket:
+                raise ConnectionError("Not connected to server")
+
+            try:
+                self.socket.sendall(packet)
+                logger.debug(f"TINY packet sent: subtype={subtype}")
+                return True
+            except socket.timeout:
+                logger.warning(
+                    f"TINY packet send timeout (subtype={subtype}) - "
+                    "connection may be slow or unresponsive"
+                )
+                if retry and self.reconnect_enabled:
+                    self.trigger_reconnect()
+                return False
+            except socket.error as e:
+                logger.error(f"Error sending TINY packet: {e}")
+                if retry and self.reconnect_enabled:
+                    self.trigger_reconnect()
+                return False
 
     def validate_packet(self, packet: bytes) -> bool:
         """
