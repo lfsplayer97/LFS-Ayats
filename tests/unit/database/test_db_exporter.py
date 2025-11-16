@@ -293,7 +293,7 @@ class TestSetupOperations:
         in_memory_exporter.setup_circuits_and_vehicles(circuits, vehicles)
 
         # Verify circuits were created
-        sessions = in_memory_exporter.repository.get_sessions_by_circuit("BL1")
+        in_memory_exporter.repository.get_sessions_by_circuit("BL1")
         # Should not raise error
 
     def test_setup_circuits_only(self, in_memory_exporter):

@@ -27,7 +27,9 @@ def display_telemetry(telemetry):
     print(f"Node: {telemetry.node}")
     print(f"Speed: {telemetry.speed:.2f} m/s ({telemetry.speed * 3.6:.2f} km/h)")
     print(
-        f"Position: X={telemetry.position.get('x', 0)}, Y={telemetry.position.get('y', 0)}, Z={telemetry.position.get('z', 0)}"
+        f"Position: X={telemetry.position.get('x', 0)}, "
+        f"Y={telemetry.position.get('y', 0)}, "
+        f"Z={telemetry.position.get('z', 0)}"
     )
 
 

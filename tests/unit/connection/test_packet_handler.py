@@ -2,9 +2,8 @@
 Unit tests for PacketHandler
 """
 
-import pytest
 import struct
-from src.connection.packet_handler import PacketHandler, PacketInfo, TinySubtype
+from src.connection.packet_handler import PacketHandler
 
 
 class TestPacketHandler:
@@ -19,7 +18,9 @@ class TestPacketHandler:
     def test_register_handler(self):
         """Test handler registration"""
         handler = PacketHandler()
-        callback = lambda x: None
+
+        def callback(x):
+            return None
 
         handler.register_handler(1, callback)
 

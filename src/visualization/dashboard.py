@@ -11,12 +11,10 @@ import dash
 from dash import html, dcc, Input, Output, State
 from dash.exceptions import PreventUpdate
 import plotly.graph_objects as go
-from typing import Optional, Dict, Any, List
-import time
-import threading
+from typing import Optional
 from queue import Queue
 
-from src.telemetry.collector import TelemetryCollector, CarTelemetry
+from src.telemetry.collector import TelemetryCollector
 from src.connection.insim_client import InSimClient
 from src.visualization.components.gauges import (
     create_speed_gauge,
@@ -28,8 +26,6 @@ from src.visualization.components.charts import (
     create_position_chart,
 )
 from src.visualization.components.layout import (
-    create_main_layout,
-    create_telemetry_card,
     create_stat_box,
 )
 

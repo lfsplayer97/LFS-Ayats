@@ -2,7 +2,6 @@
 Unit tests for JSON Exporter
 """
 
-import pytest
 import json
 from pathlib import Path
 from unittest.mock import Mock

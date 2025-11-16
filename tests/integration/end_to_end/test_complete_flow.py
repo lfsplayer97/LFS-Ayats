@@ -8,13 +8,13 @@ import pytest
 import json
 import csv
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-from src.connection.insim_client import InSimClient, PacketType
+from unittest.mock import Mock, patch
+from src.connection.insim_client import InSimClient
 from src.telemetry.collector import TelemetryCollector, CarTelemetry
 from src.telemetry.processor import TelemetryProcessor
 from src.export.csv_exporter import CSVExporter
 from src.export.json_exporter import JSONExporter
-from src.config.settings import Settings, load_config, create_default_config
+from src.config.settings import Settings, load_config
 
 
 @pytest.mark.integration

@@ -206,7 +206,10 @@ def create_live_position_map(
                         text=[f"P{plid}"],
                         textposition="top center",
                         name=f"Player {plid}",
-                        hovertemplate=f"Player {plid}<br>X: {x:.0f}<br>Y: {y:.0f}<br>Speed: {speed_kmh:.1f} km/h<extra></extra>",
+                        hovertemplate=(
+                            f"Player {plid}<br>X: {x:.0f}<br>Y: {y:.0f}<br>"
+                            f"Speed: {speed_kmh:.1f} km/h<extra></extra>"
+                        ),
                     )
                 )
     else:

@@ -157,7 +157,9 @@ async def get_circuit_stats(
     for session in sessions:
         if session.laps:
             total_laps += len(session.laps)
-            session_best = min(session.laps, key=lambda l: l.lap_time, default=None)
+            session_best = min(
+                session.laps, key=lambda lap_item: lap_item.lap_time, default=None
+            )
             if session_best and (best_lap is None or session_best.lap_time < best_lap):
                 best_lap = session_best.lap_time
                 best_driver = session.driver_name

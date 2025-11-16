@@ -7,9 +7,7 @@ and managing LFS connection.
 
 import logging
 import time
-from datetime import datetime
 from fastapi import APIRouter, Depends, Body
-from typing import Optional
 
 from src.api.models import (
     HealthResponse,

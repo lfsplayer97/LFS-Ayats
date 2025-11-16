@@ -6,7 +6,6 @@ notifications and photos.
 """
 
 import asyncio
-from datetime import datetime
 from src.integrations import TelegramIntegration
 
 

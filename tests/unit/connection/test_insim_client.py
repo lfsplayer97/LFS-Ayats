@@ -4,8 +4,8 @@ Unit tests for InSim Client
 
 import pytest
 import socket
-from unittest.mock import Mock, patch, MagicMock
-from src.connection.insim_client import InSimClient, PacketType, InSimVersion
+from unittest.mock import Mock, patch
+from src.connection.insim_client import InSimClient, PacketType
 
 
 class TestInSimClient:

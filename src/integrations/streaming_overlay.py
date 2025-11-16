@@ -17,9 +17,9 @@ OVERLAY_TEMPLATE = """
     <title>LFS Telemetry Overlay</title>
     <meta charset="utf-8">
     <style>
-        body { 
-            margin: 0; 
-            background: transparent; 
+        body {
+            margin: 0;
+            background: transparent;
             font-family: 'Arial', sans-serif;
             overflow: hidden;
         }
@@ -35,15 +35,15 @@ OVERLAY_TEMPLATE = """
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             min-width: 200px;
         }
-        .speed { 
-            font-size: 48px; 
-            font-weight: bold; 
+        .speed {
+            font-size: 48px;
+            font-weight: bold;
             color: #00ff00;
             text-align: center;
             margin-bottom: 10px;
         }
-        .rpm { 
-            font-size: 24px; 
+        .rpm {
+            font-size: 24px;
             color: #ff6b6b;
             text-align: center;
             margin-bottom: 8px;
@@ -82,45 +82,45 @@ OVERLAY_TEMPLATE = """
         </div>
         <div class="lap-time" id="lap-time">00:00.000</div>
     </div>
-    
+
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script>
         const socket = io();
-        
+
         socket.on('telemetry_update', (data) => {
             // Update speed
-            document.getElementById('speed').innerText = 
+            document.getElementById('speed').innerText =
                 `${Math.round(data.speed || 0)} km/h`;
-            
+
             // Update RPM
-            document.getElementById('rpm').innerText = 
+            document.getElementById('rpm').innerText =
                 `${Math.round(data.rpm || 0)} RPM`;
-            
+
             // Update gear
             const gear = data.gear || 'N';
             document.getElementById('gear').innerText = gear;
-            
+
             // Update position
             const position = data.position || '-';
             document.getElementById('position').innerText = position;
-            
+
             // Update lap time
             if (data.lap_time !== undefined) {
-                document.getElementById('lap-time').innerText = 
+                document.getElementById('lap-time').innerText =
                     formatTime(data.lap_time);
             }
         });
-        
+
         function formatTime(seconds) {
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
             return `${mins.toString().padStart(2, '0')}:${secs.toFixed(3).padStart(6, '0')}`;
         }
-        
+
         socket.on('connect', () => {
             console.log('Connected to telemetry server');
         });
-        
+
         socket.on('disconnect', () => {
             console.log('Disconnected from telemetry server');
         });

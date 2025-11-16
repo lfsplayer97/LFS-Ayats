@@ -6,14 +6,13 @@ Provides CRUD operations for telemetry sessions.
 
 import logging
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 from fastapi import APIRouter, Depends, Query
 
 from src.api.models import SessionResponse, SessionCreate, SessionListResponse
 from src.api.dependencies import get_repository
-from src.api.exceptions import SessionNotFoundError, InvalidParameterError
+from src.api.exceptions import SessionNotFoundError
 from src.database.repository import TelemetryRepository
-from src.database import models as db_models
 
 logger = logging.getLogger(__name__)
 

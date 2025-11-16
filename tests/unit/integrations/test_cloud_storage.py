@@ -4,8 +4,7 @@ Tests for Cloud Storage integrations
 
 import pytest
 import os
-import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 
 # Skip tests if google/dropbox packages are not available
@@ -13,16 +12,14 @@ google_available = False
 dropbox_available = False
 
 try:
-    import google.oauth2.credentials
-    import googleapiclient.discovery
-    import googleapiclient.http
+    pass
 
     google_available = True
 except ImportError:
     pass
 
 try:
-    import dropbox
+    pass
 
     dropbox_available = True
 except ImportError:
@@ -55,7 +52,7 @@ class TestGoogleDriveIntegration:
                 "google.oauth2.credentials.Credentials.from_authorized_user_file"
             ):
                 with pytest.raises(Exception):  # Will fail auth but that's ok
-                    gdrive = GoogleDriveIntegration(creds_file)
+                    GoogleDriveIntegration(creds_file)
         finally:
             if os.path.exists(creds_file):
                 os.remove(creds_file)
@@ -74,7 +71,7 @@ class TestGoogleDriveIntegration:
             ):
                 with pytest.raises(Exception):  # Constructor will fail, which is fine
                     gdrive = GoogleDriveIntegration(creds_file)
-                    result = gdrive.upload_session("/nonexistent/file.json")
+                    gdrive.upload_session("/nonexistent/file.json")
         finally:
             if os.path.exists(creds_file):
                 os.remove(creds_file)
@@ -93,7 +90,7 @@ class TestGoogleDriveIntegration:
             ):
                 with pytest.raises(Exception):  # Constructor will fail
                     gdrive = GoogleDriveIntegration(creds_file)
-                    count = gdrive.auto_backup("/nonexistent/directory")
+                    gdrive.auto_backup("/nonexistent/directory")
         finally:
             if os.path.exists(creds_file):
                 os.remove(creds_file)

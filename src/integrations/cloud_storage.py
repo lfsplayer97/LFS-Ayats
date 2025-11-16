@@ -5,7 +5,6 @@ Upload and backup telemetry data to cloud storage services
 
 import os
 from typing import Optional, List
-from datetime import datetime
 
 
 class GoogleDriveIntegration:
@@ -56,8 +55,10 @@ class GoogleDriveIntegration:
             self._MediaFileUpload = MediaFileUpload
         except ImportError as e:
             raise ImportError(
-                "google-api-python-client is required for Google Drive integration. "
-                "Install it with: pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib"
+                "google-api-python-client is required for Google Drive "
+                "integration. Install it with: pip install "
+                "google-api-python-client google-auth-httplib2 "
+                "google-auth-oauthlib"
             ) from e
 
         self.credentials_path = credentials_path

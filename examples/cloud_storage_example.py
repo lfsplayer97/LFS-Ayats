@@ -5,7 +5,6 @@ This example demonstrates how to use the cloud storage integrations
 to backup telemetry data to Google Drive or Dropbox.
 """
 
-import os
 from src.integrations import GoogleDriveIntegration, DropboxIntegration
 
 

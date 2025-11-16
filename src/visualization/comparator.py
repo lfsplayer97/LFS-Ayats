@@ -274,7 +274,7 @@ class LapComparator:
         fig = go.Figure()
 
         # Create time delta trace with color based on sign
-        colors = ["red" if d > 0 else "green" for d in time_deltas]
+        ["red" if d > 0 else "green" for d in time_deltas]
 
         fig.add_trace(
             go.Scatter(

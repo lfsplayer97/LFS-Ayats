@@ -6,7 +6,6 @@ of the InSim client.
 """
 
 import time
-import logging
 from src.connection import InSimClient, ConnectionState
 from src.telemetry import TelemetryBuffer
 from src.utils.logger import setup_logger
