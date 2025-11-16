@@ -3,6 +3,7 @@ Settings
 LFS-Ayats application configuration.
 """
 
+import os
 import yaml
 import logging
 from pathlib import Path
@@ -64,6 +65,13 @@ class LoggingSettings:
 
 
 @dataclass
+class DatabaseSettings:
+    """Database configuration"""
+
+    url: str = "sqlite:///telemetry.db"
+
+
+@dataclass
 class Settings:
     """
     Main application configuration.
@@ -79,6 +87,7 @@ class Settings:
     export: ExportSettings = None
     visualization: VisualizationSettings = None
     logging: LoggingSettings = None
+    database: DatabaseSettings = None
 
     def __post_init__(self):
         """Initialize sub-configurations if None"""
@@ -92,6 +101,8 @@ class Settings:
             self.visualization = VisualizationSettings()
         if self.logging is None:
             self.logging = LoggingSettings()
+        if self.database is None:
+            self.database = DatabaseSettings()
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary"""
@@ -101,6 +112,7 @@ class Settings:
             "export": asdict(self.export),
             "visualization": asdict(self.visualization),
             "logging": asdict(self.logging),
+            "database": asdict(self.database),
         }
 
     @classmethod
@@ -112,7 +124,39 @@ class Settings:
             export=ExportSettings(**data.get("export", {})),
             visualization=VisualizationSettings(**data.get("visualization", {})),
             logging=LoggingSettings(**data.get("logging", {})),
+            database=DatabaseSettings(**data.get("database", {})),
         )
+
+
+def get_database_url() -> str:
+    """
+    Get database URL from environment variable or default.
+
+    Reads DATABASE_URL environment variable. If not set, returns default SQLite URL.
+    Supports .env file via python-dotenv if present.
+
+    Returns:
+        str: Database connection URL
+
+    Example:
+        >>> # Using environment variable
+        >>> os.environ['DATABASE_URL'] = 'postgresql://user:pass@localhost/db'
+        >>> get_database_url()
+        'postgresql://user:pass@localhost/db'
+
+        >>> # Using default
+        >>> get_database_url()
+        'sqlite:///telemetry.db'
+    """
+    # Try to load from .env file (fails silently if not present)
+    try:
+        from dotenv import load_dotenv
+
+        load_dotenv()
+    except ImportError:
+        pass
+
+    return os.getenv("DATABASE_URL", "sqlite:///telemetry.db")
 
 
 def load_config(filename: str = "config.yaml") -> Settings:

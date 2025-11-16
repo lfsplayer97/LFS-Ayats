@@ -34,6 +34,7 @@ from src.api.routers import (
     export,
     config,
 )
+from src.config.settings import get_database_url
 
 # Configure logging
 logging.basicConfig(
@@ -52,7 +53,11 @@ async def lifespan(app: FastAPI):
     """
     # Startup
     logger.info("Starting LFS-Ayats API...")
-    init_dependencies(db_connection_string="sqlite:///telemetry.db")
+    db_url = get_database_url()
+    # Mask credentials in log output for security
+    log_url = db_url.split("@")[-1] if "@" in db_url else db_url
+    logger.info(f"Connecting to database: {log_url[:50]}...")
+    init_dependencies(db_connection_string=db_url)
     logger.info("API started successfully")
 
     yield
@@ -114,7 +119,10 @@ async def api_root():
             "openapi": "/api/openapi.json",
         },
         "endpoints": {
-            "system": "/api/v1/health, /api/v1/status, /api/v1/connect, /api/v1/disconnect",
+            "system": (
+                "/api/v1/health, /api/v1/status, "
+                "/api/v1/connect, /api/v1/disconnect"
+            ),
             "sessions": "/api/v1/sessions",
             "laps": "/api/v1/{session_id}/laps, /api/v1/{lap_id}",
             "telemetry": "/api/v1/telemetry/live (WebSocket), /api/v1/telemetry/range",

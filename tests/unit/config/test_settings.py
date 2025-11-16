@@ -4,6 +4,7 @@ Unit tests for Settings Configuration
 
 import pytest
 import yaml
+import os
 from src.config.settings import (
     Settings,
     ConnectionSettings,
@@ -11,9 +12,11 @@ from src.config.settings import (
     ExportSettings,
     VisualizationSettings,
     LoggingSettings,
+    DatabaseSettings,
     load_config,
     save_config,
     create_default_config,
+    get_database_url,
 )
 
 
@@ -343,6 +346,77 @@ class TestCreateDefaultConfig:
 
         assert loaded.connection.host == "127.0.0.1"
         assert loaded.telemetry.interval == 100
+
+
+class TestDatabaseSettings:
+    """Test DatabaseSettings dataclass"""
+
+    def test_default_values(self):
+        """Test default database settings"""
+        settings = DatabaseSettings()
+        assert settings.url == "sqlite:///telemetry.db"
+
+    def test_custom_values(self):
+        """Test custom database settings"""
+        settings = DatabaseSettings(url="postgresql://localhost/testdb")
+        assert settings.url == "postgresql://localhost/testdb"
+
+    def test_settings_includes_database(self):
+        """Test that Settings includes database configuration"""
+        settings = Settings()
+        assert isinstance(settings.database, DatabaseSettings)
+        assert settings.database.url == "sqlite:///telemetry.db"
+
+    def test_settings_to_dict_includes_database(self):
+        """Test that Settings.to_dict includes database"""
+        settings = Settings()
+        settings.database.url = "postgresql://localhost/db"
+
+        data = settings.to_dict()
+        assert "database" in data
+        assert data["database"]["url"] == "postgresql://localhost/db"
+
+    def test_settings_from_dict_includes_database(self):
+        """Test that Settings.from_dict includes database"""
+        data = {
+            "connection": {"host": "localhost"},
+            "database": {"url": "mysql://localhost/testdb"},
+        }
+
+        settings = Settings.from_dict(data)
+        assert settings.database.url == "mysql://localhost/testdb"
+
+
+class TestGetDatabaseUrl:
+    """Test get_database_url function"""
+
+    def test_default_database_url(self, monkeypatch):
+        """Test default database URL when env var not set"""
+        monkeypatch.delenv("DATABASE_URL", raising=False)
+
+        url = get_database_url()
+        assert url == "sqlite:///telemetry.db"
+
+    def test_environment_variable_override(self, monkeypatch):
+        """Test DATABASE_URL environment variable override"""
+        monkeypatch.setenv("DATABASE_URL", "postgresql://localhost/testdb")
+
+        url = get_database_url()
+        assert url == "postgresql://localhost/testdb"
+
+    def test_mysql_url(self, monkeypatch):
+        """Test MySQL database URL"""
+        monkeypatch.setenv("DATABASE_URL", "mysql://user:pass@localhost:3306/lfs_db")
+
+        url = get_database_url()
+        assert url == "mysql://user:pass@localhost:3306/lfs_db"
+
+    def test_sqlite_custom_path(self, monkeypatch):
+        """Test SQLite with custom path"""
+        monkeypatch.setenv("DATABASE_URL", "sqlite:////tmp/custom.db")
+
+        url = get_database_url()
+        assert url == "sqlite:////tmp/custom.db"
 
 
 class TestEnvironmentVariableOverride:
