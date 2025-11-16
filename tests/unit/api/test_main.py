@@ -50,10 +50,93 @@ class TestMiddleware:
             assert response.status_code == 200
 
     @patch("src.api.dependencies.init_dependencies")
+    def test_error_handling_middleware_attached(self, mock_init_deps):
+        """Test error handling middleware is attached."""
+        assert len(app.user_middleware) >= 5  # All middleware are attached
+
+    @patch("src.api.dependencies.init_dependencies")
     def test_logging_middleware_attached(self, mock_init_deps):
         """Test logging middleware is attached to app."""
-        # Should have CORS and potentially logging middleware
+        # Should have multiple middleware
         assert len(app.user_middleware) > 0
+
+    @patch("src.api.dependencies.init_dependencies")
+    def test_request_id_in_response_headers(self, mock_init_deps):
+        """Test that request ID is added to response headers."""
+        with TestClient(app) as client:
+            response = client.get("/api/v1/health")
+            assert "X-Request-ID" in response.headers
+
+    @patch("src.api.dependencies.init_dependencies")
+    def test_process_time_in_response_headers(self, mock_init_deps):
+        """Test that process time is added to response headers."""
+        with TestClient(app) as client:
+            response = client.get("/api/v1/health")
+            assert "X-Process-Time" in response.headers
+            assert float(response.headers["X-Process-Time"]) >= 0
+
+    @patch("src.api.dependencies.init_dependencies")
+    def test_rate_limit_headers_in_response(self, mock_init_deps):
+        """Test that rate limit headers are added to responses."""
+        with TestClient(app) as client:
+            response = client.get("/api")
+            assert "X-RateLimit-Limit" in response.headers
+            assert "X-RateLimit-Remaining" in response.headers
+
+
+class TestExceptionHandlers:
+    """Test exception handlers."""
+
+    @patch("src.api.dependencies.init_dependencies")
+    def test_http_exception_handler(self, mock_init_deps):
+        """Test HTTP exception handler returns formatted error."""
+        with TestClient(app) as client:
+            # Request non-existent endpoint (use a clearly invalid path)
+            response = client.get("/completely/invalid/path/that/does/not/exist")
+
+            assert response.status_code == 404
+            data = response.json()
+            assert "error" in data
+            assert "request_id" in data
+            assert "X-Request-ID" in response.headers
+
+    @patch("src.api.dependencies.init_dependencies")
+    def test_validation_exception_handler(self, mock_init_deps):
+        """Test validation exception handler returns field errors."""
+        with TestClient(app) as client:
+            # Send invalid port number (out of valid range)
+            response = client.post(
+                "/api/v1/connect",
+                json={"host": "localhost", "port": 999999},  # Port too large
+            )
+
+            assert response.status_code == 422
+            data = response.json()
+            assert data["error"] == "Validation Error"
+            assert "errors" in data
+            assert "request_id" in data
+            assert isinstance(data["errors"], list)
+            assert len(data["errors"]) > 0
+
+    @patch("src.api.dependencies.init_dependencies")
+    def test_validation_error_includes_field_details(self, mock_init_deps):
+        """Test validation errors include detailed field information."""
+        with TestClient(app) as client:
+            # Send invalid data type (string for port instead of int)
+            response = client.post(
+                "/api/v1/connect", json={"host": "localhost", "port": "not_a_number"}
+            )
+
+            assert response.status_code == 422
+            data = response.json()
+            assert "errors" in data
+            assert len(data["errors"]) > 0
+
+            # Check error format
+            error = data["errors"][0]
+            assert "field" in error
+            assert "message" in error
+            assert "type" in error
 
 
 class TestRouters:
