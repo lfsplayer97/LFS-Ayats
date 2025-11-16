@@ -135,7 +135,8 @@ class TestLifespan:
     """Test application lifespan management."""
 
     @patch("src.api.main.logger")
-    async def test_lifespan_startup_logging(self, mock_logger):
+    @patch("src.api.main.init_dependencies")
+    async def test_lifespan_startup_logging(self, mock_init_deps, mock_logger):
         """Test lifespan startup logging."""
         mock_app = MagicMock()
 
@@ -148,7 +149,8 @@ class TestLifespan:
         assert any("Starting" in msg for msg in calls)
 
     @patch("src.api.main.logger")
-    async def test_lifespan_shutdown_logging(self, mock_logger):
+    @patch("src.api.main.init_dependencies")
+    async def test_lifespan_shutdown_logging(self, mock_init_deps, mock_logger):
         """Test lifespan shutdown logging."""
         mock_app = MagicMock()
 
@@ -159,10 +161,29 @@ class TestLifespan:
         calls = [call[0][0] for call in mock_logger.info.call_args_list]
         assert any("Shutting down" in msg for msg in calls)
 
-    async def test_lifespan_context_manager(self):
+    @patch("src.api.main.init_dependencies")
+    async def test_lifespan_context_manager(self, mock_init_deps):
         """Test lifespan is a proper async context manager."""
         mock_app = MagicMock()
 
         # Should not raise any exceptions
         async with lifespan(mock_app):
             assert True  # Successfully entered context
+
+    @patch("src.api.main.init_dependencies")
+    @patch("src.api.main.get_database_url")
+    async def test_lifespan_uses_database_url(self, mock_get_db_url, mock_init_deps):
+        """Test lifespan uses get_database_url for configuration."""
+        mock_get_db_url.return_value = "postgresql://test:pass@localhost/testdb"
+        mock_app = MagicMock()
+
+        async with lifespan(mock_app):
+            pass
+
+        # Verify get_database_url was called
+        mock_get_db_url.assert_called_once()
+
+        # Verify init_dependencies was called with the database URL
+        mock_init_deps.assert_called_once_with(
+            db_connection_string="postgresql://test:pass@localhost/testdb"
+        )

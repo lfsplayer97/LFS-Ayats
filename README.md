@@ -205,6 +205,35 @@ json_exporter.export(telemetry_data)
 
 The system includes a complete REST API built with FastAPI for programmatic access:
 
+#### Configuration
+
+The API supports environment-based configuration for different deployment scenarios:
+
+**Database Configuration:**
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env to configure your database
+# For development (default):
+DATABASE_URL=sqlite:///telemetry.db
+
+# For production with PostgreSQL:
+DATABASE_URL=postgresql://username:password@localhost:5432/lfs_telemetry
+
+# For production with MySQL:
+DATABASE_URL=mysql://username:password@localhost:3306/lfs_telemetry
+```
+
+**Security Notes:**
+- Never commit `.env` file to version control (already in `.gitignore`)
+- Use strong passwords for production databases
+- Use environment-specific credentials for dev/test/prod
+- Keep database credentials secure
+
+#### Starting the API
+
 ```bash
 # Start the API server
 uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
