@@ -9,7 +9,8 @@ import logging
 import time
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field
-from threading import Thread, Event
+from threading import Thread, Event, Lock
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 
 logger = logging.getLogger(__name__)
 
@@ -111,17 +112,29 @@ class TelemetryCollector:
         >>> collector.stop()
     """
 
-    def __init__(self, client):
+    def __init__(
+        self, 
+        client, 
+        max_callback_workers: int = 4,
+        callback_timeout: float = 1.0
+    ):
         """
         Initialize the telemetry collector.
 
         Args:
             client: Connected InSim client
+            max_callback_workers: Maximum number of worker threads for callbacks
+            callback_timeout: Timeout in seconds for callback execution
         """
         self.client = client
         self.running = False
         self.collection_thread: Optional[Thread] = None
         self.stop_event = Event()
+
+        # Thread safety
+        self.callbacks_lock = Lock()
+        self.callback_executor = ThreadPoolExecutor(max_workers=max_callback_workers)
+        self.callback_timeout = callback_timeout
 
         # Data storage
         self.car_telemetry: Dict[int, List[CarTelemetry]] = {}
@@ -139,6 +152,16 @@ class TelemetryCollector:
 
         logger.info("TelemetryCollector initialized")
 
+    def __del__(self):
+        """Cleanup on deletion."""
+        try:
+            if hasattr(self, 'callback_executor') and self.callback_executor:
+                # Don't wait for threads, just mark the executor as shutting down
+                self.callback_executor.shutdown(wait=False)
+        except Exception:
+            # Ignore errors during cleanup
+            pass
+
     def register_callback(self, event_type: str, callback: Callable) -> None:
         """
         Register a callback for an event type.
@@ -147,19 +170,48 @@ class TelemetryCollector:
             event_type: Event type ('car_update', 'lap_complete', etc.)
             callback: Function to call when event occurs
         """
-        if event_type in self.callbacks:
-            self.callbacks[event_type].append(callback)
-            logger.debug(f"Callback registered for '{event_type}'")
-        else:
-            logger.warning(f"Unknown event type: {event_type}")
+        with self.callbacks_lock:
+            if event_type in self.callbacks:
+                self.callbacks[event_type].append(callback)
+                logger.debug(f"Callback registered for '{event_type}'")
+            else:
+                logger.warning(f"Unknown event type: {event_type}")
 
     def _trigger_callbacks(self, event_type: str, data: Any) -> None:
-        """Trigger callbacks for an event type."""
-        for callback in self.callbacks.get(event_type, []):
+        """
+        Trigger callbacks for an event type in a thread-safe manner.
+        
+        This method:
+        1. Copies the callback list under lock protection
+        2. Executes each callback in a thread pool with timeout
+        3. Handles exceptions and timeouts gracefully
+        
+        Args:
+            event_type: The type of event that occurred
+            data: The data to pass to callbacks
+        """
+        # Create a copy of callbacks under lock protection
+        with self.callbacks_lock:
+            callbacks_copy = list(self.callbacks.get(event_type, []))
+        
+        # Execute callbacks asynchronously with timeout
+        for callback in callbacks_copy:
             try:
-                callback(data)
+                # Submit callback to thread pool
+                future = self.callback_executor.submit(callback, data)
+                # Wait for result with timeout
+                future.result(timeout=self.callback_timeout)
+            except FuturesTimeoutError:
+                callback_name = getattr(callback, '__name__', str(callback))
+                logger.warning(
+                    f"Callback timeout ({self.callback_timeout}s): "
+                    f"{callback_name} for {event_type}"
+                )
             except Exception as e:
-                logger.error(f"Error in {event_type} callback: {e}")
+                callback_name = getattr(callback, '__name__', str(callback))
+                logger.error(
+                    f"Error in {event_type} callback {callback_name}: {e}"
+                )
 
     def handle_mci_packet(self, packet_data: bytes) -> None:
         """
@@ -264,6 +316,10 @@ class TelemetryCollector:
 
         if self.collection_thread:
             self.collection_thread.join(timeout=2.0)
+
+        # Shutdown callback executor gracefully
+        # Don't wait indefinitely for pending callbacks
+        self.callback_executor.shutdown(wait=False)
 
         logger.info("Telemetry collection stopped")
 

@@ -106,31 +106,41 @@ class TestTelemetryCollector:
         client.receive_packet = Mock(return_value=None)
         return client
 
+    @pytest.fixture
+    def collector(self, mock_client):
+        """Create a TelemetryCollector with automatic cleanup"""
+        collector_instance = TelemetryCollector(mock_client)
+        yield collector_instance
+        # Cleanup: shutdown the executor if it exists
+        if hasattr(collector_instance, 'callback_executor'):
+            collector_instance.callback_executor.shutdown(wait=False)
+
     def test_init(self, mock_client):
         """Test collector initialization"""
         collector = TelemetryCollector(mock_client)
+        
+        try:
+            assert collector.client == mock_client
+            assert collector.running is False
+            assert collector.collection_thread is None
+            assert collector.car_telemetry == {}
+            assert collector.lap_telemetry == {}
+            assert collector.player_info == {}
+            assert "car_update" in collector.callbacks
+            assert "lap_complete" in collector.callbacks
+        finally:
+            collector.callback_executor.shutdown(wait=False)
 
-        assert collector.client == mock_client
-        assert collector.running is False
-        assert collector.collection_thread is None
-        assert collector.car_telemetry == {}
-        assert collector.lap_telemetry == {}
-        assert collector.player_info == {}
-        assert "car_update" in collector.callbacks
-        assert "lap_complete" in collector.callbacks
-
-    def test_register_callback(self, mock_client):
+    def test_register_callback(self, collector):
         """Test callback registration"""
-        collector = TelemetryCollector(mock_client)
         callback_fn = Mock()
 
         collector.register_callback("car_update", callback_fn)
 
         assert callback_fn in collector.callbacks["car_update"]
 
-    def test_register_invalid_callback(self, mock_client):
+    def test_register_invalid_callback(self, collector):
         """Test registration of invalid callback type"""
-        collector = TelemetryCollector(mock_client)
         callback_fn = Mock()
 
         # Should not raise error, just log warning
@@ -138,9 +148,8 @@ class TestTelemetryCollector:
 
         assert callback_fn not in collector.callbacks.get("invalid_event", [])
 
-    def test_trigger_callbacks(self, mock_client):
+    def test_trigger_callbacks(self, collector):
         """Test callback triggering"""
-        collector = TelemetryCollector(mock_client)
         callback_fn = Mock()
         collector.register_callback("car_update", callback_fn)
 
@@ -149,9 +158,8 @@ class TestTelemetryCollector:
 
         callback_fn.assert_called_once_with(test_data)
 
-    def test_trigger_callbacks_with_error(self, mock_client):
+    def test_trigger_callbacks_with_error(self, collector):
         """Test callback error handling"""
-        collector = TelemetryCollector(mock_client)
 
         # Callback that raises exception
         def error_callback(data):
@@ -163,9 +171,8 @@ class TestTelemetryCollector:
         collector._trigger_callbacks("car_update", {})
 
     @patch("src.connection.packet_handler.PacketHandler")
-    def test_handle_mci_packet(self, mock_handler_class, mock_client):
+    def test_handle_mci_packet(self, mock_handler_class, collector):
         """Test MCI packet handling"""
-        collector = TelemetryCollector(mock_client)
         callback_fn = Mock()
         collector.register_callback("car_update", callback_fn)
 
@@ -204,45 +211,41 @@ class TestTelemetryCollector:
         # Verify callback triggered
         assert callback_fn.called
 
-    def test_handle_lap_packet(self, mock_client):
+    def test_handle_lap_packet(self, collector):
         """Test LAP packet handling"""
-        collector = TelemetryCollector(mock_client)
 
         # Just verify it doesn't crash (simplified implementation)
         packet_data = b"\x00" * 20
         collector.handle_lap_packet(packet_data)
 
-    def test_start_collection(self, mock_client):
+    def test_start_collection(self, collector):
         """Test starting telemetry collection"""
-        collector = TelemetryCollector(mock_client)
 
         with patch("src.telemetry.collector.Thread") as mock_thread:
             collector.start(interval=100)
 
             assert collector.running is True
-            mock_client.initialize.assert_called_once_with(flags=0, interval=100)
-            mock_client.register_callback.assert_any_call(
+            collector.client.initialize.assert_called_once_with(flags=0, interval=100)
+            collector.client.register_callback.assert_any_call(
                 PacketType.ISP_MCI, collector.handle_mci_packet
             )
-            mock_client.register_callback.assert_any_call(
+            collector.client.register_callback.assert_any_call(
                 PacketType.ISP_LAP, collector.handle_lap_packet
             )
             mock_thread.assert_called_once()
 
-    def test_start_already_running(self, mock_client):
+    def test_start_already_running(self, collector):
         """Test starting collection when already running"""
-        collector = TelemetryCollector(mock_client)
         collector.running = True
 
         with patch("src.telemetry.collector.Thread"):
             collector.start()
 
             # Should not initialize again
-            mock_client.initialize.assert_not_called()
+            collector.client.initialize.assert_not_called()
 
-    def test_stop_collection(self, mock_client):
+    def test_stop_collection(self, collector):
         """Test stopping telemetry collection"""
-        collector = TelemetryCollector(mock_client)
 
         # Start first
         with patch("src.telemetry.collector.Thread"):
@@ -259,18 +262,16 @@ class TestTelemetryCollector:
         assert collector.stop_event.is_set()
         mock_thread.join.assert_called_once_with(timeout=2.0)
 
-    def test_stop_not_running(self, mock_client):
+    def test_stop_not_running(self, collector):
         """Test stopping when not running"""
-        collector = TelemetryCollector(mock_client)
 
         # Should not crash
         collector.stop()
 
         assert collector.running is False
 
-    def test_get_latest_telemetry_all(self, mock_client):
+    def test_get_latest_telemetry_all(self, collector):
         """Test getting latest telemetry for all players"""
-        collector = TelemetryCollector(mock_client)
 
         # Add some telemetry data
         collector.car_telemetry[1] = [
@@ -287,9 +288,8 @@ class TestTelemetryCollector:
         assert latest[1].speed == 110.0  # Latest for player 1
         assert latest[2].speed == 120.0
 
-    def test_get_latest_telemetry_specific_player(self, mock_client):
+    def test_get_latest_telemetry_specific_player(self, collector):
         """Test getting latest telemetry for specific player"""
-        collector = TelemetryCollector(mock_client)
 
         collector.car_telemetry[1] = [
             CarTelemetry(plid=1, speed=100.0),
@@ -301,17 +301,15 @@ class TestTelemetryCollector:
         assert len(latest) == 1
         assert latest[1].speed == 110.0
 
-    def test_get_latest_telemetry_no_data(self, mock_client):
+    def test_get_latest_telemetry_no_data(self, collector):
         """Test getting latest telemetry with no data"""
-        collector = TelemetryCollector(mock_client)
 
         latest = collector.get_latest_telemetry()
 
         assert latest == {}
 
-    def test_get_telemetry_history(self, mock_client):
+    def test_get_telemetry_history(self, collector):
         """Test getting telemetry history"""
-        collector = TelemetryCollector(mock_client)
 
         # Add history
         collector.car_telemetry[1] = [
@@ -324,9 +322,8 @@ class TestTelemetryCollector:
         assert history[0].speed == 100.0
         assert history[9].speed == 109.0
 
-    def test_get_telemetry_history_with_limit(self, mock_client):
+    def test_get_telemetry_history_with_limit(self, collector):
         """Test getting limited telemetry history"""
-        collector = TelemetryCollector(mock_client)
 
         collector.car_telemetry[1] = [
             CarTelemetry(plid=1, speed=100.0 + i) for i in range(10)
@@ -337,17 +334,15 @@ class TestTelemetryCollector:
         assert len(history) == 5
         assert history[0].speed == 105.0  # Last 5 entries
 
-    def test_get_telemetry_history_no_data(self, mock_client):
+    def test_get_telemetry_history_no_data(self, collector):
         """Test getting history for non-existent player"""
-        collector = TelemetryCollector(mock_client)
 
         history = collector.get_telemetry_history(plid=999)
 
         assert history == []
 
-    def test_clear_history_specific_player(self, mock_client):
+    def test_clear_history_specific_player(self, collector):
         """Test clearing history for specific player"""
-        collector = TelemetryCollector(mock_client)
 
         collector.car_telemetry[1] = [CarTelemetry(plid=1)]
         collector.car_telemetry[2] = [CarTelemetry(plid=2)]
@@ -357,9 +352,8 @@ class TestTelemetryCollector:
         assert len(collector.car_telemetry[1]) == 0
         assert len(collector.car_telemetry[2]) == 1
 
-    def test_clear_history_all(self, mock_client):
+    def test_clear_history_all(self, collector):
         """Test clearing all history"""
-        collector = TelemetryCollector(mock_client)
 
         collector.car_telemetry[1] = [CarTelemetry(plid=1)]
         collector.car_telemetry[2] = [CarTelemetry(plid=2)]
@@ -370,9 +364,8 @@ class TestTelemetryCollector:
         assert collector.car_telemetry == {}
         assert collector.lap_telemetry == {}
 
-    def test_get_statistics(self, mock_client):
+    def test_get_statistics(self, collector):
         """Test getting collection statistics"""
-        collector = TelemetryCollector(mock_client)
         collector.running = True
 
         # Add some data
@@ -387,9 +380,8 @@ class TestTelemetryCollector:
         assert stats["players"][1] == 10
         assert stats["players"][2] == 5
 
-    def test_get_statistics_empty(self, mock_client):
+    def test_get_statistics_empty(self, collector):
         """Test statistics with no data"""
-        collector = TelemetryCollector(mock_client)
 
         stats = collector.get_statistics()
 
@@ -399,12 +391,23 @@ class TestTelemetryCollector:
         assert stats["players"] == {}
 
     @patch("src.connection.packet_handler.PacketHandler")
-    def test_collection_loop_error_handling(self, mock_handler_class, mock_client):
+    def test_collection_loop_error_handling(self, mock_handler_class, collector):
         """Test error handling in collection loop"""
-        collector = TelemetryCollector(mock_client)
 
-        # Make receive_packet raise an error once, then return None to exit loop
-        mock_client.receive_packet.side_effect = [Exception("Test error"), None]
+        # Make receive_packet raise an error once, then set running to False to exit loop
+        def side_effect_receive(*args, **kwargs):
+            if not hasattr(side_effect_receive, 'call_count'):
+                side_effect_receive.call_count = 0
+            side_effect_receive.call_count += 1
+            
+            if side_effect_receive.call_count == 1:
+                raise Exception("Test error")
+            else:
+                # Stop the collector after error
+                collector.running = False
+                return None
+        
+        collector.client.receive_packet.side_effect = side_effect_receive
 
         collector.running = True
         collector.stop_event.clear()
@@ -418,4 +421,4 @@ class TestTelemetryCollector:
             assert mock_sleep.called
 
         # Should handle error gracefully
-        collector.running = False
+        assert collector.running is False
