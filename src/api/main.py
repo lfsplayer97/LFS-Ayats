@@ -18,11 +18,19 @@ API Documentation:
 
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from src.api import __version__
-from src.api.middleware import LoggingMiddleware, setup_cors
+from src.api.middleware import (
+    ErrorHandlingMiddleware,
+    LoggingMiddleware,
+    TimeoutMiddleware,
+    RateLimitMiddleware,
+    setup_cors,
+)
 from src.api.dependencies import init_dependencies
 from src.api.routers import (
     system,
@@ -81,9 +89,133 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Setup middleware
+# Setup middleware (order matters - first added is outermost)
+# 1. CORS (outermost)
 setup_cors(app)
-app.add_middleware(LoggingMiddleware)
+
+# 2. Error handling (catch all exceptions)
+app.add_middleware(ErrorHandlingMiddleware)
+
+# 3. Logging (log all requests/responses)
+app.add_middleware(LoggingMiddleware, slow_request_threshold=5.0)
+
+# 4. Timeout enforcement (prevent long-running requests)
+app.add_middleware(TimeoutMiddleware, timeout_seconds=30.0)
+
+# 5. Rate limiting (prevent abuse)
+app.add_middleware(RateLimitMiddleware, requests_per_minute=60, burst_size=100)
+
+
+# Register exception handlers
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(
+    request: Request, exc: StarletteHTTPException
+) -> JSONResponse:
+    """
+    Handle HTTP exceptions with consistent format.
+
+    Args:
+        request: Incoming HTTP request
+        exc: HTTP exception
+
+    Returns:
+        Formatted JSON error response
+    """
+    request_id = getattr(request.state, "request_id", "unknown")
+
+    logger.warning(
+        f"HTTP {exc.status_code} error in {request.method} {request.url.path} "
+        f"[request_id={request_id}]: {exc.detail}"
+    )
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": exc.detail if isinstance(exc.detail, str) else "HTTP Error",
+            "status_code": exc.status_code,
+            "request_id": request_id,
+        },
+        headers={"X-Request-ID": request_id},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    """
+    Handle FastAPI validation errors with user-friendly format.
+
+    Args:
+        request: Incoming HTTP request
+        exc: Validation error
+
+    Returns:
+        Formatted JSON error response with field-level errors
+    """
+    request_id = getattr(request.state, "request_id", "unknown")
+
+    # Format validation errors
+    errors = []
+    for error in exc.errors():
+        field_path = " -> ".join(str(loc) for loc in error["loc"])
+        errors.append(
+            {
+                "field": field_path,
+                "message": error["msg"],
+                "type": error["type"],
+            }
+        )
+
+    logger.warning(
+        f"Validation error in {request.method} {request.url.path} "
+        f"[request_id={request_id}]: {len(errors)} field(s) invalid"
+    )
+
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "error": "Validation Error",
+            "message": "Request validation failed",
+            "errors": errors,
+            "request_id": request_id,
+        },
+        headers={"X-Request-ID": request_id},
+    )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """
+    Global exception handler for unhandled exceptions.
+
+    Provides last-resort error handling for exceptions that escape middleware.
+
+    Args:
+        request: Incoming HTTP request
+        exc: Unhandled exception
+
+    Returns:
+        Formatted JSON error response
+    """
+    request_id = getattr(request.state, "request_id", "unknown")
+
+    logger.error(
+        f"Unhandled exception in {request.method} {request.url.path} "
+        f"[request_id={request_id}]: {exc}",
+        exc_info=True,
+    )
+
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": "Internal Server Error",
+            "message": "An unexpected error occurred",
+            "request_id": request_id,
+        },
+        headers={"X-Request-ID": request_id},
+    )
+
 
 # Include routers
 app.include_router(system.router, prefix="/api/v1", tags=["System"])
@@ -120,8 +252,7 @@ async def api_root():
         },
         "endpoints": {
             "system": (
-                "/api/v1/health, /api/v1/status, "
-                "/api/v1/connect, /api/v1/disconnect"
+                "/api/v1/health, /api/v1/status, " "/api/v1/connect, /api/v1/disconnect"
             ),
             "sessions": "/api/v1/sessions",
             "laps": "/api/v1/{session_id}/laps, /api/v1/{lap_id}",
