@@ -390,22 +390,23 @@ class TestInSimClientEnhanced:
 
     @patch("socket.socket")
     def test_receive_packet_rejects_invalid(self, mock_socket):
-        """Test that receive_packet rejects invalid packets"""
-        client = InSimClient()
+        """Test that receive_packet raises ConnectionError on incomplete packets"""
+        client = InSimClient(reconnect_enabled=False)  # Disable reconnect for test
         mock_sock_instance = Mock()
         mock_socket.return_value = mock_sock_instance
         client.connect()
 
-        # Return packet where size=3 (means 12 bytes) but we only return 4 bytes
+        # Return packet where size=3 (means 12 bytes) but connection closes
         mock_sock_instance.recv.side_effect = [
             bytes([3, 2, 0, 0]),  # Header says 12 bytes
-            bytes([]),  # No additional data (should have 8 more bytes)
+            bytes([]),  # No additional data - connection closed!
         ]
 
-        packet = client.receive_packet(timeout=1.0)
-
-        # Should return None for invalid packet
-        assert packet is None
+        # Should raise ConnectionError for incomplete packet due to closed connection
+        with pytest.raises(
+            ConnectionError, match="Connection closed while reading packet"
+        ):
+            client.receive_packet(timeout=1.0)
 
 
 class TestSocketCreation:
@@ -482,6 +483,247 @@ class TestSocketCreation:
         # Verify connection was made
         mock_sock_instance.connect.assert_called_once_with((client.host, client.port))
         assert client.connected is True
+
+
+class TestPacketReceptionFixes:
+    """Test cases for packet reception bug fixes"""
+
+    @patch("socket.socket")
+    def test_recv_exact_complete_read(self, mock_socket):
+        """Test _recv_exact reads exact number of bytes"""
+        client = InSimClient()
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+        client.connect()
+
+        # Simulate receiving data in one chunk
+        mock_sock_instance.recv.return_value = bytes([1, 2, 3, 4, 5, 6, 7, 8])
+
+        data = client._recv_exact(8)
+
+        assert len(data) == 8
+        assert data == bytes([1, 2, 3, 4, 5, 6, 7, 8])
+        mock_sock_instance.recv.assert_called_once_with(8)
+
+    @patch("socket.socket")
+    def test_recv_exact_partial_read(self, mock_socket):
+        """Test _recv_exact handles partial reads (TCP split packets)"""
+        client = InSimClient()
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+        client.connect()
+
+        # Simulate receiving data in multiple chunks (TCP split)
+        mock_sock_instance.recv.side_effect = [
+            bytes([1, 2, 3]),  # First recv gets 3 bytes
+            bytes([4, 5]),  # Second recv gets 2 bytes
+            bytes([6, 7, 8]),  # Third recv gets remaining 3 bytes
+        ]
+
+        data = client._recv_exact(8)
+
+        assert len(data) == 8
+        assert data == bytes([1, 2, 3, 4, 5, 6, 7, 8])
+        assert mock_sock_instance.recv.call_count == 3
+
+    @patch("socket.socket")
+    def test_recv_exact_connection_closed(self, mock_socket):
+        """Test _recv_exact raises error when connection closes"""
+        client = InSimClient()
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+        client.connect()
+
+        # Simulate connection closing (recv returns empty bytes)
+        mock_sock_instance.recv.return_value = bytes([])
+
+        with pytest.raises(
+            ConnectionError, match="Connection closed while reading packet"
+        ):
+            client._recv_exact(8)
+
+    @patch("socket.socket")
+    def test_recv_exact_partial_then_closed(self, mock_socket):
+        """Test _recv_exact raises error when connection closes mid-packet"""
+        client = InSimClient()
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+        client.connect()
+
+        # Simulate partial read then connection closes
+        mock_sock_instance.recv.side_effect = [
+            bytes([1, 2, 3]),  # First recv gets 3 bytes
+            bytes([]),  # Second recv - connection closed!
+        ]
+
+        with pytest.raises(
+            ConnectionError, match="Connection closed while reading packet"
+        ):
+            client._recv_exact(8)
+
+    @patch("socket.socket")
+    def test_receive_packet_with_partial_reads(self, mock_socket):
+        """Test receive_packet handles packets split across TCP segments"""
+        client = InSimClient()
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+        client.connect()
+
+        # Simulate packet split across multiple TCP segments
+        # Packet: size=2 (8 bytes total), type=2, reqId=0, zero=0, then 4 more bytes
+        mock_sock_instance.recv.side_effect = [
+            bytes([2]),  # Header byte 1
+            bytes([2]),  # Header byte 2
+            bytes([0]),  # Header byte 3
+            bytes([0]),  # Header byte 4
+            bytes([10, 11]),  # Data bytes 1-2
+            bytes([12, 13]),  # Data bytes 3-4
+        ]
+
+        packet = client.receive_packet(timeout=1.0)
+
+        assert packet is not None
+        assert len(packet) == 8
+        assert packet == bytes([2, 2, 0, 0, 10, 11, 12, 13])
+
+    @patch("socket.socket")
+    def test_receive_packet_large_but_valid(self, mock_socket):
+        """Test receive_packet handles large valid packets (1020 bytes)"""
+        client = InSimClient()
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+        client.connect()
+
+        # Test maximum valid packet size: 255 * 4 = 1020 bytes
+        # This is under MAX_PACKET_SIZE (4096) and should be accepted
+        large_data = bytes(
+            [i % 256 for i in range(1016)]
+        )  # 1020 - 4 = 1016 bytes of data
+        mock_sock_instance.recv.side_effect = [
+            bytes([255, 2, 0, 0]),  # Header: size=255 means 1020 bytes total
+            large_data,  # The remaining 1016 bytes
+        ]
+
+        packet = client.receive_packet(timeout=1.0)
+
+        # Should accept large but valid packet
+        assert packet is not None
+        assert len(packet) == 1020
+
+    @patch("socket.socket")
+    def test_receive_packet_timeout_restored(self, mock_socket):
+        """Test receive_packet restores original socket timeout"""
+        client = InSimClient()
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+        mock_sock_instance.gettimeout.return_value = 5.0  # Original timeout
+        client.connect()
+
+        # Return valid packet
+        mock_sock_instance.recv.side_effect = [
+            bytes([1, 2, 0, 0])  # Valid 4-byte packet
+        ]
+
+        packet = client.receive_packet(timeout=1.0)
+
+        assert packet is not None
+        # Verify timeout was restored to original value
+        mock_sock_instance.settimeout.assert_any_call(5.0)
+
+    @patch("socket.socket")
+    def test_receive_packet_timeout_restored_on_error(self, mock_socket):
+        """Test receive_packet restores timeout even when error occurs"""
+        client = InSimClient(reconnect_enabled=False)
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+        mock_sock_instance.gettimeout.return_value = 10.0  # Original timeout
+        client.connect()
+
+        # Simulate socket error during receive
+        mock_sock_instance.recv.side_effect = socket.error("Connection reset")
+
+        with pytest.raises(socket.error):
+            client.receive_packet(timeout=2.0)
+
+        # Verify timeout was restored despite error
+        mock_sock_instance.settimeout.assert_any_call(10.0)
+
+    @patch("socket.socket")
+    def test_receive_packet_no_timeout_change_when_none(self, mock_socket):
+        """Test receive_packet doesn't modify timeout when timeout=None"""
+        client = InSimClient()
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+        mock_sock_instance.gettimeout.return_value = 5.0
+        client.connect()
+
+        # Return valid packet
+        mock_sock_instance.recv.side_effect = [
+            bytes([1, 2, 0, 0])  # Valid 4-byte packet
+        ]
+
+        packet = client.receive_packet(timeout=None)
+
+        assert packet is not None
+        # When timeout=None, settimeout should not be called at all
+        # (except during connect which sets default timeout)
+        # Count how many times settimeout was called after connect
+        settimeout_calls = mock_sock_instance.settimeout.call_count
+        # Should be 1 call from _create_socket, no additional calls
+        assert settimeout_calls == 1
+
+    @patch("socket.socket")
+    def test_receive_packet_connection_error_triggers_reconnect(self, mock_socket):
+        """Test connection error during receive triggers reconnection"""
+        client = InSimClient(reconnect_enabled=True, max_retries=1)
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+        client.connect()
+
+        # Simulate connection error during header read
+        mock_sock_instance.recv.side_effect = [
+            bytes([]),  # Connection closed
+        ]
+
+        with pytest.raises(ConnectionError):
+            client.receive_packet(timeout=1.0)
+
+        # Connection should be closed after error
+        # (trigger_reconnect calls disconnect first)
+        assert mock_sock_instance.close.called
+
+    @patch("socket.socket")
+    def test_receive_packet_header_only(self, mock_socket):
+        """Test receive_packet handles header-only packets correctly"""
+        client = InSimClient()
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+        client.connect()
+
+        # Packet with size=1 means 4 bytes total (header only)
+        mock_sock_instance.recv.side_effect = [
+            bytes([1, 3, 0, 0])  # TINY packet (4 bytes total)
+        ]
+
+        packet = client.receive_packet(timeout=1.0)
+
+        assert packet is not None
+        assert len(packet) == 4
+        # Should only call recv once for header (no additional data)
+        assert mock_sock_instance.recv.call_count == 1
+
+    @patch("socket.socket")
+    def test_max_packet_size_constant(self, mock_socket):
+        """Test MAX_PACKET_SIZE constant is defined and reasonable"""
+        from src.connection.insim_client import MAX_PACKET_SIZE
+
+        # MAX_PACKET_SIZE should be defined
+        assert MAX_PACKET_SIZE is not None
+        # Should be a reasonable size (not too small, not too large)
+        assert MAX_PACKET_SIZE >= 1024  # At least 1KB
+        assert MAX_PACKET_SIZE <= 65536  # At most 64KB
+        # Should match the documented value
+        assert MAX_PACKET_SIZE == 4096
 
 
 class TestInitializeMethod:

@@ -18,6 +18,10 @@ from .heartbeat import HeartbeatManager
 
 logger = logging.getLogger(__name__)
 
+# Maximum packet size in bytes (InSim packets are typically small)
+# This prevents buffer overflow from malformed packets
+MAX_PACKET_SIZE = 4096
+
 
 class InSimVersion(IntEnum):
     """InSim protocol versions"""
@@ -521,38 +525,76 @@ class InSimClient:
 
         return True
 
+    def _recv_exact(self, size: int) -> bytes:
+        """
+        Read exact number of bytes from socket.
+
+        TCP recv() may return fewer bytes than requested, so we need to loop
+        until we have all the data or connection is closed.
+
+        Args:
+            size: Exact number of bytes to receive
+
+        Returns:
+            bytes: Exactly 'size' bytes of data
+
+        Raises:
+            ConnectionError: If connection closed before receiving all data
+            socket.error: If socket error occurs
+        """
+        data = b""
+        while len(data) < size:
+            chunk = self.socket.recv(size - len(data))
+            if not chunk:
+                # Connection closed
+                raise ConnectionError("Connection closed while reading packet")
+            data += chunk
+        return data
+
     def receive_packet(self, timeout: Optional[float] = None) -> Optional[bytes]:
         """
         Receive a packet from the LFS server with validation.
+
+        Handles incomplete reads, validates packet size, and restores
+        socket timeout after reading.
 
         Args:
             timeout: Maximum wait time in seconds (None = blocking)
 
         Returns:
-            bytes: Received packet or None if no data
+            bytes: Received packet or None if no data or timeout
 
         Raises:
-            ConnectionError: If no active connection
+            ConnectionError: If no active connection or connection closed
         """
         if not self.connected or not self.socket:
             raise ConnectionError("Not connected to server")
+
+        # Store original timeout to restore later
+        original_timeout = self.socket.gettimeout()
 
         try:
             if timeout is not None:
                 self.socket.settimeout(timeout)
 
-            # First, read the header (4 bytes)
-            header = self.socket.recv(4)
-            if not header or len(header) < 1:
-                return None
+            # First, read the header (4 bytes) - use exact read
+            header = self._recv_exact(4)
 
             # First byte is packet size (in multiples of 4)
             packet_size = header[0] * 4 if header[0] > 0 else 4
 
-            # Read the rest of the packet
+            # Validate packet size to prevent buffer overflow
+            if packet_size > MAX_PACKET_SIZE:
+                logger.error(
+                    f"Packet size {packet_size} exceeds maximum {MAX_PACKET_SIZE}, "
+                    "discarding packet"
+                )
+                return None
+
+            # Read the rest of the packet if needed
             remaining = packet_size - 4
             if remaining > 0:
-                data = self.socket.recv(remaining)
+                data = self._recv_exact(remaining)
                 packet = header + data
             else:
                 packet = header
@@ -570,11 +612,24 @@ class InSimClient:
 
         except socket.timeout:
             return None
-        except socket.error as e:
-            logger.error(f"Error receiving packet: {e}")
+        except ConnectionError as e:
+            logger.error(f"Connection error receiving packet: {e}")
             if self.reconnect_enabled:
                 self.trigger_reconnect()
             raise
+        except socket.error as e:
+            logger.error(f"Socket error receiving packet: {e}")
+            if self.reconnect_enabled:
+                self.trigger_reconnect()
+            raise
+        finally:
+            # Restore original timeout
+            if timeout is not None and self.socket:
+                try:
+                    self.socket.settimeout(original_timeout)
+                except socket.error:
+                    # Socket may be closed, ignore
+                    pass
 
     def start_heartbeat(self, interval: Optional[float] = None) -> None:
         """
