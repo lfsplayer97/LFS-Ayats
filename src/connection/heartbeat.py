@@ -55,8 +55,14 @@ class HeartbeatManager:
 
         while not self._stop.is_set() and self.client.connected:
             try:
-                self.client.send_tiny(TinySubtype.TINY_NONE)
-                logger.debug("Heartbeat sent")
+                success = self.client.send_tiny(TinySubtype.TINY_NONE)
+                if success:
+                    logger.debug("Heartbeat sent")
+                else:
+                    logger.warning("Heartbeat failed to send")
+                    if self.client.reconnect_enabled:
+                        self.client.trigger_reconnect()
+                    break
             except Exception as e:
                 logger.error(f"Heartbeat failed: {e}")
                 if self.client.reconnect_enabled:
