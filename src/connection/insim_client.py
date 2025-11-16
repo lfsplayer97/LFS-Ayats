@@ -370,22 +370,26 @@ class InSimClient:
         # }
 
         packet = struct.pack(
-            "=4BH2BH16s16s",
+            "=4BHHBBH16s16s",
             44,  # Size
             PacketType.ISP_ISI,  # Type
             0,  # ReqI
             0,  # Zero
-            0 if not self.udp else self.port,  # UDPPort
-            flags,  # Flags
-            InSimVersion.INSIM_VERSION,  # InSimVer
-            ord("!"),  # Prefix (!)
-            interval,  # Interval
+            0 if not self.udp else self.port,  # UDPPort (word/H)
+            flags,  # Flags (word/H)
+            InSimVersion.INSIM_VERSION,  # InSimVer (byte/B)
+            ord("!"),  # Prefix (byte/B)
+            interval,  # Interval (word/H)
             self.admin_password.encode("utf-8").ljust(16, b"\x00"),
             self.app_name.encode("utf-8").ljust(16, b"\x00"),
         )
 
-        self.send_packet(packet)
-        logger.info("IS_ISI packet sent")
+        success = self.send_packet(packet, retry=True)
+        if success:
+            logger.info("IS_ISI packet sent")
+        else:
+            logger.error("Failed to send IS_ISI initialization packet")
+            raise ConnectionError("Failed to initialize InSim connection")
 
     def send_packet(self, packet: bytes, retry: bool = False) -> bool:
         """

@@ -482,3 +482,35 @@ class TestSocketCreation:
         # Verify connection was made
         mock_sock_instance.connect.assert_called_once_with((client.host, client.port))
         assert client.connected is True
+
+
+class TestInitializeMethod:
+    """Test cases for initialize method with new return value handling"""
+
+    @patch("socket.socket")
+    def test_initialize_handles_send_failure(self, mock_socket):
+        """Test that initialize raises ConnectionError when send fails"""
+        client = InSimClient()
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+        client.connect()
+
+        # Simulate send failure (timeout)
+        mock_sock_instance.sendall.side_effect = socket.timeout("Timeout")
+
+        with pytest.raises(ConnectionError, match="Failed to initialize"):
+            client.initialize()
+
+    @patch("socket.socket")
+    def test_initialize_success(self, mock_socket):
+        """Test that initialize succeeds when send works"""
+        client = InSimClient()
+        mock_sock_instance = Mock()
+        mock_socket.return_value = mock_sock_instance
+        client.connect()
+
+        # Should not raise
+        client.initialize()
+
+        # Verify packet was sent
+        assert mock_sock_instance.sendall.call_count == 1
