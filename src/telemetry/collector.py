@@ -157,13 +157,17 @@ class TelemetryCollector:
         """Trigger callbacks for an event type."""
         callbacks_list = self.callbacks.get(event_type, [])
         if callbacks_list:
-            logger.debug(f"Triggering {len(callbacks_list)} callback(s) for event '{event_type}'")
+            logger.debug(
+                f"Triggering {len(callbacks_list)} callback(s) for event '{event_type}'"
+            )
         for callback in callbacks_list:
             try:
                 start_time = time.time()
                 callback(data)
                 elapsed = (time.time() - start_time) * 1000  # Convert to ms
-                logger.debug(f"Callback for '{event_type}' completed in {elapsed:.2f}ms")
+                logger.debug(
+                    f"Callback for '{event_type}' completed in {elapsed:.2f}ms"
+                )
             except Exception as e:
                 logger.error(f"Error in {event_type} callback: {e}", exc_info=True)
 
@@ -185,8 +189,10 @@ class TelemetryCollector:
             for car in mci_info["cars"]:
                 plid: int = car["plid"]
                 speed: float = car["speed"] / 32768.0  # Convert to m/s
-                logger.debug(f"Car {plid}: speed={speed:.1f} m/s, node={car['node']}, lap={car['lap']}")
-                
+                logger.debug(
+                    f"Car {plid}: speed={speed:.1f} m/s, node={car['node']}, lap={car['lap']}"
+                )
+
                 telemetry = CarTelemetry(
                     timestamp=time.time(),
                     plid=plid,
@@ -253,31 +259,35 @@ class TelemetryCollector:
         logger.debug("Starting collection loop")
         packet_count = 0
         loop_start_time = time.time()
-        
+
         while self.running and not self.stop_event.is_set():
             try:
                 # Receive packets from server
                 packet = self.client.receive_packet(timeout=0.1)
                 if packet:
                     packet_count += 1
-                    logger.debug(f"Received packet #{packet_count}, size: {len(packet)} bytes")
-                    
+                    logger.debug(
+                        f"Received packet #{packet_count}, size: {len(packet)} bytes"
+                    )
+
                     # Process packet with PacketHandler
                     from src.connection.packet_handler import PacketHandler
 
                     handler = PacketHandler()
                     handler.process_packet(packet)
-                    
+
                     # Log performance stats every 100 packets
                     if packet_count % 100 == 0:
                         elapsed = time.time() - loop_start_time
                         rate = packet_count / elapsed if elapsed > 0 else 0
-                        logger.info(f"Collection stats: {packet_count} packets, {rate:.1f} packets/sec")
+                        logger.info(
+                            f"Collection stats: {packet_count} packets, {rate:.1f} packets/sec"
+                        )
 
             except Exception as e:
                 logger.error(f"Error in collection loop: {e}", exc_info=True)
                 time.sleep(0.1)
-        
+
         logger.debug(f"Collection loop stopped after processing {packet_count} packets")
 
     def stop(self) -> None:

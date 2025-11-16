@@ -50,18 +50,20 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     Application lifespan manager.
 
     Handles startup and shutdown events.
-    
+
     Args:
         app: FastAPI application instance
-        
+
     Yields:
         None: Control during application runtime
     """
     # Startup
     logger.info("Starting LFS-Ayats API...")
     logger.debug(f"API version: {__version__}")
-    logger.debug(f"API configuration: docs_url={app.docs_url}, redoc_url={app.redoc_url}")
-    
+    logger.debug(
+        f"API configuration: docs_url={app.docs_url}, redoc_url={app.redoc_url}"
+    )
+
     init_dependencies(db_connection_string="sqlite:///telemetry.db")
     logger.info("API started successfully")
 
@@ -106,7 +108,7 @@ app.include_router(config.router, prefix="/api/v1/config", tags=["Configuration"
 async def root() -> RedirectResponse:
     """
     Root endpoint - redirects to API documentation.
-    
+
     Returns:
         RedirectResponse: Redirect to API docs
     """
@@ -118,7 +120,7 @@ async def root() -> RedirectResponse:
 async def api_root() -> dict:
     """
     API root endpoint - returns basic information.
-    
+
     Returns:
         dict: API information including endpoints and documentation links
     """

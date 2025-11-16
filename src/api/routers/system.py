@@ -63,7 +63,7 @@ async def get_status(
         SystemStatusResponse: System status information
     """
     logger.debug(f"Status check requested (connected={connected})")
-    
+
     # Calculate uptime
     uptime = time.time() - _startup_time
 
@@ -75,7 +75,7 @@ async def get_status(
         # For lap count, we would need to implement a count method
         # For now, return 0 as placeholder
         laps_count = 0
-        
+
         logger.debug(f"Database stats: {sessions_count} sessions, {laps_count} laps")
     except Exception as e:
         logger.error(f"Error fetching database stats: {e}", exc_info=True)
@@ -114,7 +114,7 @@ async def connect_to_lfs(config: ConnectionConfig = Body(...)) -> dict:
         # In a real implementation, this would use InSimClient
         # For now, just set the status
         set_connection_status(True)
-        
+
         logger.info(f"Successfully connected to LFS at {config.host}:{config.port}")
 
         return {
@@ -142,7 +142,7 @@ async def disconnect_from_lfs() -> dict:
 
     # In a real implementation, this would close the InSimClient connection
     set_connection_status(False)
-    
+
     logger.debug("Disconnection completed successfully")
 
     return {"status": "disconnected", "message": "Disconnected from LFS server"}

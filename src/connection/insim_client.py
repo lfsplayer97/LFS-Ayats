@@ -383,7 +383,9 @@ class InSimClient:
         )
 
         self.send_packet(packet)
-        logger.info(f"IS_ISI packet sent (app_name='{self.app_name}', interval={interval})")
+        logger.info(
+            f"IS_ISI packet sent (app_name='{self.app_name}', interval={interval})"
+        )
 
     def send_packet(self, packet: bytes) -> None:
         """
@@ -400,7 +402,9 @@ class InSimClient:
 
         try:
             packet_type = packet[1] if len(packet) > 1 else 0
-            logger.debug(f"Sending packet: type={packet_type}, size={len(packet)} bytes")
+            logger.debug(
+                f"Sending packet: type={packet_type}, size={len(packet)} bytes"
+            )
             self.socket.sendall(packet)
             logger.debug(f"Packet sent successfully: {len(packet)} bytes")
         except socket.error as e:
