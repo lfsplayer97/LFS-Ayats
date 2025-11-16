@@ -419,3 +419,134 @@ class TestTelemetryCollector:
 
         # Should handle error gracefully
         collector.running = False
+
+    def test_init_with_custom_max_samples(self, mock_client):
+        """Test collector initialization with custom max samples"""
+        collector = TelemetryCollector(mock_client, max_samples_per_player=5000)
+
+        assert collector.max_samples_per_player == 5000
+        assert collector.car_telemetry == {}
+        assert collector.lap_telemetry == {}
+
+    def test_init_with_default_max_samples(self, mock_client):
+        """Test collector initialization uses default max samples"""
+        collector = TelemetryCollector(mock_client)
+
+        assert collector.max_samples_per_player == 10000
+
+    def test_deque_max_size_enforcement(self, mock_client):
+        """Test that deque enforces max size and removes old samples"""
+        from collections import deque
+
+        collector = TelemetryCollector(mock_client, max_samples_per_player=5)
+
+        # Manually create a deque for player 1
+        collector.car_telemetry[1] = deque(maxlen=5)
+
+        # Add 10 samples
+        for i in range(10):
+            telemetry = CarTelemetry(plid=1, speed=float(i), timestamp=float(i))
+            collector.car_telemetry[1].append(telemetry)
+
+        # Should only keep the last 5 samples
+        assert len(collector.car_telemetry[1]) == 5
+        # First sample should be speed=5 (samples 0-4 were removed)
+        assert collector.car_telemetry[1][0].speed == 5.0
+        # Last sample should be speed=9
+        assert collector.car_telemetry[1][-1].speed == 9.0
+
+    @patch("src.connection.packet_handler.PacketHandler")
+    def test_handle_mci_packet_respects_max_samples(
+        self, mock_handler_class, mock_client
+    ):
+        """Test MCI packet handling respects max samples limit"""
+        collector = TelemetryCollector(mock_client, max_samples_per_player=3)
+
+        # Mock packet handler
+        mock_handler = Mock()
+        mock_handler_class.return_value = mock_handler
+
+        # Simulate receiving 5 packets for the same player
+        for i in range(5):
+            mock_handler.parse_mci_packet.return_value = {
+                "cars": [
+                    {
+                        "plid": 1,
+                        "node": 10 + i,
+                        "lap": 2,
+                        "position": {"x": 100.0 + i, "y": 200.0, "z": 5.0},
+                        "speed": 15000 + i * 100,
+                        "direction": 16384,
+                        "heading": 16384,
+                        "angular_vel": 100,
+                    }
+                ]
+            }
+
+            packet_data = b"\x00" * 32
+            collector.handle_mci_packet(packet_data)
+
+        # Should only keep last 3 samples
+        assert len(collector.car_telemetry[1]) == 3
+        # First sample should be from i=2 (node=12)
+        assert collector.car_telemetry[1][0].node == 12
+        # Last sample should be from i=4 (node=14)
+        assert collector.car_telemetry[1][-1].node == 14
+
+    def test_get_statistics_includes_max_samples(self, mock_client):
+        """Test that statistics include max_samples_per_player"""
+        collector = TelemetryCollector(mock_client, max_samples_per_player=7500)
+        collector.running = True
+
+        # Add some data
+        from collections import deque
+
+        collector.car_telemetry[1] = deque([CarTelemetry(plid=1)] * 10, maxlen=7500)
+
+        stats = collector.get_statistics()
+
+        assert stats["max_samples_per_player"] == 7500
+        assert "max_samples_per_player" in stats
+
+    def test_memory_bounded_multiple_players(self, mock_client):
+        """Test memory is bounded for multiple players"""
+        from collections import deque
+
+        collector = TelemetryCollector(mock_client, max_samples_per_player=10)
+
+        # Add data for 3 players
+        for plid in [1, 2, 3]:
+            collector.car_telemetry[plid] = deque(maxlen=10)
+            # Add 20 samples per player
+            for i in range(20):
+                collector.car_telemetry[plid].append(
+                    CarTelemetry(plid=plid, speed=float(i))
+                )
+
+        # Each player should have exactly 10 samples
+        for plid in [1, 2, 3]:
+            assert len(collector.car_telemetry[plid]) == 10
+
+        # Total samples should be 30 (3 players * 10 samples each)
+        stats = collector.get_statistics()
+        assert stats["total_samples"] == 30
+
+    def test_deque_maintains_fifo_order(self, mock_client):
+        """Test that deque maintains FIFO order (oldest removed first)"""
+        from collections import deque
+
+        collector = TelemetryCollector(mock_client, max_samples_per_player=3)
+        collector.car_telemetry[1] = deque(maxlen=3)
+
+        # Add samples with timestamps
+        timestamps = [1.0, 2.0, 3.0, 4.0, 5.0]
+        for ts in timestamps:
+            collector.car_telemetry[1].append(
+                CarTelemetry(plid=1, timestamp=ts, speed=ts)
+            )
+
+        # Should have last 3 samples (3.0, 4.0, 5.0)
+        assert len(collector.car_telemetry[1]) == 3
+        assert collector.car_telemetry[1][0].timestamp == 3.0
+        assert collector.car_telemetry[1][1].timestamp == 4.0
+        assert collector.car_telemetry[1][2].timestamp == 5.0
