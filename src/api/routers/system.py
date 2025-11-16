@@ -31,7 +31,7 @@ _startup_time = time.time()
 
 
 @router.get("/health", response_model=HealthResponse)
-async def health_check():
+async def health_check() -> HealthResponse:
     """
     Health check endpoint.
 
@@ -40,6 +40,7 @@ async def health_check():
     Returns:
         HealthResponse: API health status
     """
+    logger.debug("Health check requested")
     return HealthResponse(status="healthy", version="0.1.0")
 
 
@@ -47,7 +48,7 @@ async def health_check():
 async def get_status(
     repo: TelemetryRepository = Depends(get_repository),
     connected: bool = Depends(get_connection_status),
-):
+) -> SystemStatusResponse:
     """
     Get system status.
 
@@ -61,6 +62,8 @@ async def get_status(
     Returns:
         SystemStatusResponse: System status information
     """
+    logger.debug(f"Status check requested (connected={connected})")
+    
     # Calculate uptime
     uptime = time.time() - _startup_time
 
@@ -72,8 +75,10 @@ async def get_status(
         # For lap count, we would need to implement a count method
         # For now, return 0 as placeholder
         laps_count = 0
+        
+        logger.debug(f"Database stats: {sessions_count} sessions, {laps_count} laps")
     except Exception as e:
-        logger.error(f"Error fetching database stats: {e}")
+        logger.error(f"Error fetching database stats: {e}", exc_info=True)
         sessions_count = 0
         laps_count = 0
 
@@ -87,7 +92,7 @@ async def get_status(
 
 
 @router.post("/connect")
-async def connect_to_lfs(config: ConnectionConfig = Body(...)):
+async def connect_to_lfs(config: ConnectionConfig = Body(...)) -> dict:
     """
     Initiate connection to LFS server.
 
@@ -104,10 +109,13 @@ async def connect_to_lfs(config: ConnectionConfig = Body(...)):
     """
     try:
         logger.info(f"Attempting connection to LFS at {config.host}:{config.port}")
+        logger.debug(f"Connection config: app_name='{config.app_name}'")
 
         # In a real implementation, this would use InSimClient
         # For now, just set the status
         set_connection_status(True)
+        
+        logger.info(f"Successfully connected to LFS at {config.host}:{config.port}")
 
         return {
             "status": "connected",
@@ -116,12 +124,12 @@ async def connect_to_lfs(config: ConnectionConfig = Body(...)):
             "message": "Successfully connected to LFS server",
         }
     except Exception as e:
-        logger.error(f"Connection failed: {e}")
+        logger.error(f"Connection failed: {e}", exc_info=True)
         raise ConnectionErrorException(str(e))
 
 
 @router.post("/disconnect")
-async def disconnect_from_lfs():
+async def disconnect_from_lfs() -> dict:
     """
     Disconnect from LFS server.
 
@@ -134,5 +142,7 @@ async def disconnect_from_lfs():
 
     # In a real implementation, this would close the InSimClient connection
     set_connection_status(False)
+    
+    logger.debug("Disconnection completed successfully")
 
     return {"status": "disconnected", "message": "Disconnected from LFS server"}

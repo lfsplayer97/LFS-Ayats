@@ -350,6 +350,8 @@ class InSimClient:
         if not self.connected:
             raise ConnectionError("Not connected to server")
 
+        logger.debug(f"Initializing InSim: flags={flags}, interval={interval}")
+
         # Build IS_ISI packet
         # struct IS_ISI {
         #     byte Size;      # 44
@@ -381,7 +383,7 @@ class InSimClient:
         )
 
         self.send_packet(packet)
-        logger.info("IS_ISI packet sent")
+        logger.info(f"IS_ISI packet sent (app_name='{self.app_name}', interval={interval})")
 
     def send_packet(self, packet: bytes) -> None:
         """
@@ -397,8 +399,10 @@ class InSimClient:
             raise ConnectionError("Not connected to server")
 
         try:
+            packet_type = packet[1] if len(packet) > 1 else 0
+            logger.debug(f"Sending packet: type={packet_type}, size={len(packet)} bytes")
             self.socket.sendall(packet)
-            logger.debug(f"Packet sent: {len(packet)} bytes")
+            logger.debug(f"Packet sent successfully: {len(packet)} bytes")
         except socket.error as e:
             logger.error(f"Error sending packet: {e}")
             if self.reconnect_enabled:
@@ -503,10 +507,12 @@ class InSimClient:
             # First, read the header (4 bytes)
             header = self.socket.recv(4)
             if not header or len(header) < 1:
+                logger.debug("No data received (empty header)")
                 return None
 
             # First byte is packet size (in multiples of 4)
             packet_size = header[0] * 4 if header[0] > 0 else 4
+            logger.debug(f"Receiving packet: expected size={packet_size} bytes")
 
             # Read the rest of the packet
             remaining = packet_size - 4
@@ -521,13 +527,14 @@ class InSimClient:
                 logger.warning("Invalid packet received and discarded")
                 return None
 
+            packet_type = header[1] if len(header) > 1 else 0
             logger.debug(
-                f"Packet received: {len(packet)} bytes, "
-                f"type: {header[1] if len(header) > 1 else 'unknown'}"
+                f"Packet received successfully: type={packet_type}, size={len(packet)} bytes"
             )
             return packet
 
         except socket.timeout:
+            logger.debug("Socket timeout - no packet received")
             return None
         except socket.error as e:
             logger.error(f"Error receiving packet: {e}")

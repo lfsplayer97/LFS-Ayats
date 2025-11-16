@@ -18,6 +18,7 @@ API Documentation:
 
 import logging
 from contextlib import asynccontextmanager
+from typing import AsyncIterator
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 
@@ -44,14 +45,23 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """
     Application lifespan manager.
 
     Handles startup and shutdown events.
+    
+    Args:
+        app: FastAPI application instance
+        
+    Yields:
+        None: Control during application runtime
     """
     # Startup
     logger.info("Starting LFS-Ayats API...")
+    logger.debug(f"API version: {__version__}")
+    logger.debug(f"API configuration: docs_url={app.docs_url}, redoc_url={app.redoc_url}")
+    
     init_dependencies(db_connection_string="sqlite:///telemetry.db")
     logger.info("API started successfully")
 
@@ -59,6 +69,7 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Shutting down LFS-Ayats API...")
+    logger.debug("Cleaning up resources...")
 
 
 # Create FastAPI application
@@ -92,18 +103,26 @@ app.include_router(config.router, prefix="/api/v1/config", tags=["Configuration"
 
 
 @app.get("/", include_in_schema=False)
-async def root():
+async def root() -> RedirectResponse:
     """
     Root endpoint - redirects to API documentation.
+    
+    Returns:
+        RedirectResponse: Redirect to API docs
     """
+    logger.debug("Root endpoint accessed, redirecting to API docs")
     return RedirectResponse(url="/api/docs")
 
 
 @app.get("/api", include_in_schema=False)
-async def api_root():
+async def api_root() -> dict:
     """
     API root endpoint - returns basic information.
+    
+    Returns:
+        dict: API information including endpoints and documentation links
     """
+    logger.debug("API root endpoint accessed")
     return {
         "name": "LFS-Ayats API",
         "version": __version__,

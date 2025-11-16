@@ -111,7 +111,7 @@ class TelemetryCollector:
         >>> collector.stop()
     """
 
-    def __init__(self, client):
+    def __init__(self, client: Any) -> None:
         """
         Initialize the telemetry collector.
 
@@ -155,11 +155,17 @@ class TelemetryCollector:
 
     def _trigger_callbacks(self, event_type: str, data: Any) -> None:
         """Trigger callbacks for an event type."""
-        for callback in self.callbacks.get(event_type, []):
+        callbacks_list = self.callbacks.get(event_type, [])
+        if callbacks_list:
+            logger.debug(f"Triggering {len(callbacks_list)} callback(s) for event '{event_type}'")
+        for callback in callbacks_list:
             try:
+                start_time = time.time()
                 callback(data)
+                elapsed = (time.time() - start_time) * 1000  # Convert to ms
+                logger.debug(f"Callback for '{event_type}' completed in {elapsed:.2f}ms")
             except Exception as e:
-                logger.error(f"Error in {event_type} callback: {e}")
+                logger.error(f"Error in {event_type} callback: {e}", exc_info=True)
 
     def handle_mci_packet(self, packet_data: bytes) -> None:
         """
@@ -170,27 +176,33 @@ class TelemetryCollector:
         """
         from src.connection.packet_handler import PacketHandler
 
+        logger.debug(f"Processing MCI packet: {len(packet_data)} bytes")
         handler = PacketHandler()
-        mci_info = handler.parse_mci_packet(packet_data)
+        mci_info: Optional[Dict[str, Any]] = handler.parse_mci_packet(packet_data)
 
         if mci_info:
+            logger.debug(f"MCI packet contains {len(mci_info['cars'])} cars")
             for car in mci_info["cars"]:
+                plid: int = car["plid"]
+                speed: float = car["speed"] / 32768.0  # Convert to m/s
+                logger.debug(f"Car {plid}: speed={speed:.1f} m/s, node={car['node']}, lap={car['lap']}")
+                
                 telemetry = CarTelemetry(
                     timestamp=time.time(),
-                    plid=car["plid"],
+                    plid=plid,
                     node=car["node"],
                     lap=car["lap"],
                     position=car["position"],
-                    speed=car["speed"] / 32768.0,  # Convert to m/s
+                    speed=speed,
                     direction=car["direction"],
                     heading=car["heading"],
                     angular_velocity=car["angular_vel"],
                 )
 
                 # Store telemetry
-                plid = car["plid"]
                 if plid not in self.car_telemetry:
                     self.car_telemetry[plid] = []
+                    logger.debug(f"Created telemetry history for PLID {plid}")
                 self.car_telemetry[plid].append(telemetry)
 
                 # Trigger callbacks
@@ -238,20 +250,35 @@ class TelemetryCollector:
 
     def _collection_loop(self) -> None:
         """Main telemetry collection loop."""
+        logger.debug("Starting collection loop")
+        packet_count = 0
+        loop_start_time = time.time()
+        
         while self.running and not self.stop_event.is_set():
             try:
                 # Receive packets from server
                 packet = self.client.receive_packet(timeout=0.1)
                 if packet:
+                    packet_count += 1
+                    logger.debug(f"Received packet #{packet_count}, size: {len(packet)} bytes")
+                    
                     # Process packet with PacketHandler
                     from src.connection.packet_handler import PacketHandler
 
                     handler = PacketHandler()
                     handler.process_packet(packet)
+                    
+                    # Log performance stats every 100 packets
+                    if packet_count % 100 == 0:
+                        elapsed = time.time() - loop_start_time
+                        rate = packet_count / elapsed if elapsed > 0 else 0
+                        logger.info(f"Collection stats: {packet_count} packets, {rate:.1f} packets/sec")
 
             except Exception as e:
-                logger.error(f"Error in collection loop: {e}")
+                logger.error(f"Error in collection loop: {e}", exc_info=True)
                 time.sleep(0.1)
+        
+        logger.debug(f"Collection loop stopped after processing {packet_count} packets")
 
     def stop(self) -> None:
         """Stop telemetry collection."""

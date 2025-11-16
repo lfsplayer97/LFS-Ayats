@@ -21,31 +21,33 @@ router = APIRouter()
 class ConnectionManager:
     """Manages WebSocket connections for live telemetry."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.active_connections: list[WebSocket] = []
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, websocket: WebSocket) -> None:
         """Accept and register a new WebSocket connection."""
         await websocket.accept()
         self.active_connections.append(websocket)
         logger.info(
             f"WebSocket connected. Total connections: {len(self.active_connections)}"
         )
+        logger.debug(f"WebSocket connection details: {websocket.client}")
 
-    def disconnect(self, websocket: WebSocket):
+    def disconnect(self, websocket: WebSocket) -> None:
         """Remove a WebSocket connection."""
         self.active_connections.remove(websocket)
         logger.info(
             f"WebSocket disconnected. Total connections: {len(self.active_connections)}"
         )
 
-    async def broadcast(self, message: dict):
+    async def broadcast(self, message: dict) -> None:
         """Broadcast message to all connected clients."""
+        logger.debug(f"Broadcasting message to {len(self.active_connections)} clients")
         for connection in self.active_connections:
             try:
                 await connection.send_json(message)
             except Exception as e:
-                logger.error(f"Error broadcasting to client: {e}")
+                logger.error(f"Error broadcasting to client: {e}", exc_info=True)
 
 
 manager = ConnectionManager()
@@ -122,7 +124,7 @@ async def get_telemetry_range(
     start_time: float = Query(..., description="Start timestamp"),
     end_time: float = Query(..., description="End timestamp"),
     repo: TelemetryRepository = Depends(get_repository),
-):
+) -> dict:
     """
     Get telemetry data for a time range.
 
@@ -141,6 +143,7 @@ async def get_telemetry_range(
         f"Getting telemetry range for session {session_id}: "
         f"{start_time} to {end_time}"
     )
+    logger.debug(f"Time range duration: {end_time - start_time:.2f} seconds")
 
     # In a real implementation, this would query the database
     # For now, return a simple response
