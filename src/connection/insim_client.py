@@ -627,8 +627,8 @@ class InSimClient:
             if timeout is not None and self.socket:
                 try:
                     self.socket.settimeout(original_timeout)
-                except socket.error:
-                    # Socket may be closed, ignore
+                except (OSError, AttributeError):
+                    # Socket may be closed or invalid, ignore
                     pass
 
     def start_heartbeat(self, interval: Optional[float] = None) -> None:

@@ -5,7 +5,7 @@ Unit tests for InSim Client
 import pytest
 import socket
 from unittest.mock import Mock, patch
-from src.connection.insim_client import InSimClient, PacketType
+from src.connection.insim_client import InSimClient, PacketType, MAX_PACKET_SIZE
 
 
 class TestInSimClient:
@@ -715,8 +715,6 @@ class TestPacketReceptionFixes:
     @patch("socket.socket")
     def test_max_packet_size_constant(self, mock_socket):
         """Test MAX_PACKET_SIZE constant is defined and reasonable"""
-        from src.connection.insim_client import MAX_PACKET_SIZE
-
         # MAX_PACKET_SIZE should be defined
         assert MAX_PACKET_SIZE is not None
         # Should be a reasonable size (not too small, not too large)
