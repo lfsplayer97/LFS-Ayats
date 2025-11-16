@@ -7,9 +7,10 @@ Reference: https://en.lfsmanual.net/wiki/InSim.txt
 
 import logging
 import time
-from typing import Dict, Any, List, Optional, Callable
+from typing import Dict, Any, List, Optional, Callable, Deque
 from dataclasses import dataclass, field
 from threading import Thread, Event
+from collections import deque
 
 logger = logging.getLogger(__name__)
 
@@ -111,21 +112,25 @@ class TelemetryCollector:
         >>> collector.stop()
     """
 
-    def __init__(self, client):
+    def __init__(self, client, max_samples_per_player: int = 10000):
         """
         Initialize the telemetry collector.
 
         Args:
             client: Connected InSim client
+            max_samples_per_player: Maximum number of telemetry samples to
+                store per player. Older samples are automatically removed
+                when limit is reached. Default: 10000 samples
         """
         self.client = client
         self.running = False
         self.collection_thread: Optional[Thread] = None
         self.stop_event = Event()
+        self.max_samples_per_player = max_samples_per_player
 
-        # Data storage
-        self.car_telemetry: Dict[int, List[CarTelemetry]] = {}
-        self.lap_telemetry: Dict[int, List[LapTelemetry]] = {}
+        # Data storage - using deque with maxlen to prevent unbounded memory growth
+        self.car_telemetry: Dict[int, Deque[CarTelemetry]] = {}
+        self.lap_telemetry: Dict[int, Deque[LapTelemetry]] = {}
         self.player_info: Dict[int, PlayerInfo] = {}
 
         # Custom callbacks
@@ -137,7 +142,10 @@ class TelemetryCollector:
             "player_leave": [],
         }
 
-        logger.info("TelemetryCollector initialized")
+        logger.info(
+            f"TelemetryCollector initialized "
+            f"(max_samples_per_player={max_samples_per_player})"
+        )
 
     def register_callback(self, event_type: str, callback: Callable) -> None:
         """
@@ -187,10 +195,10 @@ class TelemetryCollector:
                     angular_velocity=car["angular_vel"],
                 )
 
-                # Store telemetry
+                # Store telemetry with automatic size limiting
                 plid = car["plid"]
                 if plid not in self.car_telemetry:
-                    self.car_telemetry[plid] = []
+                    self.car_telemetry[plid] = deque(maxlen=self.max_samples_per_player)
                 self.car_telemetry[plid].append(telemetry)
 
                 # Trigger callbacks
@@ -334,7 +342,7 @@ class TelemetryCollector:
         Get telemetry collection statistics.
 
         Returns:
-            Dict with statistics
+            Dict with statistics including memory limits
         """
         total_samples = sum(len(t) for t in self.car_telemetry.values())
 
@@ -342,6 +350,7 @@ class TelemetryCollector:
             "running": self.running,
             "total_players": len(self.car_telemetry),
             "total_samples": total_samples,
+            "max_samples_per_player": self.max_samples_per_player,
             "players": {
                 plid: len(telemetry) for plid, telemetry in self.car_telemetry.items()
             },
