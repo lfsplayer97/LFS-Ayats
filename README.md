@@ -593,8 +593,21 @@ This project is licensed under the MIT License. See the `LICENSE` file for more 
 
 ## 📞 Contact
 
-For questions, suggestions, or issues, please open an issue on the GitHub repository.
+Si tens preguntes, suggeriments o idees per millorar el projecte, no dubtis en contactar-me!
 
+**Email**: [lfsplayer97@gmail.com](mailto:lfsplayer97@gmail.com)
+
+### 🚀 Ajuda'ns a Fer-lo Millor!
+
+LFS-Ayats és un projecte de codi obert i la teva col·laboració és molt important. Si tens idees, trobes algun error o vols contribuir amb noves funcionalitats:
+
+- 💡 Obre un **Issue** amb les teves propostes o suggeriments
+- 🐛 Reporta errors o problemes que trobis
+- ⭐ Dona-li una estrella al repositori si t'agrada el projecte
+- 🔧 Contribueix amb codi a través de **Pull Requests**
+- 💬 Comparteix les teves experiències i casos d'ús
+
+Cada contribució, per petita que sigui, ajuda a fer créixer i millorar aquest projecte per a tota la comunitat de Live for Speed! 🏎️
 ---
 
 **Note**: This project is under active development. Check the documentation and examples for more information on usage and available features.
