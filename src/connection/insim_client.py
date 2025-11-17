@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class InSimVersion(IntEnum):
     """InSim protocol versions"""
 
-    INSIM_VERSION = 9  # Current protocol version
+    INSIM_VERSION = 11  # Current protocol version
 
 
 class ConnectionState(Enum):
