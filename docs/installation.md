@@ -149,12 +149,54 @@ Successfully installed asyncio-dgram-2.1.2 numpy-1.26.0 pandas-2.1.0 ...
 
 ### Step 5: Install Package in Development Mode
 
+**⚠️ CRITICAL STEP - Do not skip this!**
+
 ```bash
 # Install LFS-Ayats as editable package
 pip install -e .
-
-# This makes the 'src' modules importable
 ```
+
+**What this does:**
+- Installs the package in "editable" or "development" mode
+- Makes the `src` module importable throughout your code
+- Creates a symbolic link to your source code
+- Allows changes to be reflected immediately without reinstalling
+
+**Why is this needed?**
+
+Without this step, Python cannot import modules from `src/`:
+```python
+# Without 'pip install -e .', this fails:
+from src.connection import InSimClient  # ❌ ModuleNotFoundError
+```
+
+After installation, imports work correctly:
+```python
+from src.connection import InSimClient  # ✅ Works!
+```
+
+**Verification:**
+
+```bash
+# Check package is installed
+pip show lfs-ayats
+
+# Should display:
+# Name: lfs-ayats
+# Version: 0.1.0
+# Location: <path>/LFS-Ayats/src
+# Editable project location: <path>/LFS-Ayats/src
+
+# Test import
+python -c "import src; print('✓ Installation successful')"
+```
+
+**Expected output:**
+```
+✓ Installation successful
+```
+
+If you see `ModuleNotFoundError`, the installation failed. See [Troubleshooting](#troubleshooting-installation).
 
 ### Step 6: Configure LFS-Ayats
 
@@ -191,7 +233,47 @@ cp config.example.yaml config.yaml
 
 ### Step 8: Verify Installation
 
-Test the installation with a basic connection:
+**Option A: Run Verification Script (Recommended)**
+
+```bash
+# Run the setup verification script
+python scripts/verify_setup.py
+```
+
+This script checks:
+- ✓ Python version
+- ✓ Virtual environment status
+- ✓ Core dependencies installed
+- ✓ Package installed in editable mode
+- ✓ Project structure intact
+- ✓ Configuration file exists
+- ✓ Tests can execute
+
+**Expected output:**
+```
+============================================================
+  LFS-Ayats Setup Verification
+============================================================
+
+✓ [PASS] Python version: 3.12.3
+✓ [PASS] Virtual environment detected
+✓ [PASS] Core dependencies installed
+✓ [PASS] Package installed in editable mode
+✓ [PASS] Project structure is complete
+✓ [PASS] Configuration file exists
+✓ [PASS] Tests can be executed
+
+============================================================
+  Summary
+============================================================
+
+Checks passed: 7/7
+✓ All checks passed! Your environment is properly configured.
+```
+
+**Option B: Test Basic Connection**
+
+If you have LFS running, test with a basic connection:
 
 ```bash
 # Run basic connection example
@@ -211,7 +293,7 @@ INFO - Disconnecting...
 INFO - Connection closed.
 ```
 
-✅ **If you see this output, installation is successful!**
+✅ **If verification script passes or you see basic connection output, installation is successful!**
 
 ## Platform-Specific Notes
 

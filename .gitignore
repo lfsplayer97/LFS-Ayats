@@ -101,6 +101,9 @@ temp/
 # Specific files to ignore
 LFSLazy*.zip
 
+# Configuration files (user-specific)
+config.yaml
+
 # Database files
 data/
 *.db

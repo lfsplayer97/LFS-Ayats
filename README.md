@@ -99,7 +99,7 @@ LFS-Ayats/
 - Live for Speed (demo or full version)
 - pip (Python package manager)
 
-### Installing Dependencies
+### Quick Installation
 
 ```bash
 # Clone the repository
@@ -115,9 +115,48 @@ venv\Scripts\activate  # Windows
 # Install dependencies
 pip install -r requirements.txt
 
-# Install package in development mode
+# ⚠️ IMPORTANT: Install package in development mode
 pip install -e .
 ```
+
+> **💡 Why `pip install -e .` is required:**
+> 
+> The `-e` flag installs the package in **editable/development mode**, which:
+> - Makes the `src` module importable from anywhere in your code
+> - Automatically reflects code changes without reinstalling
+> - Creates a symbolic link to your source code
+> 
+> **Without this step**, you'll encounter `ModuleNotFoundError: No module named 'src'` when running examples or tests.
+> 
+> ✅ Verify installation: `pip show lfs-ayats` should display the package info
+
+### Verify Installation
+
+Run the verification script to check your setup:
+
+```bash
+python scripts/verify_setup.py
+```
+
+This will check:
+- ✅ Python version (3.8+)
+- ✅ Virtual environment
+- ✅ Dependencies installed
+- ✅ Package in editable mode
+- ✅ Project structure
+- ✅ Configuration file
+- ✅ Tests can run
+
+### Troubleshooting Installation
+
+If you see `ModuleNotFoundError: No module named 'src'`:
+
+1. Make sure you activated the virtual environment
+2. Run `pip install -e .` from the project root directory
+3. Verify with `pip show lfs-ayats`
+4. Run `python scripts/verify_setup.py` to diagnose issues
+
+For more help, see the [Troubleshooting Guide](docs/troubleshooting.md#import-and-module-errors).
 
 ## 📚 Complete Documentation
 

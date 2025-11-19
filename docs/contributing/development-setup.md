@@ -166,90 +166,45 @@ nano config.yaml  # o vim, code, etc.
 
 ## Pas 8: Verificar Configuració
 
-Script de verificació (`verify_setup.py`):
+Executa l'script de verificació per assegurar que tot està configurat correctament:
 
-```python
-"""
-Verifica que l'entorn de desenvolupament està configurat correctament.
-"""
-
-import sys
-import subprocess
-from pathlib import Path
-
-def check_python_version():
-    """Verifica versió de Python."""
-    version = sys.version_info
-    if version.major == 3 and version.minor >= 8:
-        print(f"✓ Python {version.major}.{version.minor}.{version.micro}")
-        return True
-    print(f"✗ Python {version.major}.{version.minor} (requereix 3.8+)")
-    return False
-
-def check_dependencies():
-    """Verifica dependències."""
-    try:
-        import numpy
-        import pandas
-        import plotly
-        import dash
-        import pytest
-        print("✓ Dependències principals instal·lades")
-        return True
-    except ImportError as e:
-        print(f"✗ Falta dependència: {e}")
-        return False
-
-def check_package_installed():
-    """Verifica instal·lació del paquet."""
-    try:
-        import src
-        print(f"✓ Paquet 'src' importable")
-        return True
-    except ImportError:
-        print("✗ Paquet no instal·lat (executa: pip install -e .)")
-        return False
-
-def check_tests_run():
-    """Verifica que els tests s'executen."""
-    result = subprocess.run(
-        ["pytest", "--collect-only"],
-        capture_output=True,
-        text=True
-    )
-    if result.returncode == 0:
-        print("✓ Tests es poden executar")
-        return True
-    print("✗ Error executant tests")
-    return False
-
-def main():
-    """Executa totes les verificacions."""
-    print("=== Verificant Configuració d'Entorn ===\n")
-    
-    checks = [
-        check_python_version(),
-        check_dependencies(),
-        check_package_installed(),
-        check_tests_run()
-    ]
-    
-    print(f"\n{'='*40}")
-    if all(checks):
-        print("✓ Entorn configurat correctament!")
-        sys.exit(0)
-    else:
-        print("✗ Hi ha problemes amb la configuració")
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
-```
-
-Executar:
 ```bash
-python verify_setup.py
+# Des del directori arrel del projecte
+python scripts/verify_setup.py
 ```
+
+Aquest script verifica:
+- ✓ Versió de Python (3.8+)
+- ✓ Entorn virtual actiu
+- ✓ Dependències principals instal·lades
+- ✓ Paquet instal·lat en mode editable
+- ✓ Estructura del projecte completa
+- ✓ Fitxer de configuració existent
+- ✓ Tests es poden executar
+
+**Sortida esperada:**
+```
+============================================================
+  LFS-Ayats Setup Verification
+============================================================
+
+✓ [PASS] Python version: 3.12.3
+✓ [PASS] Virtual environment detected
+✓ [PASS] Core dependencies installed
+✓ [PASS] Package installed in editable mode
+✓ [PASS] Project structure is complete
+✓ [PASS] Configuration file exists
+✓ [PASS] Tests can be executed
+
+============================================================
+  Summary
+============================================================
+
+Checks passed: 7/7
+✓ All checks passed! Your environment is properly configured.
+```
+
+Si alguna verificació falla, l'script mostrarà els passos per corregir-ho.
 
 ## Workflow de Desenvolupament
 
