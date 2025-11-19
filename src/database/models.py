@@ -8,6 +8,8 @@ Reference:
     https://docs.sqlalchemy.org/en/20/
 """
 
+from __future__ import annotations
+
 from datetime import datetime
 from typing import List, Optional
 
