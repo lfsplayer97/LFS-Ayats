@@ -733,18 +733,67 @@ WebSocket connection failed
 ### Problem: "ModuleNotFoundError: No module named 'src'"
 
 **Symptoms:**
-```
+```python
 ModuleNotFoundError: No module named 'src'
 ```
 
-**Solutions:**
+This is one of the most common issues when first setting up LFS-Ayats or after editing code.
 
-1. **Install package in development mode**
-   ```bash
-   pip install -e .
-   ```
+**Root Cause:**
 
-2. **Add to PYTHONPATH** (alternative)
+Python cannot find the `src` module because the package is not installed or is not in Python's module search path. This happens when:
+- You cloned the repository but didn't install it in development mode
+- You're working in a different virtual environment than where you installed it
+- The package was installed but you've since changed directories or environments
+
+**Recommended Solution: Install in Development Mode**
+
+The **best solution** is to install the package in editable/development mode:
+
+```bash
+# 1. Navigate to project root
+cd /path/to/LFS-Ayats
+
+# 2. Activate your virtual environment (if using one)
+source venv/bin/activate  # Linux/macOS
+# or
+venv\Scripts\activate     # Windows
+
+# 3. Install in editable mode
+pip install -e .
+```
+
+**What does `pip install -e .` do?**
+
+- **`-e`** stands for "editable" or "development" mode
+- **`.`** means "install from the current directory" (reads `setup.py`)
+- Creates a **symbolic link** from your Python installation to your source code
+- Code changes are **immediately reflected** without reinstalling
+- Makes `src` importable as a proper Python package
+
+**Verify Installation:**
+
+```bash
+# Check package is installed
+pip show lfs-ayats
+
+# Expected output:
+# Name: lfs-ayats
+# Version: 0.1.0
+# Location: /path/to/LFS-Ayats/src
+# Editable project location: /path/to/LFS-Ayats/src
+```
+
+**Test Import:**
+
+```bash
+# This should work without errors
+python -c "import src; print('✓ Success: src module imported')"
+```
+
+**Alternative Solutions (Not Recommended)**
+
+2. **Add to PYTHONPATH** (temporary, lost after closing terminal)
    ```bash
    # Linux/macOS
    export PYTHONPATH="${PYTHONPATH}:$(pwd)"
@@ -753,11 +802,40 @@ ModuleNotFoundError: No module named 'src'
    set PYTHONPATH=%PYTHONPATH%;%CD%
    ```
 
-3. **Run from correct directory**
+3. **Run from correct directory** (only works for current directory)
    ```bash
    cd LFS-Ayats  # Project root
    python examples/basic_connection.py
    ```
+
+**Common Mistakes:**
+
+❌ **Forgetting to activate virtual environment before running `pip install -e .`**
+```bash
+# Wrong: Installing outside venv
+pip install -e .
+
+# Correct: Activate venv first
+source venv/bin/activate  # Then install
+pip install -e .
+```
+
+❌ **Running from wrong directory**
+```bash
+# Wrong: In subdirectory
+cd src/
+pip install -e .  # Won't find setup.py
+
+# Correct: From project root
+cd /path/to/LFS-Ayats
+pip install -e .
+```
+
+❌ **Not installing at all and expecting imports to work**
+```python
+# This will fail without installation:
+from src.connection import InSimClient  # ❌ ModuleNotFoundError
+```
 
 ### Problem: Import Errors for Dependencies
 
