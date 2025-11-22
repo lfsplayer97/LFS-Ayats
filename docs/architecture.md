@@ -1,14 +1,14 @@
-# Arquitectura del Sistema LFS-Ayats
+# LFS-Ayats System Architecture
 
-Aquesta documentació descriu l'arquitectura interna del sistema LFS-Ayats, els seus components principals, patrons de disseny utilitzats i el flux de dades.
+This documentation describes the internal architecture of the LFS-Ayats system, its main components, design patterns used, and data flow.
 
-## Visió General
+## Overview
 
-LFS-Ayats és un sistema modular de telemetria per Live for Speed construït amb Python. Utilitza una arquitectura en capes que separa responsabilitats i facilita el manteniment i extensió.
+LFS-Ayats is a modular telemetry system for Live for Speed built with Python. It uses a layered architecture that separates responsibilities and facilitates maintenance and extension.
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                   Presentació                        │
+│                   Presentation                       │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────┐  │
 │  │  Dashboard   │  │   REST API   │  │   CLI    │  │
 │  │   (Dash)     │  │  (FastAPI)   │  │  Tools   │  │
@@ -16,7 +16,7 @@ LFS-Ayats és un sistema modular de telemetria per Live for Speed construït amb
 └─────────────────────────────────────────────────────┘
                          │
 ┌─────────────────────────────────────────────────────┐
-│                  Lògica de Negoci                    │
+│                  Business Logic                      │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────┐  │
 │  │  Analysis    │  │Visualization │  │  Export  │  │
 │  │    Module    │  │    Module    │  │  Module  │  │
@@ -24,7 +24,7 @@ LFS-Ayats és un sistema modular de telemetria per Live for Speed construït amb
 └─────────────────────────────────────────────────────┘
                          │
 ┌─────────────────────────────────────────────────────┐
-│                  Capa de Dades                       │
+│                    Data Layer                        │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────┐  │
 │  │  Telemetry   │  │   Database   │  │  Config  │  │
 │  │  Collector   │  │  Repository  │  │  Manager │  │
@@ -32,7 +32,7 @@ LFS-Ayats és un sistema modular de telemetria per Live for Speed construït amb
 └─────────────────────────────────────────────────────┘
                          │
 ┌─────────────────────────────────────────────────────┐
-│                  Capa de Connexió                    │
+│                 Connection Layer                     │
 │  ┌──────────────┐  ┌──────────────┐                 │
 │  │  InSim       │  │   Packet     │                 │
 │  │  Client      │  │   Handler    │                 │
@@ -46,71 +46,71 @@ LFS-Ayats és un sistema modular de telemetria per Live for Speed construït amb
               └─────────────────────┘
 ```
 
-## Components Principals
+## Main Components
 
-### 1. Mòdul de Connexió (`src/connection/`)
+### 1. Connection Module (`src/connection/`)
 
-**Responsabilitat**: Gestió de la comunicació amb el servidor LFS mitjançant el protocol InSim.
+**Responsibility**: Manages communication with the LFS server through the InSim protocol.
 
 #### `InSimClient`
 
 ```python
 class InSimClient:
-    """Client per connectar amb LFS via InSim."""
+    """Client to connect with LFS via InSim."""
     
     def __init__(self, host, port, admin_password, app_name):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # ...
     
     def connect(self):
-        """Estableix connexió TCP amb LFS."""
+        """Establishes TCP connection with LFS."""
         
     def initialize(self):
-        """Envia paquet IS_ISI per inicialitzar InSim."""
+        """Sends IS_ISI packet to initialize InSim."""
         
     def send_packet(self, packet):
-        """Envia paquet binari al servidor."""
+        """Sends binary packet to the server."""
         
     def receive_packet(self):
-        """Rep i parseja paquet del servidor."""
+        """Receives and parses packet from the server."""
 ```
 
-**Dependències**:
-- `socket` - Comunicació TCP/UDP
-- `struct` - Serialització binària de paquets
+**Dependencies**:
+- `socket` - TCP/UDP communication
+- `struct` - Binary packet serialization
 
-**Interaccions**:
-- Rep paquets de LFS
-- Envia paquets de control a LFS
-- Notifica `PacketHandler` de nous paquets
+**Interactions**:
+- Receives packets from LFS
+- Sends control packets to LFS
+- Notifies `PacketHandler` of new packets
 
 #### `PacketHandler`
 
 ```python
 class PacketHandler:
-    """Parseja paquets InSim rebuts."""
+    """Parses received InSim packets."""
     
     def handle_packet(self, raw_data):
-        """Determina tipus de paquet i crida handler apropiat."""
+        """Determines packet type and calls appropriate handler."""
         
     def parse_is_mci(self, data):
-        """Parseja paquet Multi Car Info (telemetria)."""
+        """Parses Multi Car Info packet (telemetry)."""
         
     def parse_is_lap(self, data):
-        """Parseja paquet de volta completada."""
+        """Parses completed lap packet."""
 ```
 
-**Patró**: Strategy Pattern per gestió de diferents tipus de paquets
+**Pattern**: Strategy Pattern for handling different packet types
 
-### 2. Mòdul de Telemetria (`src/telemetry/`)
+### 2. Telemetry Module (`src/telemetry/`)
 
-**Responsabilitat**: Recollida, validació i processament de dades telemètriques.
+**Responsibility**: Collection, validation, and processing of telemetry data.
 
 #### `TelemetryCollector`
 
 ```python
 class TelemetryCollector:
-    """Recull i emmagatzema telemetria en temps real."""
+    """Collects and stores telemetry in real-time."""
     
     def __init__(self, client: InSimClient, max_history: int = 10000):
         self.client = client
@@ -118,156 +118,156 @@ class TelemetryCollector:
         self.telemetry_history = defaultdict(list)
         
     def start(self):
-        """Inicia recollida en background thread."""
+        """Starts collection in background thread."""
         
     def stop(self):
-        """Atura recollida."""
+        """Stops collection."""
         
     def register_callback(self, event_type, callback):
-        """Registra callback per tipus d'esdeveniment."""
+        """Registers callback for event type."""
 ```
 
-**Patró**: Observer Pattern per callbacks
+**Pattern**: Observer Pattern for callbacks
 
-**Buffer de Telemetria**:
+**Telemetry Buffer**:
 ```python
 class TelemetryBuffer:
-    """Buffer circular amb auto-flush."""
+    """Circular buffer with auto-flush."""
     
     def __init__(self, max_size=1000, auto_flush=True):
         self.buffer = deque(maxlen=max_size)
         
     def add(self, data):
-        """Afegeix dada al buffer."""
+        """Adds data to buffer."""
         
     def flush(self):
-        """Buida buffer i crida callbacks."""
+        """Empties buffer and calls callbacks."""
 ```
 
 #### `TelemetryProcessor`
 
 ```python
 class TelemetryProcessor:
-    """Valida i processa dades telemètriques."""
+    """Validates and processes telemetry data."""
     
     def validate_speed(self, speed: float) -> bool:
-        """Valida rang de velocitat."""
+        """Validates speed range."""
         
     def validate_rpm(self, rpm: int) -> bool:
-        """Valida rang de RPM."""
+        """Validates RPM range."""
         
     def calculate_derived_values(self, telemetry):
-        """Calcula valors derivats (acceleració, etc)."""
+        """Calculates derived values (acceleration, etc)."""
 ```
 
-**Validacions**:
-- Rangs vàlids per cada variable
-- Detecció de valors anòmals
-- Càlcul de mètriques derivades
+**Validations**:
+- Valid ranges for each variable
+- Anomalous value detection
+- Derived metrics calculation
 
-### 3. Mòdul d'Anàlisi (`src/analysis/`)
+### 3. Analysis Module (`src/analysis/`)
 
-**Responsabilitat**: Anàlisi avançada de dades telemètriques.
+**Responsibility**: Advanced analysis of telemetry data.
 
 ```python
 class TelemetryAnalyzer:
-    """Analitza dades telemètriques."""
+    """Analyzes telemetry data."""
     
     def detect_anomalies(self, data):
-        """Detecta anomalies amb Isolation Forest."""
+        """Detects anomalies using Isolation Forest."""
         
     def predict_lap_time(self, features):
-        """Prediu temps de volta amb ML."""
+        """Predicts lap time using ML."""
         
     def analyze_sectors(self, lap_data):
-        """Analitza sectors d'una volta."""
+        """Analyzes sectors of a lap."""
 ```
 
-**Algorismes**:
-- Isolation Forest per anomalies
-- Linear Regression per prediccions
-- Clustering amb K-means
+**Algorithms**:
+- Isolation Forest for anomalies
+- Linear Regression for predictions
+- Clustering with K-means
 
-### 4. Mòdul de Visualització (`src/visualization/`)
+### 4. Visualization Module (`src/visualization/`)
 
-**Responsabilitat**: Generació de gràfics i dashboards interactius.
+**Responsibility**: Generation of charts and interactive dashboards.
 
 #### Components
 
 ```python
-# Dashboard principal (Dash)
+# Main dashboard (Dash)
 class TelemetryDashboard:
-    """Dashboard web en temps real."""
+    """Real-time web dashboard."""
     
     def __init__(self, collector):
         self.app = dash.Dash(__name__)
         self.collector = collector
         
     def create_layout(self):
-        """Crea layout del dashboard."""
+        """Creates dashboard layout."""
         
     def run(self, port=8050):
-        """Executa servidor web."""
+        """Runs web server."""
 
 
-# Comparador de voltes
+# Lap comparator
 class LapComparator:
-    """Compara múltiples voltes."""
+    """Compares multiple laps."""
     
     def add_lap(self, name, data):
-        """Afegeix volta per comparar."""
+        """Adds lap for comparison."""
         
     def create_comparison_plot(self):
-        """Genera gràfic de comparació."""
+        """Generates comparison chart."""
 
 
-# Gràfics específics
+# Specific charts
 def create_speed_vs_distance_plot(telemetry):
-    """Crea gràfic velocitat vs distància."""
+    """Creates speed vs distance chart."""
 
 def create_track_map(telemetry, show_speed_colors=True):
-    """Crea mapa del circuit amb velocitats."""
+    """Creates track map with speeds."""
 ```
 
-**Tecnologies**:
-- Plotly per gràfics interactius
-- Dash per dashboard web
-- Matplotlib per gràfics estàtics
+**Technologies**:
+- Plotly for interactive charts
+- Dash for web dashboard
+- Matplotlib for static charts
 
-### 5. Mòdul d'Exportació (`src/export/`)
+### 5. Export Module (`src/export/`)
 
-**Responsabilitat**: Exportació de dades a diversos formats.
+**Responsibility**: Data export to various formats.
 
 ```python
 class CSVExporter:
-    """Exporta telemetria a CSV."""
+    """Exports telemetry to CSV."""
     
     def export(self, data, filepath):
-        """Exporta dades a CSV."""
+        """Exports data to CSV."""
 
 
 class JSONExporter:
-    """Exporta telemetria a JSON."""
+    """Exports telemetry to JSON."""
     
     def export(self, data, filepath):
-        """Exporta dades a JSON."""
+        """Exports data to JSON."""
 
 
 class DatabaseExporter:
-    """Exporta telemetria a base de dades."""
+    """Exports telemetry to database."""
     
     def export(self, data, session_info):
-        """Emmagatzema dades a DB."""
+        """Stores data in DB."""
 ```
 
-**Patró**: Factory Pattern per crear exporters
+**Pattern**: Factory Pattern for creating exporters
 
-### 6. Mòdul de Base de Dades (`src/database/`)
+### 6. Database Module (`src/database/`)
 
-**Responsabilitat**: Persistència de dades amb ORM.
+**Responsibility**: Data persistence with ORM.
 
 ```python
-# Models SQLAlchemy
+# SQLAlchemy Models
 class Session(Base):
     __tablename__ = 'sessions'
     # ...
@@ -281,25 +281,25 @@ class TelemetryPoint(Base):
     # ...
 
 
-# Repository per accés a dades
+# Repository for data access
 class TelemetryRepository:
-    """Capa d'accés a dades."""
+    """Data access layer."""
     
     def create_session(self, **kwargs):
-        """Crea nova sessió."""
+        """Creates new session."""
         
     def get_best_laps(self, track=None, limit=10):
-        """Obté millors voltes."""
+        """Gets best laps."""
         
     def query_telemetry(self, filters):
-        """Consulta telemetria amb filtres."""
+        """Queries telemetry with filters."""
 ```
 
-**Patró**: Repository Pattern per abstracció de DB
+**Pattern**: Repository Pattern for DB abstraction
 
 ### 7. REST API (`src/api/`)
 
-**Responsabilitat**: Proporcionar accés programàtic via HTTP.
+**Responsibility**: Provides programmatic access via HTTP.
 
 ```python
 # FastAPI application
@@ -308,43 +308,43 @@ app = FastAPI(title="LFS-Ayats API")
 # Routers
 @app.get("/api/v1/sessions")
 def list_sessions():
-    """Llista sessions."""
+    """Lists sessions."""
 
 @app.get("/api/v1/{lap_id}/telemetry")
 def get_lap_telemetry(lap_id: int):
-    """Obté telemetria d'una volta."""
+    """Gets telemetry for a lap."""
 
 @app.websocket("/api/v1/telemetry/live")
 async def telemetry_stream(websocket):
-    """Streaming de telemetria en temps real."""
+    """Real-time telemetry streaming."""
 ```
 
-**Funcionalitats**:
-- Endpoints RESTful
-- WebSocket per streaming
-- Documentació automàtica (Swagger)
-- CORS i autenticació
+**Features**:
+- RESTful endpoints
+- WebSocket for streaming
+- Automatic documentation (Swagger)
+- CORS and authentication
 
-### 8. Configuració (`src/config/`)
+### 8. Configuration (`src/config/`)
 
-**Responsabilitat**: Gestió centralitzada de configuració.
+**Responsibility**: Centralized configuration management.
 
 ```python
 class Settings:
-    """Configuració de l'aplicació."""
+    """Application configuration."""
     
     def __init__(self, config_file="config.yaml"):
         self.config = self._load_config(config_file)
         
     def get(self, key, default=None):
-        """Obté valor de configuració."""
+        """Gets configuration value."""
 ```
 
-**Patró**: Singleton Pattern per configuració global
+**Pattern**: Singleton Pattern for global configuration
 
-## Flux de Dades
+## Data Flow
 
-### 1. Recollida de Telemetria
+### 1. Telemetry Collection
 
 ```
 LFS Server
@@ -361,14 +361,14 @@ PacketHandler
     ▼
 TelemetryCollector
     │
-    ├─► (4a) Callbacks notificats
+    ├─► (4a) Callbacks notified
     │
-    ├─► (4b) Buffer actualitzat
+    ├─► (4b) Buffer updated
     │
-    └─► (4c) History guardat
+    └─► (4c) History saved
 ```
 
-### 2. Visualització en Temps Real
+### 2. Real-Time Visualization
 
 ```
 TelemetryCollector
@@ -386,7 +386,7 @@ Plotly Graphs
 Web Browser
 ```
 
-### 3. Anàlisi i Exportació
+### 3. Analysis and Export
 
 ```
 TelemetryCollector
@@ -404,38 +404,38 @@ Exporter
     └─► (3c) Database
 ```
 
-## Patrons de Disseny Utilitzats
+## Design Patterns Used
 
 ### 1. Observer Pattern (Callbacks)
 
 ```python
-# TelemetryCollector actua com a Subject
+# TelemetryCollector acts as Subject
 collector.register_callback("telemetry", my_callback)
 
-# Quan arriben dades, notifica observers
+# When data arrives, notifies observers
 def _trigger_callbacks(self, event_type, data):
     for callback in self.callbacks.get(event_type, []):
         callback(data)
 ```
 
-**Avantatges**:
-- Desacoblament entre recollida i processament
-- Múltiples consumers poden escoltar mateix esdeveniment
-- Facilita extensió sense modificar codi existent
+**Advantages**:
+- Decoupling between collection and processing
+- Multiple consumers can listen to same event
+- Facilitates extension without modifying existing code
 
-### 2. Repository Pattern (Base de Dades)
+### 2. Repository Pattern (Database)
 
 ```python
-# Abstracció de l'accés a dades
+# Data access abstraction
 class TelemetryRepository:
     def get_session(self, session_id):
         return self.db_session.query(Session).filter_by(id=session_id).first()
 ```
 
-**Avantatges**:
-- Separa lògica de negoci de persistència
-- Facilita testing amb mock repositories
-- Permet canviar implementació de DB sense afectar codi
+**Advantages**:
+- Separates business logic from persistence
+- Facilitates testing with mock repositories
+- Allows changing DB implementation without affecting code
 
 ### 3. Factory Pattern (Exporters)
 
@@ -450,10 +450,10 @@ class ExporterFactory:
         # ...
 ```
 
-**Avantatges**:
-- Creació d'objectes centralitzada
-- Facilita afegir nous formats
-- Client no necessita conèixer implementacions
+**Advantages**:
+- Centralized object creation
+- Facilitates adding new formats
+- Client doesn't need to know implementations
 
 ### 4. Strategy Pattern (Packet Handlers)
 
@@ -472,12 +472,12 @@ class PacketHandler:
             return handler(data)
 ```
 
-**Avantatges**:
-- Algoritmes intercanviables
-- Fàcil afegir nous tipus de paquets
-- Reducció de condicionals
+**Advantages**:
+- Interchangeable algorithms
+- Easy to add new packet types
+- Reduction of conditionals
 
-### 5. Singleton Pattern (Configuració)
+### 5. Singleton Pattern (Configuration)
 
 ```python
 class Settings:
@@ -489,17 +489,17 @@ class Settings:
         return cls._instance
 ```
 
-**Avantatges**:
-- Punt d'accés global a configuració
-- Evita múltiples càrregues del fitxer
-- Garanteix una sola instància
+**Advantages**:
+- Global access point to configuration
+- Avoids multiple file loads
+- Guarantees single instance
 
-## Threading i Concurrència
+## Threading and Concurrency
 
-### Model de Threading
+### Threading Model
 
 ```python
-# TelemetryCollector utilitza thread separat per recollida
+# TelemetryCollector uses separate thread for collection
 class TelemetryCollector:
     def start(self):
         self._running = True
@@ -513,15 +513,15 @@ class TelemetryCollector:
             self._process_packet(packet)
 ```
 
-**Sincronització**:
-- `threading.Lock()` per protegir dades compartides
-- `queue.Queue()` per comunicació entre threads
-- Threads daemon per cleanup automàtic
+**Synchronization**:
+- `threading.Lock()` to protect shared data
+- `queue.Queue()` for inter-thread communication
+- Daemon threads for automatic cleanup
 
-### Async/Await (API i WebSocket)
+### Async/Await (API and WebSocket)
 
 ```python
-# FastAPI utilitza async per millor rendiment
+# FastAPI uses async for better performance
 @app.websocket("/api/v1/telemetry/live")
 async def telemetry_stream(websocket: WebSocket):
     await websocket.accept()
@@ -530,18 +530,18 @@ async def telemetry_stream(websocket: WebSocket):
         await websocket.send_json(data)
 ```
 
-## Gestió d'Errors
+## Error Handling
 
-### Estratègia de Gestió d'Errors
+### Error Handling Strategy
 
-1. **Validació d'Entrada**:
+1. **Input Validation**:
    ```python
    def validate_speed(self, speed):
        if not 0 <= speed <= 500:
            raise ValueError(f"Invalid speed: {speed}")
    ```
 
-2. **Recuperació Automàtica**:
+2. **Automatic Recovery**:
    ```python
    def connect(self, max_retries=3):
        for attempt in range(max_retries):
@@ -553,7 +553,7 @@ async def telemetry_stream(websocket: WebSocket):
        raise ConnectionError("Max retries exceeded")
    ```
 
-3. **Logging Detallat**:
+3. **Detailed Logging**:
    ```python
    logger.error(f"Failed to process packet: {e}", exc_info=True)
    ```
@@ -567,13 +567,13 @@ async def telemetry_stream(websocket: WebSocket):
            return self._get_from_database()
    ```
 
-## Rendiment i Optimització
+## Performance and Optimization
 
-### Estratègies d'Optimització
+### Optimization Strategies
 
-1. **Buffer Circular**:
+1. **Circular Buffer**:
    ```python
-   self.buffer = deque(maxlen=1000)  # Evita creixement indefinit
+   self.buffer = deque(maxlen=1000)  # Prevents indefinite growth
    ```
 
 2. **Batch Operations**:
@@ -593,41 +593,41 @@ async def telemetry_stream(websocket: WebSocket):
        # ...
    ```
 
-5. **Índexs de Base de Dades**:
+5. **Database Indexes**:
    ```python
    Index('idx_lap_time', Lap.lap_time)
    Index('idx_session_track', Session.track)
    ```
 
-## Extensibilitat
+## Extensibility
 
-### Afegir Nou Tipus de Paquet
+### Adding New Packet Type
 
-1. Definir tipus a `PacketType` enum
-2. Crear mètode parser a `PacketHandler`
-3. Registrar handler al diccionari
-4. Documentar estructura del paquet
+1. Define type in `PacketType` enum
+2. Create parser method in `PacketHandler`
+3. Register handler in dictionary
+4. Document packet structure
 
-### Afegir Nou Format d'Exportació
+### Adding New Export Format
 
-1. Crear classe que hereta de `BaseExporter`
-2. Implementar mètode `export()`
-3. Afegir a `ExporterFactory`
-4. Escriure tests
+1. Create class that inherits from `BaseExporter`
+2. Implement `export()` method
+3. Add to `ExporterFactory`
+4. Write tests
 
-### Afegir Nova Visualització
+### Adding New Visualization
 
-1. Crear funció a `src/visualization/plots.py`
-2. Seguir convenció de noms `create_*_plot()`
-3. Retornar figura de Plotly
-4. Documentar paràmetres
+1. Create function in `src/visualization/plots.py`
+2. Follow naming convention `create_*_plot()`
+3. Return Plotly figure
+4. Document parameters
 
-## Referències
+## References
 
-- [Protocol InSim](insim_protocol.md)
+- [InSim Protocol](insim_protocol.md)
 - [API Reference](api_reference.md)
 - [Testing Guide](contributing/testing-guide.md)
 
 ---
 
-Aquesta arquitectura permet un sistema robust, mantenible i extensible. 🏗️
+This architecture enables a robust, maintainable, and extensible system. 🏗️
