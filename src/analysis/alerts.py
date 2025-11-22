@@ -92,12 +92,12 @@ class AlertSystem:
     Alert management system.
 
     Manages creation, distribution and alert history
-    del sistema d'anàlisi telemètric.
+    of the telemetry analysis system.
 
     Example:
         >>> system = AlertSystem()
         >>> system.register_handler(ConsoleAlertHandler())
-        >>> alert = Alert(AlertLevel.WARNING, "Temperatura alta")
+        >>> alert = Alert(AlertLevel.WARNING, "High temperature")
         >>> system.trigger_alert(alert)
     """
 
@@ -152,11 +152,11 @@ class AlertSystem:
         Dispara una alerta.
 
         Args:
-            alert: Alerta a disparar
+            alert: Alert to trigger
             min_interval: Minimum interval between alerts of the same type (seconds)
 
         Returns:
-            True si l'alerta s'ha processat, False si s'ha filtrat
+            True if the alert was processed, False if filtered
 
         Example:
             >>> system = AlertSystem()
@@ -211,10 +211,10 @@ class AlertSystem:
             level: Nivell de l'alerta
             message: Missatge de l'alerta
             data: Additional data
-            min_interval: Interval mínim entre alertes
+            min_interval: Minimum interval between alerts
 
         Returns:
-            True si l'alerta s'ha processat
+            True if the alert was processed
 
         Example:
             >>> system = AlertSystem()

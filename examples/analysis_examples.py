@@ -170,7 +170,7 @@ def example_4_lap_comparison():
     # Create comparator
     comparator = AdvancedComparator()
 
-    # Dades de dues voltes
+    # Data for two laps
     lap1 = {
         "lap_id": 5,
         "total_time": 85.5,

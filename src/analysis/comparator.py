@@ -1,8 +1,8 @@
 """
 Advanced Comparator
-Comparació avançada de voltes i anàlisi de diferències.
+Comparació avançada de laps i anàlisi de diferències.
 
-Aquest mòdul proporciona eines per comparar voltes en detall,
+Aquest mòdul proporciona eines per comparar laps en detall,
 identificar diferències de rendiment i generar suggeriments de millora.
 """
 
@@ -92,7 +92,7 @@ class AdvancedComparator:
         self.comparison_cache[cache_key] = comparison
 
         logger.info(
-            f"Comparació completada: volta {lap1_id} vs {lap2_id}, "
+            f"Comparison completed: lap {lap1_id} vs {lap2_id}, "
             f"diferència: {time_difference:+.3f}s"
         )
 
@@ -102,14 +102,14 @@ class AdvancedComparator:
         self, lap1_data: Dict[str, Any], lap2_data: Dict[str, Any]
     ) -> List[SectorComparison]:
         """
-        Compara temps de sectors entre dues voltes.
+        Compara sector times entre dues laps.
 
         Args:
             lap1_data: Data from the first lap
             lap2_data: Data from the second lap
 
         Returns:
-            Llista de SectorComparison
+            List of SectorComparison
         """
         sector_comparisons = []
 
@@ -136,14 +136,14 @@ class AdvancedComparator:
         self, lap1_data: Dict[str, Any], lap2_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Compara traces de velocitat entre dues voltes.
+        Compara traces de velocitat entre dues laps.
 
         Args:
             lap1_data: Data from the first lap
             lap2_data: Data from the second lap
 
         Returns:
-            Diccionari amb comparació de velocitats
+            Dictionary amb comparació de velocitats
         """
         lap1_telemetry = lap1_data.get("telemetry", [])
         lap2_telemetry = lap2_data.get("telemetry", [])
@@ -175,14 +175,14 @@ class AdvancedComparator:
         self, lap1_data: Dict[str, Any], lap2_data: Dict[str, Any]
     ) -> float:
         """
-        Compara les línies de carrera entre dues voltes.
+        Compara les línies de carrera entre dues laps.
 
         Args:
             lap1_data: Data from the first lap
             lap2_data: Data from the second lap
 
         Returns:
-            Diferència mitjana en metres entre trajectòries
+            Diferència average en metres entre trajectòries
         """
         lap1_telemetry = lap1_data.get("telemetry", [])
         lap2_telemetry = lap2_data.get("telemetry", [])
@@ -236,7 +236,7 @@ class AdvancedComparator:
             line_difference: Diferència de línia de carrera
 
         Returns:
-            Llista de suggeriments
+            List of suggeriments
         """
         suggestions = []
 
@@ -251,16 +251,16 @@ class AdvancedComparator:
         # Suggeriments basats en velocitat
         if speed_comparison:
             avg_diff = speed_comparison.get("avg_speed_diff", 0)
-            if avg_diff < -1.0:  # Velocitat mitjana inferior
+            if avg_diff < -1.0:  # Velocitat average inferior
                 suggestions.append(
-                    f"Augmentar velocitat mitjana: "
+                    f"Augmentar velocitat average: "
                     f"actualment {abs(avg_diff):.1f} m/s més lenta"
                 )
 
         # Suggeriments basats en línia de carrera
         if line_difference > 2.0:  # Diferència significativa (>2m)
             suggestions.append(
-                f"Ajustar línia de carrera: diferència mitjana de {line_difference:.1f}m"
+                f"Arightar línia de carrera: diferència average de {line_difference:.1f}m"
             )
 
         return suggestions
@@ -281,7 +281,7 @@ class AdvancedComparator:
         Example:
             >>> comparator = AdvancedComparator()
             >>> delta = comparator.calculate_time_delta(lap1, lap2)
-            >>> print(f"Màxim guany: {delta.max_gain:.3f}s")
+            >>> print(f"Màxim gain: {delta.max_gain:.3f}s")
         """
         lap1_telemetry = lap1_data.get("telemetry", [])
         lap2_telemetry = lap2_data.get("telemetry", [])
@@ -327,7 +327,7 @@ class AdvancedComparator:
             lap2_data: Data from the second lap
 
         Returns:
-            Llista de diferències significatives
+            List of diferències significatives
 
         Example:
             >>> comparator = AdvancedComparator()
@@ -389,7 +389,7 @@ class AdvancedComparator:
 
         Args:
             lap1_id: ID of the first lap
-            lap2_id: ID de la segona volta
+            lap2_id: ID de la segona lap
 
         Returns:
             LapComparison si existeix, None altrament
@@ -400,4 +400,4 @@ class AdvancedComparator:
     def clear_cache(self) -> None:
         """Clear the comparisons cache."""
         self.comparison_cache.clear()
-        logger.debug("Cache de comparacions netejat")
+        logger.debug("Comparisons cache cleared")

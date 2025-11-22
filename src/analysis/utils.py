@@ -68,7 +68,7 @@ class LapComparison:
 
     Attributes:
         lap1_id: ID of the first lap
-        lap2_id: ID de la segona volta
+        lap2_id: ID de la segona lap
         time_difference: Time difference total (seconds)
         sector_comparisons: List of comparisons per sector
         speed_trace_comparison: Comparació de traces de velocitat
@@ -92,7 +92,7 @@ class BrakingPoint:
 
     Attributes:
         position: Braking point position (x, y)
-        lap: Número de volta
+        lap: Número de lap
         distance: Distància des de l'inici del sector
         speed_before: Speed before braking
         speed_after: Speed after braking
@@ -112,15 +112,15 @@ class BrakingPoint:
 @dataclass
 class ThrottleAnalysis:
     """
-    Anàlisi d'aplicació de gas en corbes.
+    Anàlisi d'throttle application en corbes.
 
     Attributes:
         corner_id: Corner identifier
-        entry_speed: Velocitat d'entrada
-        apex_speed: Velocitat a l'apex
-        exit_speed: Velocitat de sortida
-        throttle_application_point: Throttle application point (% de la corba)
-        full_throttle_point: Full throttle point (% de la corba)
+        entry_speed: Entry speed
+        apex_speed: Apex speed
+        exit_speed: Exit speed
+        throttle_application_point: Throttle application point (% of corner)
+        full_throttle_point: Full throttle point (% of corner)
         time_in_corner: Total time in corner (seconds)
     """
 
@@ -156,7 +156,7 @@ class TimeDelta:
 @dataclass
 class RacingLine:
     """
-    Línia de carrera òptima.
+    Racing line optimala.
 
     Attributes:
         points: List of points (x, y) of the trajectory
