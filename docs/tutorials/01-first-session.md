@@ -1,44 +1,44 @@
-# Tutorial 1: Primera Sessió de Telemetria
+# Tutorial 1: First Telemetry Session
 
-Aquest tutorial t'ensenyarà a recollir, analitzar i exportar dades telemètriques d'una sessió completa de conducció a Live for Speed.
+This tutorial will teach you how to collect, analyze, and export telemetry data from a complete driving session in Live for Speed.
 
-## Objectius d'Aprenentatge
+## Learning Objectives
 
-Al final d'aquest tutorial, sabràs:
+By the end of this tutorial, you will know how to:
 
-- ✅ Configurar una sessió de recollida de telemetria
-- ✅ Recollir dades en temps real durant la conducció
-- ✅ Exportar dades a formats CSV i JSON
-- ✅ Analitzar les dades recollides
-- ✅ Identificar la millor volta de la sessió
+- ✅ Configure a telemetry collection session
+- ✅ Collect data in real-time during driving
+- ✅ Export data to CSV and JSON formats
+- ✅ Analyze the collected data
+- ✅ Identify the best lap of the session
 
-## Prerequisits
+## Prerequisites
 
-- LFS-Ayats instal·lat i configurat (veure [Guia d'Inici Ràpid](../quick-start.md))
-- Live for Speed en execució amb InSim activat
-- Coneixements bàsics de Python
+- LFS-Ayats installed and configured (see [Quick Start Guide](../quick-start.md))
+- Live for Speed running with InSim enabled
+- Basic Python knowledge
 
-## Temps Estimat
+## Estimated Time
 
-30-45 minuts
+30-45 minutes
 
-## Pas 1: Preparar l'Entorn de Treball
+## Step 1: Prepare the Working Environment
 
-Crea un nou script Python per la teva primera sessió:
+Create a new Python script for your first session:
 
 ```bash
 cd LFS-Ayats
 touch my_first_session.py
 ```
 
-O utilitza el teu editor preferit per crear `my_first_session.py`.
+Or use your preferred editor to create `my_first_session.py`.
 
-## Pas 2: Importar Mòduls Necessaris
+## Step 2: Import Required Modules
 
 ```python
 """
-Primera Sessió de Telemetria
-Tutorial complet per recollir dades d'una sessió de conducció.
+First Telemetry Session
+Complete tutorial for collecting data from a driving session.
 """
 
 import sys
@@ -46,35 +46,35 @@ import time
 from pathlib import Path
 from datetime import datetime
 
-# Importar mòduls de LFS-Ayats
+# Import LFS-Ayats modules
 from src.connection import InSimClient, PacketHandler
 from src.telemetry import TelemetryCollector
 from src.export import CSVExporter, JSONExporter
 from src.utils import setup_logger
 
-# Configurar logging
+# Configure logging
 logger = setup_logger("first_session", "INFO")
 ```
 
-## Pas 3: Configurar la Connexió InSim
+## Step 3: Configure the InSim Connection
 
 ```python
 def setup_connection():
     """
-    Configura i estableix connexió amb LFS.
+    Configure and establish connection with LFS.
     
     Returns:
-        InSimClient: Client InSim connectat
+        InSimClient: Connected InSim client
     """
-    logger.info("=== Primera Sessió de Telemetria ===")
+    logger.info("=== First Telemetry Session ===")
     
-    # Configuració de connexió
+    # Connection configuration
     HOST = "127.0.0.1"
     PORT = 29999
     APP_NAME = "FirstSession"
     
     try:
-        # Crear i connectar client
+        # Create and connect client
         client = InSimClient(
             host=HOST,
             port=PORT,
@@ -83,71 +83,71 @@ def setup_connection():
         )
         
         client.connect()
-        logger.info(f"✓ Connectat a {HOST}:{PORT}")
+        logger.info(f"✓ Connected to {HOST}:{PORT}")
         
-        # Inicialitzar InSim
+        # Initialize InSim
         client.initialize()
-        logger.info("✓ InSim inicialitzat")
+        logger.info("✓ InSim initialized")
         
         return client
         
     except ConnectionError as e:
-        logger.error(f"✗ Error de connexió: {e}")
-        logger.error("  Verifica que LFS està executant amb InSim activat")
+        logger.error(f"✗ Connection error: {e}")
+        logger.error("  Verify that LFS is running with InSim enabled")
         sys.exit(1)
 ```
 
-## Pas 4: Configurar el Col·lector de Telemetria
+## Step 4: Configure the Telemetry Collector
 
 ```python
 def setup_telemetry_collector(client):
     """
-    Configura el col·lector de telemetria.
+    Configure the telemetry collector.
     
     Args:
-        client: Client InSim connectat
+        client: Connected InSim client
         
     Returns:
-        TelemetryCollector: Col·lector configurat
+        TelemetryCollector: Configured collector
     """
     collector = TelemetryCollector(client)
     
-    # Registrar callback per notificacions
+    # Register callback for notifications
     def on_lap_completed(lap_data):
-        """Callback quan es completa una volta."""
-        logger.info(f"🏁 Volta completada: {lap_data['lap_time']:.2f}s")
+        """Callback when a lap is completed."""
+        logger.info(f"🏁 Lap completed: {lap_data['lap_time']:.2f}s")
     
     def on_telemetry_update(telemetry_data):
-        """Callback per actualitzacions de telemetria."""
+        """Callback for telemetry updates."""
         if telemetry_data:
             speed = telemetry_data.get('speed', 0)
             rpm = telemetry_data.get('rpm', 0)
             gear = telemetry_data.get('gear', 0)
-            logger.debug(f"📊 Velocitat: {speed:.1f} km/h | RPM: {rpm} | Marxa: {gear}")
+            logger.debug(f"📊 Speed: {speed:.1f} km/h | RPM: {rpm} | Gear: {gear}")
     
-    # Registrar callbacks
+    # Register callbacks
     collector.register_callback("lap", on_lap_completed)
     collector.register_callback("telemetry", on_telemetry_update)
     
-    logger.info("✓ Col·lector de telemetria configurat")
+    logger.info("✓ Telemetry collector configured")
     return collector
 ```
 
-## Pas 5: Recollir Dades de la Sessió
+## Step 5: Collect Session Data
 
 ```python
 def collect_session_data(collector, duration_seconds=300):
     """
-    Recull dades durant un temps determinat.
+    Collect data for a specified duration.
     
     Args:
-        collector: Col·lector de telemetria
-        duration_seconds: Durada de la sessió en segons (per defecte 5 minuts)
+        collector: Telemetry collector
+        duration_seconds: Session duration in seconds (default 5 minutes)
     """
-    logger.info(f"🏁 Iniciant recollida de dades durant {duration_seconds} segons")
-    logger.info("   Comença a conduir pel circuit!")
+    logger.info(f"🏁 Starting data collection for {duration_seconds} seconds")
+    logger.info("   Start driving on the track!")
     
-    # Iniciar recollida
+    # Start collection
     collector.start()
     
     start_time = time.time()
@@ -155,134 +155,134 @@ def collect_session_data(collector, duration_seconds=300):
     
     try:
         while time.time() - start_time < duration_seconds:
-            # Mostrar progrés cada 30 segons
+            # Show progress every 30 seconds
             current_time = time.time()
             if current_time - last_update >= 30:
                 elapsed = int(current_time - start_time)
                 remaining = duration_seconds - elapsed
-                logger.info(f"⏱️  Temps transcorregut: {elapsed}s | Restant: {remaining}s")
+                logger.info(f"⏱️  Elapsed time: {elapsed}s | Remaining: {remaining}s")
                 last_update = current_time
             
             time.sleep(1)
     
     except KeyboardInterrupt:
-        logger.info("\n⚠️  Recollida interrompuda per l'usuari")
+        logger.info("\n⚠️  Collection interrupted by user")
     
     finally:
-        # Aturar recollida
+        # Stop collection
         collector.stop()
-        logger.info("✓ Recollida de dades finalitzada")
+        logger.info("✓ Data collection finished")
 ```
 
-## Pas 6: Analitzar les Dades Recollides
+## Step 6: Analyze the Collected Data
 
 ```python
 def analyze_session_data(collector):
     """
-    Analitza les dades recollides de la sessió.
+    Analyze the collected session data.
     
     Args:
-        collector: Col·lector amb dades
+        collector: Collector with data
         
     Returns:
-        dict: Estadístiques de la sessió
+        dict: Session statistics
     """
-    logger.info("\n=== Analitzant Dades de la Sessió ===")
+    logger.info("\n=== Analyzing Session Data ===")
     
-    # Obtenir estadístiques
+    # Get statistics
     stats = collector.get_statistics()
     
     if not stats:
-        logger.warning("⚠️  No s'han recollit dades durant la sessió")
+        logger.warning("⚠️  No data collected during the session")
         return None
     
-    # Mostrar estadístiques generals
-    logger.info("\n📊 Estadístiques Generals:")
-    logger.info(f"   • Total de mostres: {stats.get('total_samples', 0)}")
-    logger.info(f"   • Jugadors detectats: {stats.get('player_count', 0)}")
+    # Show general statistics
+    logger.info("\n📊 General Statistics:")
+    logger.info(f"   • Total samples: {stats.get('total_samples', 0)}")
+    logger.info(f"   • Players detected: {stats.get('player_count', 0)}")
     
-    # Estadístiques per jugador
+    # Statistics per player
     for player_id, player_stats in stats.get('players', {}).items():
-        logger.info(f"\n👤 Jugador {player_id}:")
-        logger.info(f"   • Mostres: {player_stats.get('sample_count', 0)}")
-        logger.info(f"   • Velocitat màxima: {player_stats.get('max_speed', 0):.1f} km/h")
-        logger.info(f"   • Velocitat mitjana: {player_stats.get('avg_speed', 0):.1f} km/h")
-        logger.info(f"   • RPM màxim: {player_stats.get('max_rpm', 0)}")
+        logger.info(f"\n👤 Player {player_id}:")
+        logger.info(f"   • Samples: {player_stats.get('sample_count', 0)}")
+        logger.info(f"   • Max speed: {player_stats.get('max_speed', 0):.1f} km/h")
+        logger.info(f"   • Average speed: {player_stats.get('avg_speed', 0):.1f} km/h")
+        logger.info(f"   • Max RPM: {player_stats.get('max_rpm', 0)}")
     
     return stats
 ```
 
-## Pas 7: Exportar les Dades
+## Step 7: Export the Data
 
 ```python
 def export_session_data(collector):
     """
-    Exporta les dades de la sessió a CSV i JSON.
+    Export the session data to CSV and JSON.
     
     Args:
-        collector: Col·lector amb dades
+        collector: Collector with data
     """
-    logger.info("\n=== Exportant Dades ===")
+    logger.info("\n=== Exporting Data ===")
     
-    # Obtenir totes les dades
+    # Get all data
     all_data = collector.get_telemetry_history()
     
     if not all_data:
-        logger.warning("⚠️  No hi ha dades per exportar")
+        logger.warning("⚠️  No data to export")
         return
     
-    # Crear directori de dades si no existeix
+    # Create data directory if it doesn't exist
     data_dir = Path("data")
     data_dir.mkdir(exist_ok=True)
     
-    # Generar nom de fitxer amb timestamp
+    # Generate filename with timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
-    # Exportar a CSV
+    # Export to CSV
     csv_filename = data_dir / f"session_{timestamp}.csv"
     csv_exporter = CSVExporter(str(csv_filename))
     csv_exporter.export(all_data)
-    logger.info(f"✓ Dades exportades a CSV: {csv_filename}")
+    logger.info(f"✓ Data exported to CSV: {csv_filename}")
     
-    # Exportar a JSON
+    # Export to JSON
     json_filename = data_dir / f"session_{timestamp}.json"
     json_exporter = JSONExporter(str(json_filename))
     json_exporter.export(all_data)
-    logger.info(f"✓ Dades exportades a JSON: {json_filename}")
+    logger.info(f"✓ Data exported to JSON: {json_filename}")
     
-    logger.info(f"\n📁 Fitxers generats:")
+    logger.info(f"\n📁 Generated files:")
     logger.info(f"   • CSV: {csv_filename}")
     logger.info(f"   • JSON: {json_filename}")
 ```
 
-## Pas 8: Funció Principal
+## Step 8: Main Function
 
 ```python
 def main():
-    """Funció principal del programa."""
+    """Main program function."""
     try:
-        # 1. Configurar connexió
+        # 1. Configure connection
         client = setup_connection()
         
-        # 2. Configurar col·lector
+        # 2. Configure collector
         collector = setup_telemetry_collector(client)
         
-        # 3. Recollir dades (5 minuts)
+        # 3. Collect data (5 minutes)
         collect_session_data(collector, duration_seconds=300)
         
-        # 4. Analitzar dades
+        # 4. Analyze data
         stats = analyze_session_data(collector)
         
-        # 5. Exportar dades
+        # 5. Export data
         if stats:
             export_session_data(collector)
         
-        # 6. Desconnectar
+        # 6. Disconnect
         client.disconnect()
-        logger.info("\n✓ Sessió finalitzada correctament")
+        logger.info("\n✓ Session finished successfully")
         
     except Exception as e:
-        logger.error(f"✗ Error durant la sessió: {e}")
+        logger.error(f"✗ Error during session: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
@@ -292,94 +292,94 @@ if __name__ == "__main__":
     main()
 ```
 
-## Executar la Sessió
+## Running the Session
 
-Amb LFS en execució i en una sessió de conducció:
+With LFS running and in a driving session:
 
 ```bash
 python my_first_session.py
 ```
 
-## Sortida Esperada
+## Expected Output
 
 ```
-INFO - === Primera Sessió de Telemetria ===
-INFO - ✓ Connectat a 127.0.0.1:29999
-INFO - ✓ InSim inicialitzat
-INFO - ✓ Col·lector de telemetria configurat
-INFO - 🏁 Iniciant recollida de dades durant 300 segons
-INFO -    Comença a conduir pel circuit!
-INFO - 🏁 Volta completada: 95.34s
-INFO - ⏱️  Temps transcorregut: 30s | Restant: 270s
-INFO - 🏁 Volta completada: 93.12s
-INFO - ⏱️  Temps transcorregut: 60s | Restant: 240s
+INFO - === First Telemetry Session ===
+INFO - ✓ Connected to 127.0.0.1:29999
+INFO - ✓ InSim initialized
+INFO - ✓ Telemetry collector configured
+INFO - 🏁 Starting data collection for 300 seconds
+INFO -    Start driving on the track!
+INFO - 🏁 Lap completed: 95.34s
+INFO - ⏱️  Elapsed time: 30s | Remaining: 270s
+INFO - 🏁 Lap completed: 93.12s
+INFO - ⏱️  Elapsed time: 60s | Remaining: 240s
 ...
-INFO - === Analitzant Dades de la Sessió ===
-INFO - 📊 Estadístiques Generals:
-INFO -    • Total de mostres: 3000
-INFO -    • Jugadors detectats: 1
-INFO - 👤 Jugador 1:
-INFO -    • Mostres: 3000
-INFO -    • Velocitat màxima: 198.5 km/h
-INFO -    • Velocitat mitjana: 142.3 km/h
-INFO -    • RPM màxim: 7800
-INFO - === Exportant Dades ===
-INFO - ✓ Dades exportades a CSV: data/session_20240115_143022.csv
-INFO - ✓ Dades exportades a JSON: data/session_20240115_143022.json
-INFO - ✓ Sessió finalitzada correctament
+INFO - === Analyzing Session Data ===
+INFO - 📊 General Statistics:
+INFO -    • Total samples: 3000
+INFO -    • Players detected: 1
+INFO - 👤 Player 1:
+INFO -    • Samples: 3000
+INFO -    • Max speed: 198.5 km/h
+INFO -    • Average speed: 142.3 km/h
+INFO -    • Max RPM: 7800
+INFO - === Exporting Data ===
+INFO - ✓ Data exported to CSV: data/session_20240115_143022.csv
+INFO - ✓ Data exported to JSON: data/session_20240115_143022.json
+INFO - ✓ Session finished successfully
 ```
 
-## Analitzar les Dades Exportades
+## Analyzing the Exported Data
 
-### Obrir el CSV amb Excel/LibreOffice
+### Open the CSV with Excel/LibreOffice
 
-Les dades CSV es poden obrir directament amb Excel o LibreOffice Calc per fer anàlisi visual.
+CSV data can be opened directly with Excel or LibreOffice Calc for visual analysis.
 
-**Columnes del CSV**:
-- `timestamp`: Moment de la mostra
-- `player_id`: ID del jugador
-- `speed`: Velocitat en km/h
-- `rpm`: Revolucions per minut
-- `gear`: Marxa actual
-- `pos_x`, `pos_y`, `pos_z`: Posició al circuit
-- `heading`: Direcció del vehicle
+**CSV Columns**:
+- `timestamp`: Sample timestamp
+- `player_id`: Player ID
+- `speed`: Speed in km/h
+- `rpm`: Revolutions per minute
+- `gear`: Current gear
+- `pos_x`, `pos_y`, `pos_z`: Track position
+- `heading`: Vehicle heading
 
-### Analitzar amb Python/Pandas
+### Analyze with Python/Pandas
 
 ```python
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Carregar dades
+# Load data
 df = pd.read_csv('data/session_20240115_143022.csv')
 
-# Estadístiques bàsiques
+# Basic statistics
 print(df.describe())
 
-# Gràfic de velocitat vs temps
+# Speed vs time plot
 plt.figure(figsize=(12, 6))
 plt.plot(df['timestamp'], df['speed'])
-plt.xlabel('Temps')
-plt.ylabel('Velocitat (km/h)')
-plt.title('Velocitat durant la Sessió')
+plt.xlabel('Time')
+plt.ylabel('Speed (km/h)')
+plt.title('Speed During Session')
 plt.xticks(rotation=45)
 plt.tight_layout()
 plt.savefig('speed_analysis.png')
-print("Gràfic guardat: speed_analysis.png")
+print("Plot saved: speed_analysis.png")
 ```
 
-## Exercicis Pràctics
+## Practical Exercises
 
-### Exercici 1: Identificar la Millor Volta
+### Exercise 1: Identify the Best Lap
 
-Modifica el codi per identificar automàticament quina va ser la volta més ràpida de la sessió.
+Modify the code to automatically identify which was the fastest lap of the session.
 
 <details>
-<summary>Veure solució</summary>
+<summary>View solution</summary>
 
 ```python
 def find_best_lap(collector):
-    """Troba la millor volta de la sessió."""
+    """Find the best lap of the session."""
     history = collector.get_telemetry_history()
     
     laps = [item for item in history if item.get('type') == 'lap']
@@ -390,110 +390,110 @@ def find_best_lap(collector):
     best_lap = min(laps, key=lambda x: x.get('lap_time', float('inf')))
     return best_lap
 
-# Afegir a la funció main():
+# Add to main() function:
 best_lap = find_best_lap(collector)
 if best_lap:
-    logger.info(f"\n🏆 Millor volta: {best_lap['lap_time']:.2f}s")
+    logger.info(f"\n🏆 Best lap: {best_lap['lap_time']:.2f}s")
 ```
 </details>
 
-### Exercici 2: Alertes de Límit de Velocitat
+### Exercise 2: Speed Limit Alerts
 
-Afegeix un callback que generi una alerta quan la velocitat superi un llindar (per exemple, 200 km/h).
+Add a callback that generates an alert when speed exceeds a threshold (e.g., 200 km/h).
 
 <details>
-<summary>Veure solució</summary>
+<summary>View solution</summary>
 
 ```python
 def on_telemetry_update(telemetry_data):
-    """Callback amb alerta de velocitat."""
+    """Callback with speed alert."""
     if telemetry_data:
         speed = telemetry_data.get('speed', 0)
         if speed > 200:
-            logger.warning(f"⚠️  Velocitat alta: {speed:.1f} km/h!")
+            logger.warning(f"⚠️  High speed: {speed:.1f} km/h!")
 ```
 </details>
 
-### Exercici 3: Exportació Personalitzada
+### Exercise 3: Custom Export
 
-Crea un format d'exportació personalitzat que només guardi les dades de les voltes completades.
+Create a custom export format that only saves data from completed laps.
 
 <details>
-<summary>Veure solució</summary>
+<summary>View solution</summary>
 
 ```python
 def export_laps_only(collector, filename):
-    """Exporta només les dades de voltes."""
+    """Export only lap data."""
     history = collector.get_telemetry_history()
     laps = [item for item in history if item.get('type') == 'lap']
     
     json_exporter = JSONExporter(filename)
     json_exporter.export(laps)
-    logger.info(f"✓ Voltes exportades: {filename}")
+    logger.info(f"✓ Laps exported: {filename}")
 ```
 </details>
 
-## Consells i Bones Pràctiques
+## Tips and Best Practices
 
-### 💡 Consell 1: Durada de la Sessió
-Per a sessions de pràctica, 5-10 minuts són suficients. Per carreres completes, ajusta `duration_seconds` segons necessitat.
+### 💡 Tip 1: Session Duration
+For practice sessions, 5-10 minutes are sufficient. For complete races, adjust `duration_seconds` as needed.
 
-### 💡 Consell 2: Gestió de Memòria
-Si la sessió és molt llarga, considera utilitzar buffers amb límit de mida per evitar problemes de memòria:
+### 💡 Tip 2: Memory Management
+If the session is very long, consider using buffers with size limits to avoid memory issues:
 
 ```python
 collector = TelemetryCollector(client, max_history=10000)
 ```
 
-### 💡 Consell 3: Verificació de Dades
-Sempre comprova que s'estan rebent dades abans d'exportar. Pots fer-ho amb:
+### 💡 Tip 3: Data Verification
+Always check that data is being received before exporting. You can do this with:
 
 ```python
 stats = collector.get_statistics()
 if stats.get('total_samples', 0) == 0:
-    logger.warning("No s'han recollit dades!")
+    logger.warning("No data collected!")
 ```
 
-### 💡 Consell 4: Gestió d'Errors
-Utilitza sempre blocs try-except per gestionar errors de connexió o d'exportació.
+### 💡 Tip 4: Error Handling
+Always use try-except blocks to handle connection or export errors.
 
-## Problemes Comuns
+## Common Issues
 
-### No es reben dades de telemetria
+### No telemetry data received
 
-**Causa**: El vehicle està aturat o en parc tancat.
+**Cause**: The vehicle is stopped or in the pits.
 
-**Solució**: Condueix activament pel circuit. InSim només envia telemetria quan hi ha activitat.
+**Solution**: Drive actively on the track. InSim only sends telemetry when there is activity.
 
-### Fitxers no es guarden
+### Files not being saved
 
-**Causa**: Permisos d'escriptura o directori inexistent.
+**Cause**: Write permissions or missing directory.
 
-**Solució**: Verifica que el directori `data/` existeix i tens permisos d'escriptura.
+**Solution**: Verify that the `data/` directory exists and you have write permissions.
 
-### Connexió perduda durant la sessió
+### Connection lost during session
 
-**Causa**: LFS tancat o pèrdua de connexió de xarxa.
+**Cause**: LFS closed or network connection loss.
 
-**Solució**: El codi inclou gestió d'errors. Les dades recollides fins al moment es guardaran.
+**Solution**: The code includes error handling. Data collected up to that point will be saved.
 
-## Pròxims Passos
+## Next Steps
 
-Ara que saps recollir dades d'una sessió, estàs preparat per:
+Now that you know how to collect session data, you're ready for:
 
-1. **[Tutorial 2: Anàlisi de Voltes](02-lap-analysis.md)** - Aprèn a comparar voltes i identificar àrees de millora
-2. **[Tutorial 3: Dashboard en Temps Real](03-real-time-dashboard.md)** - Crea un dashboard personalitzat
-3. **[Tutorial 4: Anàlisi Avançada](04-advanced-analysis.md)** - Utilitza tècniques avançades d'anàlisi
+1. **[Tutorial 2: Lap Analysis](02-lap-analysis.md)** - Learn to compare laps and identify areas for improvement
+2. **[Tutorial 3: Real-Time Dashboard](03-real-time-dashboard.md)** - Create a custom dashboard
+3. **[Tutorial 4: Advanced Analysis](04-advanced-analysis.md)** - Use advanced analysis techniques
 
-## Recursos Addicionals
+## Additional Resources
 
-- [Documentació de TelemetryCollector](../api_reference.md#telemetrycollector)
-- [Formats d'Exportació](../api_reference.md#export-formats)
-- [Protocol InSim](../insim_protocol.md)
-- [Exemples Avançats](../../examples/)
+- [TelemetryCollector Documentation](../api_reference.md#telemetrycollector)
+- [Export Formats](../api_reference.md#export-formats)
+- [InSim Protocol](../insim_protocol.md)
+- [Advanced Examples](../../examples/)
 
 ---
 
-**¡Felicitats!** Has completat el teu primer tutorial. Ara tens les bases per començar a treballar amb telemetria de LFS! 🏎️
+**Congratulations!** You've completed your first tutorial. You now have the foundation to start working with LFS telemetry! 🏎️
 
-Per dubtes o problemes, consulta la [FAQ](../faq.md) o obre un [issue a GitHub](https://github.com/lfsplayer97/LFS-Ayats/issues).
+For questions or issues, check the [FAQ](../faq.md) or open an [issue on GitHub](https://github.com/lfsplayer97/LFS-Ayats/issues).
