@@ -1,28 +1,28 @@
-# Tutorial 3: Dashboard en Temps Real
+# Tutorial 3: Real-Time Dashboard
 
-Aquest tutorial t'ensenyarà a crear i personalitzar un dashboard web interactiu per visualitzar telemetria en temps real.
+This tutorial will teach you how to create and customize an interactive web dashboard to visualize telemetry in real-time.
 
-## Objectius
+## Objectives
 
-- ✅ Crear un dashboard web amb Dash
-- ✅ Mostrar gràfics en temps real
-- ✅ Personalitzar widgets i indicadors
-- ✅ Afegir alertes personalitzades
-- ✅ Configurar actualitzacions automàtiques
+- ✅ Create a web dashboard with Dash
+- ✅ Display real-time graphs
+- ✅ Customize widgets and indicators
+- ✅ Add custom alerts
+- ✅ Configure automatic updates
 
-## Prerequisits
+## Prerequisites
 
-- Tutorials 1 i 2 completats
-- LFS en execució amb InSim actiu
+- Tutorials 1 and 2 completed
+- LFS running with InSim active
 
-## Temps Estimat: 30-45 minuts
+## Estimated Time: 30-45 minutes
 
-## Pas 1: Estructura Bàsica del Dashboard
+## Step 1: Basic Dashboard Structure
 
 ```python
 """
-Dashboard en Temps Real
-Tutorial per crear un dashboard interactiu amb Dash.
+Real-Time Dashboard
+Tutorial for creating an interactive dashboard with Dash.
 """
 
 import dash
@@ -38,25 +38,25 @@ from src.utils import setup_logger
 
 logger = setup_logger("dashboard", "INFO")
 
-# Inicialitzar aplicació Dash
+# Initialize Dash application
 app = dash.Dash(__name__)
 
-# Configurar InSim
+# Configure InSim
 client = InSimClient(host="127.0.0.1", port=29999)
 collector = TelemetryCollector(client)
 ```
 
-## Pas 2: Layout del Dashboard
+## Step 2: Dashboard Layout
 
 ```python
 app.layout = html.Div([
-    html.H1("LFS Telemetria en Temps Real", 
+    html.H1("LFS Real-Time Telemetry", 
             style={'textAlign': 'center', 'color': '#2c3e50'}),
     
     html.Div([
-        # Indicadors principals
+        # Main indicators
         html.Div([
-            html.H3("Velocitat", style={'textAlign': 'center'}),
+            html.H3("Speed", style={'textAlign': 'center'}),
             html.H2(id='speed-indicator', 
                    children='0 km/h',
                    style={'textAlign': 'center', 'color': '#e74c3c'})
@@ -70,14 +70,14 @@ app.layout = html.Div([
         ], className='four columns'),
         
         html.Div([
-            html.H3("Marxa", style={'textAlign': 'center'}),
+            html.H3("Gear", style={'textAlign': 'center'}),
             html.H2(id='gear-indicator',
                    children='N',
                    style={'textAlign': 'center', 'color': '#2ecc71'})
         ], className='four columns'),
     ], className='row'),
     
-    # Gràfics
+    # Graphs
     html.Div([
         dcc.Graph(id='speed-graph'),
         dcc.Graph(id='rpm-graph'),
@@ -87,7 +87,7 @@ app.layout = html.Div([
         dcc.Graph(id='track-map'),
     ]),
     
-    # Interval per actualitzacions
+    # Interval for updates
     dcc.Interval(
         id='interval-component',
         interval=100,  # milliseconds
@@ -96,7 +96,7 @@ app.layout = html.Div([
 ])
 ```
 
-## Pas 3: Callbacks per Actualitzacions
+## Step 3: Callbacks for Updates
 
 ```python
 @app.callback(
@@ -106,7 +106,7 @@ app.layout = html.Div([
     [Input('interval-component', 'n_intervals')]
 )
 def update_indicators(n):
-    """Actualitza indicadors principals."""
+    """Update main indicators."""
     telemetry = collector.get_latest_telemetry()
     
     if not telemetry:
@@ -127,7 +127,7 @@ def update_indicators(n):
     [Input('interval-component', 'n_intervals')]
 )
 def update_speed_graph(n):
-    """Actualitza gràfic de velocitat."""
+    """Update speed graph."""
     history = collector.get_telemetry_history(limit=300)
     
     if not history:
@@ -141,14 +141,14 @@ def update_speed_graph(n):
         x=times,
         y=speeds,
         mode='lines',
-        name='Velocitat',
+        name='Speed',
         line=dict(color='#e74c3c', width=2)
     ))
     
     fig.update_layout(
-        title='Velocitat al llarg del temps',
-        xaxis_title='Temps',
-        yaxis_title='Velocitat (km/h)',
+        title='Speed over time',
+        xaxis_title='Time',
+        yaxis_title='Speed (km/h)',
         hovermode='x unified'
     )
     
@@ -160,7 +160,7 @@ def update_speed_graph(n):
     [Input('interval-component', 'n_intervals')]
 )
 def update_track_map(n):
-    """Actualitza mapa del circuit."""
+    """Update track map."""
     history = collector.get_telemetry_history(limit=500)
     
     if not history:
@@ -183,41 +183,41 @@ def update_track_map(n):
             colorbar=dict(title="km/h")
         ),
         line=dict(width=1),
-        name='Traçada'
+        name='Trajectory'
     ))
     
     fig.update_layout(
-        title='Mapa del Circuit',
-        xaxis_title='Posició X',
-        yaxis_title='Posició Y',
+        title='Track Map',
+        xaxis_title='Position X',
+        yaxis_title='Position Y',
         hovermode='closest'
     )
     
     return fig
 ```
 
-## Pas 4: Executar el Dashboard
+## Step 4: Run the Dashboard
 
 ```python
 def main():
-    """Funció principal."""
-    logger.info("Iniciant dashboard...")
+    """Main function."""
+    logger.info("Starting dashboard...")
     
-    # Connectar a LFS
+    # Connect to LFS
     try:
         client.connect()
         client.initialize()
-        logger.info("✓ Connectat a LFS")
+        logger.info("✓ Connected to LFS")
     except Exception as e:
-        logger.error(f"✗ Error de connexió: {e}")
+        logger.error(f"✗ Connection error: {e}")
         return
     
-    # Iniciar recollida
+    # Start collection
     collector.start()
-    logger.info("✓ Recollida de telemetria iniciada")
+    logger.info("✓ Telemetry collection started")
     
-    # Executar dashboard
-    logger.info("Dashboard disponible a: http://localhost:8050")
+    # Run dashboard
+    logger.info("Dashboard available at: http://localhost:8050")
     app.run_server(debug=True, port=8050)
 
 
@@ -225,28 +225,28 @@ if __name__ == '__main__':
     main()
 ```
 
-## Funcionalitats Avançades
+## Advanced Features
 
-### Alertes Personalitzades
+### Custom Alerts
 
 ```python
 def check_alerts(telemetry):
-    """Comprova condicions d'alerta."""
+    """Check alert conditions."""
     alerts = []
     
     speed = telemetry.get('speed', 0)
     rpm = telemetry.get('rpm', 0)
     
     if speed > 200:
-        alerts.append("⚠️ Velocitat alta!")
+        alerts.append("⚠️ High speed!")
     
     if rpm > 7500:
-        alerts.append("🔴 RPM alt - canvia de marxa!")
+        alerts.append("🔴 High RPM - shift gear!")
     
     return alerts
 ```
 
-### Gràfic de Rendiment
+### Performance Graph
 
 ```python
 @app.callback(
@@ -254,10 +254,10 @@ def check_alerts(telemetry):
     [Input('interval-component', 'n_intervals')]
 )
 def update_performance(n):
-    """Mostra rendiment comparatiu."""
+    """Display comparative performance."""
     history = collector.get_telemetry_history(limit=100)
     
-    # Calcular eficiència
+    # Calculate efficiency
     efficiency = [
         h.get('speed', 0) / max(h.get('rpm', 1), 1) * 1000
         for h in history
@@ -267,18 +267,18 @@ def update_performance(n):
     fig.add_trace(go.Indicator(
         mode="gauge+number",
         value=np.mean(efficiency) if efficiency else 0,
-        title={'text': "Eficiència"},
+        title={'text': "Efficiency"},
         gauge={'axis': {'range': [None, 50]}}
     ))
     
     return fig
 ```
 
-## Personalització de Temes
+## Theme Customization
 
 ```python
 app.layout = html.Div([
-    # ... contingut anterior ...
+    # ... previous content ...
 ], style={
     'backgroundColor': '#ecf0f1',
     'padding': '20px',
@@ -286,26 +286,26 @@ app.layout = html.Div([
 })
 ```
 
-## Executar
+## Run
 
 ```bash
 python dashboard_realtime.py
 ```
 
-Obre el navegador a: **http://localhost:8050**
+Open your browser at: **http://localhost:8050**
 
-## Consells
+## Tips
 
-- Ajusta `interval` segons necessitat (100-500ms recomanat)
-- Limita històric per evitar problemes de memòria
-- Utilitza `dcc.Store` per compartir dades entre callbacks
-- Considera `dash-bootstrap-components` per millor disseny
+- Adjust `interval` as needed (100-500ms recommended)
+- Limit history to avoid memory issues
+- Use `dcc.Store` to share data between callbacks
+- Consider `dash-bootstrap-components` for better design
 
-## Pròxims Passos
+## Next Steps
 
-- **[Tutorial 4: Anàlisi Avançada](04-advanced-analysis.md)**
-- **[Documentació de Visualització](../visualization.md)**
+- **[Tutorial 4: Advanced Analysis](04-advanced-analysis.md)**
+- **[Visualization Documentation](../visualization.md)**
 
 ---
 
-Ara tens un dashboard professional! 📊
+Now you have a professional dashboard! 📊
