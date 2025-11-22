@@ -68,7 +68,7 @@ class PerformancePredictor:
 
         # Si no hi ha dades històriques, fer estimació simple
         if not historical_data or len(historical_data) == 0:
-            # Estimar sectors restants basant-se en la average dels completats
+            # Estimate remaining sectors based on la average dels completats
             avg_sector = statistics.mean(current_sector_times)
             total_sectors = 3  # Assumir 3 sectors per defecte
             remaining_sectors = max(0, total_sectors - num_sectors)
@@ -83,12 +83,12 @@ class PerformancePredictor:
                         sector_averages[i] = []
                     sector_averages[i].append(sector_time)
 
-        # Calcular mitjanes històriques per cada sector
+        # Calculate mitjanes històriques per cada sector
         historical_means = {
             i: statistics.mean(times) for i, times in sector_averages.items()
         }
 
-        # Predir sectors restants
+        # Predict remaining sectors
         predicted_total = sum(current_sector_times)
         for i in range(num_sectors, len(historical_means)):
             if i in historical_means:
@@ -113,10 +113,10 @@ class PerformancePredictor:
         Args:
             fuel_consumption: Fuel consumption per lap (%)
             tire_wear: Tire wear per lap (%)
-            laps_remaining: Voltes restants a la cursa
+            laps_remaining: Remaining laps a la cursa
 
         Returns:
-            Tuple amb (laps fins pit stop, raó principal)
+            Tuple with (laps fins pit stop, raó principal)
 
         Example:
             >>> predictor = PerformancePredictor()
@@ -140,7 +140,7 @@ class PerformancePredictor:
             pit_lap = max(1, int(tire_laps * 0.9))  # 90% safety margin
             reason = "tires"
 
-        # Arightar si és més enllà de les laps restants
+        # Adjust if it is beyond the remaining laps
         pit_lap = min(pit_lap, laps_remaining)
 
         logger.info(
@@ -161,7 +161,7 @@ class PerformancePredictor:
             laps_completed: Laps completed with these tires
 
         Returns:
-            Tuple amb (laps restants, confiança de l'estimació 0-1)
+            Tuple with (remaining laps, confidence of the estimate 0-1)
 
         Example:
             >>> predictor = PerformancePredictor()
@@ -171,14 +171,14 @@ class PerformancePredictor:
         if current_wear <= 0 or laps_completed <= 0:
             return 0, 0.0
 
-        # Calcular taxa de desgast per lap
+        # Calculate taxa of wear per lap
         wear_per_lap = current_wear / laps_completed
 
-        # Calcular laps restants fins al 100% de desgast
+        # Calculate remaining laps until 100% of wear
         remaining_wear = 100.0 - current_wear
         laps_remaining = int(remaining_wear / wear_per_lap)
 
-        # Calcular confiança basada en mostres
+        # Calculate confiança basada en mostres
         # Més laps completades = més confiança
         confidence = min(1.0, laps_completed / 10.0)
 
@@ -193,11 +193,11 @@ class PerformancePredictor:
         self, fuel_target: float, laps_remaining: int, current_fuel: float
     ) -> float:
         """
-        Calculate the optimal pace optimal to arrive with right the right fuel right.
+        Calculate the optimal pace to arrive with the right fuel.
 
         Args:
-            fuel_target: Combustible objectiu al final (%)
-            laps_remaining: Voltes restants
+            fuel_target: Target fuel at finish (%)
+            laps_remaining: Remaining laps
             current_fuel: Combustible actual (%)
 
         Returns:
@@ -211,10 +211,10 @@ class PerformancePredictor:
         if laps_remaining <= 0:
             return 0.0
 
-        # Calcular fuel available to spend
+        # Calculate fuel available to spend
         available_fuel = current_fuel - fuel_target
 
-        # Calcular optimal consumption per lap
+        # Calculate optimal consumption per lap
         optimal_consumption = available_fuel / laps_remaining
 
         logger.debug(
@@ -231,12 +231,12 @@ class PerformancePredictor:
         laps_remaining: int,
     ) -> Dict[str, Any]:
         """
-        Prediu canvis de posició basant-se en ritmes.
+        Prediu canvis de posició based on ritmes.
 
         Args:
             current_pace: Current pace (segons per lap)
             competitors_pace: List of (posició, ritme) dels competidors
-            laps_remaining: Voltes restants
+            laps_remaining: Remaining laps
 
         Returns:
             Dictionary amb predicció de posició final i canvis esperats
@@ -250,13 +250,13 @@ class PerformancePredictor:
         if not competitors_pace or laps_remaining <= 0:
             return {"final_position": None, "changes": []}
 
-        # Calcular temps total per cada competidor
+        # Calculate temps total per cada competidor
         time_projections = []
         for position, pace in competitors_pace:
             total_time = pace * laps_remaining
             time_projections.append((position, total_time))
 
-        # Calcular temps propi
+        # Calculate temps propi
         own_time = current_pace * laps_remaining
         time_projections.append((0, own_time))  # 0 = posició pròpia
 
@@ -274,11 +274,11 @@ class PerformancePredictor:
         changes = []
         if final_position:
             for pos, pace in competitors_pace:
-                # Calcular gain/loss de temps per lap
+                # Calculate gain/loss de temps per lap
                 time_diff_per_lap = pace - current_pace
                 total_diff = time_diff_per_lap * laps_remaining
 
-                if abs(total_diff) > 1.0:  # Diferència significativa
+                if abs(total_diff) > 1.0:  # Significant difference
                     changes.append(
                         {
                             "position": pos,
@@ -323,11 +323,11 @@ class PerformancePredictor:
         if len(x_data) != len(y_data) or len(x_data) < 2:
             return 0.0
 
-        # Calcular mitjanes
+        # Calculate mitjanes
         x_mean = statistics.mean(x_data)
         y_mean = statistics.mean(y_data)
 
-        # Calcular pendent (slope)
+        # Calculate pendent (slope)
         numerator = sum(
             (x_data[i] - x_mean) * (y_data[i] - y_mean) for i in range(len(x_data))
         )
@@ -348,7 +348,7 @@ class PerformancePredictor:
         self, historical_values: List[float], periods_ahead: int = 1
     ) -> List[float]:
         """
-        Prediu tendència futura basant-se en valors històrics.
+        Prediu tendència futura based on valors històrics.
 
         Uses a weighted average that gives more importance
         to recent values.
@@ -369,18 +369,18 @@ class PerformancePredictor:
         if not historical_values or periods_ahead <= 0:
             return []
 
-        # Calcular pesos exponencials (més pes als valors recents)
+        # Calculate pesos exponencials (més pes als valors recents)
         n = len(historical_values)
         weights = [2**i for i in range(n)]
         total_weight = sum(weights)
         normalized_weights = [w / total_weight for w in weights]
 
-        # Calcular average ponderada
+        # Calculate average ponderada
         weighted_mean = sum(
             historical_values[i] * normalized_weights[i] for i in range(n)
         )
 
-        # Calcular tendència (pendent)
+        # Calculate tendència (pendent)
         if n >= 2:
             recent_change = historical_values[-1] - historical_values[-2]
         else:
@@ -411,7 +411,7 @@ class PerformancePredictor:
             sector_times_per_lap: List of lists with sector times per lap
 
         Returns:
-            Tuple amb (temps teòric, millors temps per sector)
+            Tuple with (temps teòric, millors temps per sector)
 
         Example:
             >>> predictor = PerformancePredictor()
@@ -434,7 +434,7 @@ class PerformancePredictor:
             if sector_times:
                 best_sectors.append(min(sector_times))
 
-        # Calcular temps teòric
+        # Calculate temps teòric
         theoretical_best = sum(best_sectors)
 
         logger.info(

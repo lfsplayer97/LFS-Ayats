@@ -68,12 +68,12 @@ class LapComparison:
 
     Attributes:
         lap1_id: ID of the first lap
-        lap2_id: ID de la segona lap
-        time_difference: Time difference total (seconds)
+        lap2_id: ID of the second lap
+        time_difference: Total time difference (seconds)
         sector_comparisons: List of comparisons per sector
-        speed_trace_comparison: Comparació de traces de velocitat
+        speed_trace_comparison: Speed trace comparison
         racing_line_difference: Difference in racing line
-        suggestions: Suggeriments de millora
+        suggestions: Improvement suggestions
     """
 
     lap1_id: int
@@ -112,7 +112,7 @@ class BrakingPoint:
 @dataclass
 class ThrottleAnalysis:
     """
-    Anàlisi d'throttle application en corbes.
+    Throttle application analysis in corners.
 
     Attributes:
         corner_id: Corner identifier
@@ -156,12 +156,12 @@ class TimeDelta:
 @dataclass
 class RacingLine:
     """
-    Racing line optimala.
+    Optimal racing line.
 
     Attributes:
         points: List of points (x, y) of the trajectory
-        speeds: Velocitats corresponents a cada punt
-        sector: Número de sector
+        speeds: Speeds corresponding to each point
+        sector: Sector number
         lap_time: Associated lap time
     """
 

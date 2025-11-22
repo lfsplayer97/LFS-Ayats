@@ -220,7 +220,7 @@ class AnomalyDetector:
         with excessive wear (flat spots).
 
         Args:
-            wheel_wear_pattern: List of values de desgast al lapnt de la roda
+            wheel_wear_pattern: List of wear values around the wheel
 
         Returns:
             Tuple with (detection bool, optional Alert)
@@ -325,7 +325,7 @@ class AnomalyDetector:
         Args:
             fuel_level: Current level of fuel (%)
             fuel_per_lap: Average consumption per lap (%)
-            laps_remaining: Voltes restants a la cursa
+            laps_remaining: Remaining laps a la cursa
 
         Returns:
             Tuple with (detection bool, optional Alert)

@@ -3,7 +3,7 @@ Sector Analyzer
 Anàlisi detallada del performance for sectors.
 
 Aquest mòdul proporciona eines per analitzar el performance in diferents
-sectors de la pista, identificar punts febles i optimitzar la línia de carrera.
+sectors of the track, identify weak points i optimize the racing line.
 """
 
 import logging
@@ -123,21 +123,21 @@ class SectorAnalyzer:
             if len(times) < 2:
                 continue
 
-            # Calcular estadístiques
+            # Calculate estadístiques
             mean_time = statistics.mean(times)
             best_time = min(times)
             # worst_time = max(times)  # Not currently used
             stdev = statistics.stdev(times)
 
-            # Calcular temps perdut respecte al millor
+            # Calculate temps perdut respecte al millor
             time_lost = mean_time - best_time
 
-            # Calcular consistència (inversa del coeficient de variació)
+            # Calculate consistència (inversa del coeficient de variació)
             consistency = 1.0 - min(1.0, stdev / mean_time) if mean_time > 0 else 0.0
 
             # Identificar si és un sector feble
             # Un sector és feble si el temps perdut és significatiu
-            if time_lost > stdev * 0.5:  # Més de mitja deviation de diferència
+            if time_lost > stdev * 0.5:  # More than half deviation difference
                 weak_sectors.append(
                     Sector(
                         number=sector_num + 1,
@@ -188,7 +188,7 @@ class SectorAnalyzer:
                     sector_times[i] = []
                 sector_times[i].append(time)
 
-        # Calcular consistència per sector
+        # Calculate consistència per sector
         consistency = {}
 
         for sector_num, times in sector_times.items():
@@ -211,14 +211,14 @@ class SectorAnalyzer:
         self, telemetry_points: List[Dict[str, Any]], fast_laps_only: bool = True
     ) -> RacingLine:
         """
-        Find the optimal line optimala basada en laps ràpides.
+        Find the optimal line based on fast laps.
 
         Args:
-            telemetry_points: List of telemetry points amb posició i velocitat
-            fast_laps_only: Si cal considerar només laps ràpides
+            telemetry_points: List of telemetry points with position and speed
+            fast_laps_only: Whether to consider only fast laps
 
         Returns:
-            RacingLine amb la trajectory optimala
+            RacingLine with the optimal trajectory
 
         Example:
             >>> analyzer = SectorAnalyzer()
@@ -255,7 +255,7 @@ class SectorAnalyzer:
 
         racing_line = RacingLine(points=points, speeds=speeds)
 
-        logger.debug(f"Line optimala found amb {len(points)} punts")
+        logger.debug(f"Optimal line found with {len(points)} points")
 
         return racing_line
 
@@ -304,7 +304,7 @@ class SectorAnalyzer:
             if not zones:
                 continue
 
-            # Calcular estadístiques
+            # Calculate estadístiques
             distances = [z["distance"] for z in zones]
             mean_distance = statistics.mean(distances)
             stdev_distance = statistics.stdev(distances) if len(distances) > 1 else 0

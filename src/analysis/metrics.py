@@ -259,13 +259,13 @@ class MetricsCalculator:
                     sector_data[i] = []
                 sector_data[i].append(time)
 
-        # Calcular mitjanes per sector
+        # Calculate mitjanes per sector
         sector_means = {i: statistics.mean(times) for i, times in sector_data.items()}
         overall_mean = statistics.mean(
             [t for times in sector_data.values() for t in times]
         )
 
-        # Calcular equilibri (100 = perfectament equilibrat)
+        # Calculate equilibri (100 = perfectament equilibrat)
         balance = {}
         for sector, mean_time in sector_means.items():
             deviation = abs(mean_time - overall_mean) / overall_mean
@@ -308,7 +308,7 @@ class MetricsCalculator:
             consistency_weight /= total_weight
             pace_weight /= total_weight
 
-        # Calcular components
+        # Calculate components
         consistency = self.calculate_consistency(lap_times)
         pace = self.calculate_pace_score(lap_times, reference_time)
 

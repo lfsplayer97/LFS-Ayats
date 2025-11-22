@@ -93,7 +93,7 @@ class AdvancedComparator:
 
         logger.info(
             f"Comparison completed: lap {lap1_id} vs {lap2_id}, "
-            f"diferència: {time_difference:+.3f}s"
+            f"difference: {time_difference:+.3f}s"
         )
 
         return comparison
@@ -155,7 +155,7 @@ class AdvancedComparator:
         lap1_speeds = [t.get("speed", 0) for t in lap1_telemetry]
         lap2_speeds = [t.get("speed", 0) for t in lap2_telemetry]
 
-        # Calcular estadístiques
+        # Calculate estadístiques
         comparison = {
             "lap1_avg_speed": statistics.mean(lap1_speeds) if lap1_speeds else 0,
             "lap2_avg_speed": statistics.mean(lap2_speeds) if lap2_speeds else 0,
@@ -182,7 +182,7 @@ class AdvancedComparator:
             lap2_data: Data from the second lap
 
         Returns:
-            Diferència average en metres entre trajectòries
+            Average difference en metres between trajectories
         """
         lap1_telemetry = lap1_data.get("telemetry", [])
         lap2_telemetry = lap2_data.get("telemetry", [])
@@ -201,7 +201,7 @@ class AdvancedComparator:
         if not lap1_positions or not lap2_positions:
             return 0.0
 
-        # Calcular diferències de posició
+        # Calculate diferències de posició
         # (simplificat: comparar punts corresponents)
         min_length = min(len(lap1_positions), len(lap2_positions))
         differences = []
@@ -228,19 +228,19 @@ class AdvancedComparator:
         line_difference: float,
     ) -> List[str]:
         """
-        Genera suggeriments de millora basats en la comparació.
+        Generate improvement suggestions based on the comparison.
 
         Args:
             sector_comparisons: Comparacions de sectors
             speed_comparison: Comparació de velocitats
-            line_difference: Diferència de línia de carrera
+            line_difference: Racing line difference
 
         Returns:
             List of suggeriments
         """
         suggestions = []
 
-        # Suggeriments basats en sectors
+        # Suggestions based on sectors
         for sector in sector_comparisons:
             if sector.difference > 0.1:  # Perdre més de 0.1s
                 suggestions.append(
@@ -248,19 +248,19 @@ class AdvancedComparator:
                     f"perdent {sector.difference:.3f}s ({sector.percentage_diff:+.1f}%)"
                 )
 
-        # Suggeriments basats en velocitat
+        # Suggestions based on speed
         if speed_comparison:
             avg_diff = speed_comparison.get("avg_speed_diff", 0)
-            if avg_diff < -1.0:  # Velocitat average inferior
+            if avg_diff < -1.0:  # Lower average speed
                 suggestions.append(
-                    f"Augmentar velocitat average: "
-                    f"actualment {abs(avg_diff):.1f} m/s més lenta"
+                    f"Increase average speed: "
+                    f"currently {abs(avg_diff):.1f} m/s slower"
                 )
 
-        # Suggeriments basats en línia de carrera
-        if line_difference > 2.0:  # Diferència significativa (>2m)
+        # Suggestions based on racing line
+        if line_difference > 2.0:  # Significant difference (>2m)
             suggestions.append(
-                f"Arightar línia de carrera: diferència average de {line_difference:.1f}m"
+                f"Adjust racing line: average difference of {line_difference:.1f}m"
             )
 
         return suggestions
@@ -295,7 +295,7 @@ class AdvancedComparator:
         lap1_distances = [t.get("distance", i) for i, t in enumerate(lap1_telemetry)]
         # lap2_distances not used but kept for potential future comparison
 
-        # Calcular deltas (simplificat)
+        # Calculate deltas (simplificat)
         min_length = min(len(lap1_times), len(lap2_times))
         deltas = []
         distances = []
