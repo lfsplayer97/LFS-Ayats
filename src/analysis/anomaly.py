@@ -524,6 +524,6 @@ class AnomalyDetector:
         return self.anomaly_history.copy()
 
     def clear_history(self) -> None:
-        """Neteja l'historial d'anomalies."""
+        """Clear the anomaly history."""
         self.anomaly_history.clear()
-        logger.debug("Historial d'anomalies netejat")
+        logger.debug("Anomaly history cleared")

@@ -67,7 +67,7 @@ class LapComparison:
     Complete comparison between two laps.
 
     Attributes:
-        lap1_id: ID de la primera volta
+        lap1_id: ID of the first lap
         lap2_id: ID de la segona volta
         time_difference: Time difference total (seconds)
         sector_comparisons: List of comparisons per sector
@@ -94,8 +94,8 @@ class BrakingPoint:
         position: Braking point position (x, y)
         lap: Número de volta
         distance: Distància des de l'inici del sector
-        speed_before: Velocitat abans de frenar
-        speed_after: Velocitat després de frenar
+        speed_before: Speed before braking
+        speed_after: Speed after braking
         brake_duration: Braking duration (seconds)
         consistency_score: Consistency score (0-1)
     """

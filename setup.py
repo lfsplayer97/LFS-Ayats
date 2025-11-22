@@ -15,7 +15,7 @@ setup(
     name="lfs-ayats",
     version="0.1.0",
     author="lfsplayer97",
-    description="Sistema modular de telemetria per Live for Speed mitjançant InSim",
+    description="Modular telemetry system for Live for Speed using InSim",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/lfsplayer97/LFS-Ayats",

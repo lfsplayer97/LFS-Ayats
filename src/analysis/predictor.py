@@ -16,25 +16,25 @@ logger = logging.getLogger(__name__)
 
 class PerformancePredictor:
     """
-    Predictor de rendiment en carreres.
+    Race performance predictor.
 
-    Utilitza dades històriques i actuals per predir:
-    - Temps de volta finals
-    - Finestres òptimes de pit stop
-    - Vida útil dels pneumàtics
-    - Ritme òptim per gestió de combustible
-    - Canvis de posició predits
+    Uses historical and current data to predict:
+    - Final lap times
+    - Optimal pit stop windows
+    - Tire life
+    - Optimal pace for fuel management
+    - Predicted position changes
 
-    Exemple:
+    Example:
         >>> predictor = PerformancePredictor()
         >>> predicted_time = predictor.predict_lap_time([28.5, 31.2], historical_data)
         >>> print(f"Temps predit: {predicted_time:.3f}s")
     """
 
     def __init__(self):
-        """Inicialitza el predictor de rendiment."""
+        """Initialize the performance predictor."""
         self.historical_predictions: List[Dict[str, Any]] = []
-        logger.info("PerformancePredictor inicialitzat")
+        logger.info("PerformancePredictor initialized")
 
     def predict_lap_time(
         self,
@@ -124,20 +124,20 @@ class PerformancePredictor:
             >>> print(f"Pit stop en {laps} voltes per {reason}")
         """
         if fuel_consumption <= 0 or tire_wear <= 0:
-            return laps_remaining, "No pit stop necessari"
+            return laps_remaining, "No pit stop necessary"
 
-        # Calcular voltes disponibles segons combustible (assumir 100% inicial)
+        # Calculate available laps based on fuel (assume 100% initial)
         fuel_laps = 100.0 / fuel_consumption
 
-        # Calcular voltes disponibles segons pneumàtics (assumir 100% de vida)
+        # Calculate available laps based on tires (assume 100% life)
         tire_laps = 100.0 / tire_wear
 
-        # Determinar factor limitant
+        # Determine limiting factor
         if fuel_laps < tire_laps:
-            pit_lap = max(1, int(fuel_laps * 0.9))  # 90% de seguretat
-            reason = "combustible"
+            pit_lap = max(1, int(fuel_laps * 0.9))  # 90% safety margin
+            reason = "fuel"
         else:
-            pit_lap = max(1, int(tire_laps * 0.9))  # 90% de seguretat
+            pit_lap = max(1, int(tire_laps * 0.9))  # 90% safety margin
             reason = "pneumàtics"
 
         # Ajustar si és més enllà de les voltes restants
@@ -304,15 +304,15 @@ class PerformancePredictor:
         self, x_data: List[float], y_data: List[float], x_predict: float
     ) -> float:
         """
-        Predicció utilitzant regressió lineal simple.
+        Prediction using simple linear regression.
 
         Args:
-            x_data: Valors X (per exemple, número de volta)
-            y_data: Valors Y (per exemple, temps de volta)
-            x_predict: Valor X per predir
+            x_data: X values (e.g., lap number)
+            y_data: Y values (e.g., lap time)
+            x_predict: X value to predict
 
         Returns:
-            Valor Y predit
+            Predicted Y value
 
         Example:
             >>> predictor = PerformancePredictor()
@@ -350,15 +350,15 @@ class PerformancePredictor:
         """
         Prediu tendència futura basant-se en valors històrics.
 
-        Utilitza una mitjana ponderada que dona més importància
-        a valors recents.
+        Uses a weighted average that gives more importance
+        to recent values.
 
         Args:
-            historical_values: Valors històrics (ordenats cronològicament)
-            periods_ahead: Nombre de períodes a predir
+            historical_values: Historical values (ordered chronologically)
+            periods_ahead: Number of periods to predict
 
         Returns:
-            Llista de valors predits
+            List of predicted values
 
         Example:
             >>> predictor = PerformancePredictor()

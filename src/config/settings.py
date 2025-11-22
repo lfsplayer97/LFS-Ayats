@@ -76,7 +76,7 @@ class Settings:
     """
     Main application configuration.
 
-    Exemple:
+    Example:
         >>> settings = Settings()
         >>> settings.connection.host = "192.168.1.100"
         >>> save_config(settings, "config.yaml")

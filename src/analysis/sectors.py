@@ -16,16 +16,16 @@ logger = logging.getLogger(__name__)
 
 class SectorAnalyzer:
     """
-    Analitzador de rendiment per sectors.
+    Sector performance analyzer.
 
-    Proporciona anàlisi detallada de sectors incloent:
-    - Comparació de temps de sectors
-    - Identificació de sectors febles
-    - Càlcul de consistència
-    - Anàlisi de punts de frenada
-    - Anàlisi d'aplicació de gas
+    Provides detailed sector analysis including:
+    - Sector time comparison
+    - Weak sector identification
+    - Consistency calculation
+    - Braking point analysis
+    - Throttle application analysis
 
-    Exemple:
+    Example:
         >>> analyzer = SectorAnalyzer()
         >>> weak_sectors = analyzer.identify_weak_sectors(session_data)
         >>> for sector in weak_sectors:
@@ -33,9 +33,9 @@ class SectorAnalyzer:
     """
 
     def __init__(self):
-        """Inicialitza l'analitzador de sectors."""
+        """Initialize the sector analyzer."""
         self.analysis_cache: Dict[str, Any] = {}
-        logger.info("SectorAnalyzer inicialitzat")
+        logger.info("SectorAnalyzer initialized")
 
     def compare_sector_times(
         self, lap_data: Dict[str, Any], reference_lap_data: Dict[str, Any]
@@ -398,13 +398,13 @@ class SectorAnalyzer:
         self, laps: List[Dict[str, Any]]
     ) -> Dict[int, Dict[str, float]]:
         """
-        Obté estadístiques completes per cada sector.
+        Get complete statistics for each sector.
 
         Args:
-            laps: Llista de dades de voltes
+            laps: List of lap data
 
         Returns:
-            Diccionari amb estadístiques per número de sector
+            Dictionary with statistics per sector number
         """
         sector_times: Dict[int, List[float]] = {}
 

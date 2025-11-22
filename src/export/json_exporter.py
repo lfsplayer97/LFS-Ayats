@@ -16,22 +16,22 @@ class JSONExporter:
     """
     Export telemetry data to JSON format.
 
-    Exemple:
+    Example:
         >>> exporter = JSONExporter('telemetry.json')
         >>> exporter.export(telemetry_data)
     """
 
     def __init__(self, filename: str, indent: int = 2):
         """
-        Inicialitza l'exportador JSON.
+        Initialize the JSON exporter.
 
         Args:
-            filename: Nom del fitxer de sortida
+            filename: Output file name
             indent: JSON indentation (by default 2)
         """
         self.filename = Path(filename)
         self.indent = indent
-        logger.info(f"JSONExporter inicialitzat: {filename}")
+        logger.info(f"JSONExporter initialized: {filename}")
 
     def export(
         self, telemetry_data: List[Any], metadata: Dict[str, Any] = None
@@ -40,18 +40,18 @@ class JSONExporter:
         Export telemetry data to JSON.
 
         Args:
-            telemetry_data: Llista d'objectes CarTelemetry
-            metadata: Metadades opcionals
+            telemetry_data: List of CarTelemetry objects
+            metadata: Optional metadata
 
         Returns:
             bool: True if export is successful
         """
         if not telemetry_data:
-            logger.warning("No hi ha dades per exportar")
+            logger.warning("No data to export")
             return False
 
         try:
-            # Convertir objectes a diccionaris
+            # Convert objects to dictionaries
             data_list = []
             for item in telemetry_data:
                 data_list.append(
@@ -68,7 +68,7 @@ class JSONExporter:
                     }
                 )
 
-            # Estructura final
+            # Final structure
             output = {
                 "metadata": metadata
                 or {
@@ -96,8 +96,8 @@ class JSONExporter:
         Export processed data to JSON.
 
         Args:
-            processed_data: Objecte ProcessedTelemetry
-            metadata: Metadades opcionals
+            processed_data: ProcessedTelemetry object
+            metadata: Optional metadata
 
         Returns:
             bool: True if export is successful
@@ -132,20 +132,20 @@ class JSONExporter:
         Append data to an existing JSON file.
 
         Args:
-            telemetry_data: Llista d'objectes CarTelemetry
+            telemetry_data: List of CarTelemetry objects
 
         Returns:
             bool: True if operation is successful
         """
         try:
-            # Llegir dades existents
+            # Read existing data
             if self.filename.exists():
                 with open(self.filename, "r", encoding="utf-8") as f:
                     existing_data = json.load(f)
             else:
                 existing_data = {"metadata": {}, "telemetry": []}
 
-            # Afegir noves dades
+            # Add new data
             for item in telemetry_data:
                 existing_data["telemetry"].append(
                     {
@@ -161,7 +161,7 @@ class JSONExporter:
                     }
                 )
 
-            # Actualitzar metadades
+            # Update metadata
             existing_data["metadata"]["last_update"] = datetime.now().isoformat()
             existing_data["metadata"]["sample_count"] = len(existing_data["telemetry"])
 
@@ -173,5 +173,5 @@ class JSONExporter:
             return True
 
         except Exception as e:
-            logger.error(f"Error afegint a JSON: {e}")
+            logger.error(f"Error appending to JSON: {e}")
             return False

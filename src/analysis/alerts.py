@@ -55,7 +55,7 @@ class LogAlertHandler(AlertHandler):
     """Handler that logs alerts to the logging system."""
 
     def handle(self, alert: Alert) -> None:
-        """Registra l'alerta al sistema de logging."""
+        """Register the alert to the logging system."""
         log_methods = {
             AlertLevel.INFO: logger.info,
             AlertLevel.WARNING: logger.warning,
@@ -94,7 +94,7 @@ class AlertSystem:
     Manages creation, distribution and alert history
     del sistema d'anàlisi telemètric.
 
-    Exemple:
+    Example:
         >>> system = AlertSystem()
         >>> system.register_handler(ConsoleAlertHandler())
         >>> alert = Alert(AlertLevel.WARNING, "Temperatura alta")
@@ -220,7 +220,7 @@ class AlertSystem:
             >>> system = AlertSystem()
             >>> system.create_and_trigger(
             ...     AlertLevel.WARNING,
-            ...     "Temperatura elevada",
+            ...     "Elevated temperature",
             ...     {"temp": 95.5}
             ... )
         """
@@ -264,7 +264,7 @@ class AlertSystem:
             elif temp > 95:
                 alert = Alert(
                     level=AlertLevel.WARNING,
-                    message=f"Temperatura elevada: {temp}°C",
+                    message=f"Elevated temperature: {temp}°C",
                     data={"temperature": temp},
                 )
                 if self.trigger_alert(alert, min_interval=30.0):

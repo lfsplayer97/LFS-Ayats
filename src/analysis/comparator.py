@@ -16,38 +16,38 @@ logger = logging.getLogger(__name__)
 
 class AdvancedComparator:
     """
-    Comparador avançat de voltes.
+    Advanced lap comparator.
 
-    Proporciona comparació detallada entre voltes incloent:
-    - Comparació de temps per sectors
-    - Delta de temps punt a punt
-    - Comparació de línies de carrera
-    - Identificació de diferències clau
-    - Generació de suggeriments de millora
+    Provides detailed lap comparison including:
+    - Sector time comparison
+    - Point-to-point time delta
+    - Racing line comparison
+    - Key difference identification
+    - Improvement suggestion generation
 
-    Exemple:
+    Example:
         >>> comparator = AdvancedComparator()
         >>> comparison = comparator.compare_laps(lap1_data, lap2_data)
-        >>> print(f"Diferència: {comparison.time_difference:+.3f}s")
+        >>> print(f"Difference: {comparison.time_difference:+.3f}s")
     """
 
     def __init__(self):
-        """Inicialitza el comparador avançat."""
+        """Initialize the advanced comparator."""
         self.comparison_cache: Dict[str, LapComparison] = {}
-        logger.info("AdvancedComparator inicialitzat")
+        logger.info("AdvancedComparator initialized")
 
     def compare_laps(
         self, lap1_data: Dict[str, Any], lap2_data: Dict[str, Any]
     ) -> LapComparison:
         """
-        Comparació completa entre dues voltes.
+        Complete comparison between two laps.
 
         Args:
-            lap1_data: Dades de la primera volta
-            lap2_data: Dades de la segona volta
+            lap1_data: Data from the first lap
+            lap2_data: Data from the second lap
 
         Returns:
-            LapComparison amb tots els detalls de la comparació
+            LapComparison with all comparison details
 
         Example:
             >>> comparator = AdvancedComparator()
@@ -105,8 +105,8 @@ class AdvancedComparator:
         Compara temps de sectors entre dues voltes.
 
         Args:
-            lap1_data: Dades de la primera volta
-            lap2_data: Dades de la segona volta
+            lap1_data: Data from the first lap
+            lap2_data: Data from the second lap
 
         Returns:
             Llista de SectorComparison
@@ -139,8 +139,8 @@ class AdvancedComparator:
         Compara traces de velocitat entre dues voltes.
 
         Args:
-            lap1_data: Dades de la primera volta
-            lap2_data: Dades de la segona volta
+            lap1_data: Data from the first lap
+            lap2_data: Data from the second lap
 
         Returns:
             Diccionari amb comparació de velocitats
@@ -178,8 +178,8 @@ class AdvancedComparator:
         Compara les línies de carrera entre dues voltes.
 
         Args:
-            lap1_data: Dades de la primera volta
-            lap2_data: Dades de la segona volta
+            lap1_data: Data from the first lap
+            lap2_data: Data from the second lap
 
         Returns:
             Diferència mitjana en metres entre trajectòries
@@ -272,8 +272,8 @@ class AdvancedComparator:
         Calcula delta de temps punt a punt.
 
         Args:
-            lap1_data: Dades de la primera volta
-            lap2_data: Dades de la segona volta
+            lap1_data: Data from the first lap
+            lap2_data: Data from the second lap
 
         Returns:
             TimeDelta amb delta punt a punt
@@ -323,8 +323,8 @@ class AdvancedComparator:
         Identifica diferències clau de rendiment.
 
         Args:
-            lap1_data: Dades de la primera volta
-            lap2_data: Dades de la segona volta
+            lap1_data: Data from the first lap
+            lap2_data: Data from the second lap
 
         Returns:
             Llista de diferències significatives
@@ -385,10 +385,10 @@ class AdvancedComparator:
 
     def get_comparison(self, lap1_id: int, lap2_id: int) -> Optional[LapComparison]:
         """
-        Obté una comparació del cache.
+        Get a comparison from cache.
 
         Args:
-            lap1_id: ID de la primera volta
+            lap1_id: ID of the first lap
             lap2_id: ID de la segona volta
 
         Returns:
@@ -398,6 +398,6 @@ class AdvancedComparator:
         return self.comparison_cache.get(cache_key)
 
     def clear_cache(self) -> None:
-        """Neteja el cache de comparacions."""
+        """Clear the comparisons cache."""
         self.comparison_cache.clear()
         logger.debug("Cache de comparacions netejat")
