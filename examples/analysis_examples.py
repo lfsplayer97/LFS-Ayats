@@ -161,7 +161,7 @@ def example_4_lap_comparison():
     """
     Example 4: Lap Comparison
 
-    Demostra com comparar dues voltes en detall.
+    Demonstrates how to compare two laps in detail.
     """
     print("=" * 70)
     print("Example 4: Lap Comparison")
@@ -170,7 +170,7 @@ def example_4_lap_comparison():
     # Create comparator
     comparator = AdvancedComparator()
 
-    # Dades de dues voltes
+    # Data for two laps
     lap1 = {
         "lap_id": 5,
         "total_time": 85.5,
@@ -188,10 +188,10 @@ def example_4_lap_comparison():
     # Compare laps
     comparison = comparator.compare_laps(lap1, lap2)
 
-    print(f"\nComparació: Volta {lap1['lap_id']} vs Volta {lap2['lap_id']}")
+    print(f"\nComparison: Lap {lap1['lap_id']} vs Lap {lap2['lap_id']}")
     print(f"Total difference: {comparison.time_difference:+.3f}s")
 
-    print("\nComparació per sectors:")
+    print("\nSector comparison:")
     for sector_comp in comparison.sector_comparisons:
         symbol = "✓" if sector_comp.difference < 0 else "✗"
         print(
@@ -200,7 +200,7 @@ def example_4_lap_comparison():
             f"({sector_comp.percentage_diff:+.1f}%)"
         )
 
-    print("\nSuggeriments de millora:")
+    print("\nImprovement suggestions:")
     for suggestion in comparison.suggestions:
         print(f"  • {suggestion}")
 
@@ -220,7 +220,7 @@ def example_5_alert_system():
     # Create alert system
     system = AlertSystem()
 
-    # Afegir gestor de consola per veure alertes
+    # Add console handler to view alerts
     from src.analysis.alerts import ConsoleAlertHandler
 
     system.register_handler(ConsoleAlertHandler())
@@ -303,9 +303,9 @@ def example_6_metrics_calculation():
 
 
 def main():
-    """Executar tots els exemples."""
+    """Execute all examples."""
     print("\n" + "=" * 70)
-    print("EXEMPLES D'ÚS DEL MÒDUL D'ANÀLISI - LFS-Ayats")
+    print("ANALYSIS MODULE USAGE EXAMPLES - LFS-Ayats")
     print("=" * 70 + "\n")
 
     example_1_anomaly_detection()
@@ -316,7 +316,7 @@ def main():
     example_6_metrics_calculation()
 
     print("=" * 70)
-    print("Fi dels exemples")
+    print("End of examples")
     print("=" * 70 + "\n")
 
 

@@ -1,9 +1,9 @@
 """
 Sector Analyzer
-Anàlisi detallada del rendiment per sectors.
+Detailed sector performance analysis.
 
-Aquest mòdul proporciona eines per analitzar el rendiment en diferents
-sectors de la pista, identificar punts febles i optimitzar la línia de carrera.
+This module provides tools for analyzing performance in different
+track sectors, identifying weak points, and optimizing the racing line.
 """
 
 import logging
@@ -16,16 +16,16 @@ logger = logging.getLogger(__name__)
 
 class SectorAnalyzer:
     """
-    Analitzador de rendiment per sectors.
+    Sector performance analyzer.
 
-    Proporciona anàlisi detallada de sectors incloent:
-    - Comparació de temps de sectors
-    - Identificació de sectors febles
-    - Càlcul de consistència
-    - Anàlisi de punts de frenada
-    - Anàlisi d'aplicació de gas
+    Provides detailed sector analysis including:
+    - Sector time comparison
+    - Weak sector identification
+    - Consistency calculation
+    - Braking point analysis
+    - Throttle application analysis
 
-    Exemple:
+    Example:
         >>> analyzer = SectorAnalyzer()
         >>> weak_sectors = analyzer.identify_weak_sectors(session_data)
         >>> for sector in weak_sectors:
@@ -33,22 +33,22 @@ class SectorAnalyzer:
     """
 
     def __init__(self):
-        """Inicialitza l'analitzador de sectors."""
+        """Initialize the sector analyzer."""
         self.analysis_cache: Dict[str, Any] = {}
-        logger.info("SectorAnalyzer inicialitzat")
+        logger.info("SectorAnalyzer initialized")
 
     def compare_sector_times(
         self, lap_data: Dict[str, Any], reference_lap_data: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """
-        Compara temps de sectors entre dues voltes.
+        Compare sector times between two laps.
 
         Args:
-            lap_data: Dades de la volta actual
-            reference_lap_data: Dades de la volta de referència
+            lap_data: Current lap data
+            reference_lap_data: Reference lap data
 
         Returns:
-            Llista de comparacions per cada sector
+            List of comparisons for each sector
 
         Example:
             >>> analyzer = SectorAnalyzer()
@@ -87,11 +87,11 @@ class SectorAnalyzer:
         Identifica sectors on el pilot perd més temps.
 
         Args:
-            session_data: Llista de dades de voltes
+            session_data: List of lap data
             percentile: Percentil per considerar un sector "feble" (0.9 = top 10%)
 
         Returns:
-            Llista de sectors febles ordenats per temps perdut
+            List of weak sectors ordered by time lost
 
         Example:
             >>> analyzer = SectorAnalyzer()
@@ -123,21 +123,21 @@ class SectorAnalyzer:
             if len(times) < 2:
                 continue
 
-            # Calcular estadístiques
+            # Calculate statistics
             mean_time = statistics.mean(times)
             best_time = min(times)
             # worst_time = max(times)  # Not currently used
             stdev = statistics.stdev(times)
 
-            # Calcular temps perdut respecte al millor
+            # Calculate time lost relative to best
             time_lost = mean_time - best_time
 
-            # Calcular consistència (inversa del coeficient de variació)
+            # Calculate consistency (inverse of coefficient of variation)
             consistency = 1.0 - min(1.0, stdev / mean_time) if mean_time > 0 else 0.0
 
             # Identificar si és un sector feble
             # Un sector és feble si el temps perdut és significatiu
-            if time_lost > stdev * 0.5:  # Més de mitja desviació de diferència
+            if time_lost > stdev * 0.5:  # More than half deviation difference
                 weak_sectors.append(
                     Sector(
                         number=sector_num + 1,
@@ -151,7 +151,7 @@ class SectorAnalyzer:
         # Ordenar per temps perdut (descendent)
         weak_sectors.sort(key=lambda s: s.time_lost, reverse=True)
 
-        logger.info(f"Identificats {len(weak_sectors)} sectors febles")
+        logger.info(f"Identificats {len(weak_sectors)} weak sectors")
 
         return weak_sectors
 
@@ -159,16 +159,16 @@ class SectorAnalyzer:
         self, laps: List[Dict[str, Any]]
     ) -> Dict[int, float]:
         """
-        Calcula la consistència per cada sector.
+        Calculate consistency per cada sector.
 
-        La consistència es mesura com 1 - CV (coeficient de variació),
-        on valors més alts indiquen major consistència.
+        Consistency is measured com 1 - CV (coefficient of variation),
+        on higher values indicate greater consistency.
 
         Args:
-            laps: Llista de dades de voltes
+            laps: List of lap data
 
         Returns:
-            Diccionari amb consistència per número de sector
+            Dictionary with consistency per sector number
 
         Example:
             >>> analyzer = SectorAnalyzer()
@@ -188,7 +188,7 @@ class SectorAnalyzer:
                     sector_times[i] = []
                 sector_times[i].append(time)
 
-        # Calcular consistència per sector
+        # Calculate consistency per sector
         consistency = {}
 
         for sector_num, times in sector_times.items():
@@ -202,7 +202,7 @@ class SectorAnalyzer:
             # Coeficient de variació
             cv = stdev / mean_time if mean_time > 0 else 0
 
-            # Consistència (1 = perfecte, 0 = molt inconsistent)
+            # Consistency (1 = perfect, 0 = very inconsistent)
             consistency[sector_num + 1] = max(0.0, 1.0 - cv)
 
         return consistency
@@ -211,14 +211,14 @@ class SectorAnalyzer:
         self, telemetry_points: List[Dict[str, Any]], fast_laps_only: bool = True
     ) -> RacingLine:
         """
-        Troba la línia òptima basada en voltes ràpides.
+        Find the optimal line based on fast laps.
 
         Args:
-            telemetry_points: Llista de punts telemètrics amb posició i velocitat
-            fast_laps_only: Si cal considerar només voltes ràpides
+            telemetry_points: List of telemetry points with position and speed
+            fast_laps_only: Whether to consider only fast laps
 
         Returns:
-            RacingLine amb la trajectòria òptima
+            RacingLine with the optimal trajectory
 
         Example:
             >>> analyzer = SectorAnalyzer()
@@ -228,9 +228,9 @@ class SectorAnalyzer:
         if not telemetry_points:
             return RacingLine()
 
-        # Filtrar voltes ràpides si és necessari
+        # Filtrar laps ràpides si és necessari
         if fast_laps_only:
-            # Ordenar per velocitat mitjana i prendre el top 20%
+            # Ordenar per velocitat average i prendre el top 20%
             avg_speeds = []
             for point in telemetry_points:
                 if "speed" in point:
@@ -255,7 +255,7 @@ class SectorAnalyzer:
 
         racing_line = RacingLine(points=points, speeds=speeds)
 
-        logger.debug(f"Línia òptima trobada amb {len(points)} punts")
+        logger.debug(f"Optimal line found with {len(points)} points")
 
         return racing_line
 
@@ -304,19 +304,19 @@ class SectorAnalyzer:
             if not zones:
                 continue
 
-            # Calcular estadístiques
+            # Calculate statistics
             distances = [z["distance"] for z in zones]
             mean_distance = statistics.mean(distances)
             stdev_distance = statistics.stdev(distances) if len(distances) > 1 else 0
 
-            # Consistència (menor desviació = major consistència)
+            # Consistency (lower deviation = greater consistency)
             consistency = (
                 1.0 - min(1.0, stdev_distance / mean_distance)
                 if mean_distance > 0
                 else 1.0
             )
 
-            # Prendre el punt més representatiu (mitjà)
+            # Take the most representative point (average)
             braking_point = BrakingPoint(
                 position=zones[0]["position"],
                 lap=len(zones),
@@ -337,13 +337,13 @@ class SectorAnalyzer:
         self, corners: List[Dict[str, Any]]
     ) -> List[ThrottleAnalysis]:
         """
-        Analitza aplicació de gas a les corbes.
+        Analitza throttle application a les corbes.
 
         Args:
-            corners: Llista de dades de corbes
+            corners: List of corner data
 
         Returns:
-            Llista d'anàlisi d'aplicació de gas
+            List of analysis d'throttle application
 
         Example:
             >>> analyzer = SectorAnalyzer()
@@ -382,7 +382,7 @@ class SectorAnalyzer:
             sector_data: Dades telemètriques del sector
 
         Returns:
-            Diccionari amb distances i velocitats corresponents
+            Dictionary amb distances i velocitats corresponents
         """
         distances = []
         speeds = []
@@ -398,13 +398,13 @@ class SectorAnalyzer:
         self, laps: List[Dict[str, Any]]
     ) -> Dict[int, Dict[str, float]]:
         """
-        Obté estadístiques completes per cada sector.
+        Get complete statistics for each sector.
 
         Args:
-            laps: Llista de dades de voltes
+            laps: List of lap data
 
         Returns:
-            Diccionari amb estadístiques per número de sector
+            Dictionary with statistics per sector number
         """
         sector_times: Dict[int, List[float]] = {}
 

@@ -76,7 +76,7 @@ class Settings:
     """
     Main application configuration.
 
-    Exemple:
+    Example:
         >>> settings = Settings()
         >>> settings.connection.host = "192.168.1.100"
         >>> save_config(settings, "config.yaml")
@@ -170,7 +170,7 @@ def load_config(filename: str = "config.yaml") -> Settings:
         Settings: Configuration object
 
     Raises:
-        FileNotFoundError: Si el fitxer no existeix
+        FileNotFoundError: If the file does not exist
     """
     config_path = Path(filename)
 
@@ -201,10 +201,10 @@ def save_config(settings: Settings, filename: str = "config.yaml") -> bool:
 
     Args:
         settings: Configuration object
-        filename: Nom del fitxer de sortida
+        filename: Output file name
 
     Returns:
-        bool: True si s'ha desat correctament
+        bool: True if saved successfully
     """
     try:
         config_path = Path(filename)
@@ -230,12 +230,12 @@ def create_default_config(filename: str = "config.yaml") -> Settings:
     Create a default configuration file.
 
     Args:
-        filename: Nom del fitxer de sortida
+        filename: Output file name
 
     Returns:
         Settings: Default configuration
     """
     settings = Settings()
     save_config(settings, filename)
-    logger.info(f"Default configuration creada: {filename}")
+    logger.info(f"Default configuration created: {filename}")
     return settings

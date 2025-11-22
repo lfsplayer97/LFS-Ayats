@@ -185,7 +185,7 @@ class MetricsCalculator:
         Calculate fuel efficiency.
 
         Args:
-            fuel_used: Combustible utilitzat (%)
+            fuel_used: Fuel used (%)
             distance_covered: Distance covered (metres)
 
         Returns:
@@ -209,7 +209,7 @@ class MetricsCalculator:
 
         Args:
             initial_pace: Initial pace with new tires (segons)
-            current_pace: Ritme actual (segons)
+            current_pace: Current pace (segons)
             laps_on_tires: Laps on these tires
 
         Returns:
@@ -218,7 +218,7 @@ class MetricsCalculator:
         Example:
             >>> calculator = MetricsCalculator()
             >>> degradation = calculator.calculate_tire_degradation_rate(85.0, 86.5, 10)
-            >>> print(f"Degradation: {degradation:.3f}s per volta")
+            >>> print(f"Degradation: {degradation:.3f}s per lap")
         """
         if laps_on_tires == 0:
             return 0.0
@@ -232,16 +232,16 @@ class MetricsCalculator:
         self, sector_times: List[List[float]]
     ) -> Dict[int, float]:
         """
-        Calcula l'equilibri de rendiment entre sectors.
+        Calcula l'equilibri de performance intre sectors.
 
         Identify if a driver is consistently faster
         en alguns sectors que en d'altres.
 
         Args:
-            sector_times: Llista de llistes amb temps de sectors per volta
+            sector_times: List of lists with sector times per lap
 
         Returns:
-            Diccionari amb puntuacions d'equilibri per sector (0-100)
+            Dictionary amb puntuacions d'equilibri per sector (0-100)
 
         Example:
             >>> calculator = MetricsCalculator()
@@ -259,13 +259,13 @@ class MetricsCalculator:
                     sector_data[i] = []
                 sector_data[i].append(time)
 
-        # Calcular mitjanes per sector
+        # Calculate averages per sector
         sector_means = {i: statistics.mean(times) for i, times in sector_data.items()}
         overall_mean = statistics.mean(
             [t for times in sector_data.values() for t in times]
         )
 
-        # Calcular equilibri (100 = perfectament equilibrat)
+        # Calculate equilibri (100 = perfectament equilibrat)
         balance = {}
         for sector, mean_time in sector_means.items():
             deviation = abs(mean_time - overall_mean) / overall_mean
@@ -286,10 +286,10 @@ class MetricsCalculator:
         Combine consistency and pace into a single metric.
 
         Args:
-            lap_times: Llista de temps de volta
+            lap_times: List of lap time
             reference_time: Reference time (e.g., best on server)
-            consistency_weight: Pes de la consistència (0-1)
-            pace_weight: Pes del ritme (0-1)
+            consistency_weight: Consistency weight (0-1)
+            pace_weight: Pace weight (0-1)
 
         Returns:
             Índex de rendiment (0-100)
@@ -308,7 +308,7 @@ class MetricsCalculator:
             consistency_weight /= total_weight
             pace_weight /= total_weight
 
-        # Calcular components
+        # Calculate components
         consistency = self.calculate_consistency(lap_times)
         pace = self.calculate_pace_score(lap_times, reference_time)
 
@@ -326,7 +326,7 @@ class MetricsCalculator:
             dataset: Conjunt de dades de referència
 
         Returns:
-            Z-score (nombre de desviacions estàndard de la mitjana)
+            Z-score (number of standard deviations de la average)
 
         Example:
             >>> calculator = MetricsCalculator()
@@ -363,7 +363,7 @@ class MetricsCalculator:
         if not dataset:
             return 0.0
 
-        # Per temps de volta, menor és millor
+        # For lap time, lower is better
         # Comptar quants són més lents
         slower_count = sum(1 for v in dataset if v > value)
         percentile = (slower_count / len(dataset)) * 100
@@ -377,7 +377,7 @@ class MetricsCalculator:
         Calcula un índex d'estabilitat per una mètrica telemètrica.
 
         Args:
-            telemetry_data: Llista de punts telemètrics
+            telemetry_data: List of telemetry points
             metric: Mètrica a analitzar
 
         Returns:
@@ -422,7 +422,7 @@ class MetricsCalculator:
             overtake_attempts: Intents d'avançament
             successful_overtakes: Avançaments exitosos
             defensive_moves: Moviments defensius
-            total_laps: Total de voltes
+            total_laps: Total de laps
 
         Returns:
             Índex d'agressivitat (0-100)
@@ -435,7 +435,7 @@ class MetricsCalculator:
         if total_laps == 0:
             return 0.0
 
-        # Normalitzar accions per volta
+        # Normalize actions per lap
         actions_per_lap = (overtake_attempts + defensive_moves) / total_laps
 
         # Success rate dels avançaments

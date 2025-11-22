@@ -1,12 +1,12 @@
 # API Reference
 
-Referència completa de l'API de LFS-Ayats.
+Complete API reference for LFS-Ayats.
 
-## Mòdul `connection`
+## `connection` Module
 
 ### `InSimClient`
 
-Client per connectar-se al servidor LFS mitjançant InSim.
+Client to connect to the LFS server using InSim.
 
 #### Constructor
 
@@ -20,60 +20,60 @@ InSimClient(
 )
 ```
 
-**Paràmetres:**
-- `host`: IP del servidor LFS
-- `port`: Port InSim (defecte 29999)
-- `admin_password`: Contrasenya admin si cal
-- `app_name`: Nom de l'aplicació (màx 16 caràcters)
-- `udp`: Usar UDP en lloc de TCP
+**Parameters:**
+- `host`: LFS server IP
+- `port`: InSim port (default 29999)
+- `admin_password`: Admin password if needed
+- `app_name`: Application name (max 16 characters)
+- `udp`: Use UDP instead of TCP
 
-#### Mètodes
+#### Methods
 
 ##### `connect() -> bool`
 
-Estableix connexió amb el servidor.
+Establish connection with the server.
 
-**Returns:** `True` si exitós, `False` altrament
+**Returns:** `True` if successful, `False` otherwise
 
-**Raises:** `ConnectionError` si no pot connectar
+**Raises:** `ConnectionError` if connection fails
 
 ##### `initialize(flags: int = 0, interval: int = 0) -> None`
 
-Inicialitza la connexió InSim.
+Initialize the InSim connection.
 
-**Paràmetres:**
-- `flags`: Flags d'InSim (ISF_MCI, ISF_NLP, etc.)
-- `interval`: Interval MCI/NLP en centèssimes de segon
+**Parameters:**
+- `flags`: InSim flags (ISF_MCI, ISF_NLP, etc.)
+- `interval`: MCI/NLP interval in hundredths of a second
 
 ##### `send_packet(packet: bytes) -> None`
 
-Envia un paquet al servidor.
+Send a packet to the server.
 
-**Paràmetres:**
-- `packet`: Paquet en format bytes
+**Parameters:**
+- `packet`: Packet in bytes format
 
 ##### `receive_packet(timeout: Optional[float] = None) -> Optional[bytes]`
 
-Rep un paquet del servidor.
+Receive a packet from the server.
 
-**Paràmetres:**
-- `timeout`: Temps d'espera màxim (None = bloqueig)
+**Parameters:**
+- `timeout`: Maximum wait time (None = blocking)
 
-**Returns:** Paquet rebut o None
+**Returns:** Received packet or None
 
 ##### `disconnect() -> None`
 
-Tanca la connexió amb el servidor.
+Close the connection with the server.
 
 ##### `register_callback(packet_type: int, callback: Callable) -> None`
 
-Registra un callback per un tipus de paquet.
+Register a callback for a packet type.
 
-**Paràmetres:**
-- `packet_type`: Tipus de paquet (PacketType)
-- `callback`: Funció a cridar
+**Parameters:**
+- `packet_type`: Packet type (PacketType)
+- `callback`: Function to call
 
-#### Exemple
+#### Example
 
 ```python
 from src.connection import InSimClient
@@ -84,49 +84,49 @@ with InSimClient(host="127.0.0.1", port=29999) as client:
     while True:
         packet = client.receive_packet(timeout=1.0)
         if packet:
-            # Processar paquet
+            # Process packet
             pass
 ```
 
 ### `PacketHandler`
 
-Gestiona el processament de paquets InSim.
+Handles InSim packet processing.
 
-#### Mètodes
+#### Methods
 
 ##### `parse_packet(data: bytes) -> Optional[PacketInfo]`
 
-Parseja un paquet i extreu informació bàsica.
+Parse a packet and extract basic information.
 
-**Returns:** `PacketInfo` o None si invàlid
+**Returns:** `PacketInfo` or None if invalid
 
 ##### `process_packet(data: bytes) -> bool`
 
-Processa un paquet i crida el handler corresponent.
+Process a packet and call the corresponding handler.
 
-**Returns:** `True` si processat correctament
+**Returns:** `True` if processed correctly
 
 ##### `register_handler(packet_type: int, handler: Callable) -> None`
 
-Registra un handler per un tipus de paquet.
+Register a handler for a packet type.
 
 ##### `parse_version_packet(data: bytes) -> Optional[Dict[str, Any]]`
 
-Parseja un paquet IS_VER.
+Parse an IS_VER packet.
 
 ##### `parse_state_packet(data: bytes) -> Optional[Dict[str, Any]]`
 
-Parseja un paquet IS_STA.
+Parse an IS_STA packet.
 
 ##### `parse_mci_packet(data: bytes) -> Optional[Dict[str, Any]]`
 
-Parseja un paquet IS_MCI (telemetria).
+Parse an IS_MCI packet (telemetry).
 
-## Mòdul `telemetry`
+## `telemetry` Module
 
 ### `TelemetryCollector`
 
-Recull dades telemètriques del servidor LFS.
+Collects telemetry data from the LFS server.
 
 #### Constructor
 
@@ -134,55 +134,55 @@ Recull dades telemètriques del servidor LFS.
 TelemetryCollector(client: InSimClient)
 ```
 
-**Paràmetres:**
-- `client`: Client InSim connectat
+**Parameters:**
+- `client`: Connected InSim client
 
-#### Mètodes
+#### Methods
 
 ##### `start(interval: int = 100) -> None`
 
-Inicia la recollida de telemetria.
+Start telemetry collection.
 
-**Paràmetres:**
-- `interval`: Interval en ms (defecte 100ms = 10Hz)
+**Parameters:**
+- `interval`: Interval in ms (default 100ms = 10Hz)
 
 ##### `stop() -> None`
 
-Atura la recollida de telemetria.
+Stop telemetry collection.
 
 ##### `get_latest_telemetry(plid: Optional[int] = None) -> Dict[int, CarTelemetry]`
 
-Obté telemetria més recent.
+Get latest telemetry.
 
-**Paràmetres:**
-- `plid`: Player ID específic (None = tots)
+**Parameters:**
+- `plid`: Specific Player ID (None = all)
 
-**Returns:** Dict amb telemetria per player ID
+**Returns:** Dict with telemetry per player ID
 
 ##### `get_telemetry_history(plid: int, limit: Optional[int] = None) -> List[CarTelemetry]`
 
-Obté historial de telemetria.
+Get telemetry history.
 
-**Paràmetres:**
+**Parameters:**
 - `plid`: Player ID
-- `limit`: Nombre màxim de mostres (None = totes)
+- `limit`: Maximum number of samples (None = all)
 
 ##### `clear_history(plid: Optional[int] = None) -> None`
 
-Neteja l'historial de telemetria.
+Clear telemetry history.
 
 ##### `register_callback(event_type: str, callback: Callable) -> None`
 
-Registra un callback per esdeveniments.
+Register a callback for events.
 
 **Event types:**
-- `'car_update'`: Actualització de vehicle
-- `'lap_complete'`: Volta completada
-- `'split_time'`: Temps de sector
-- `'player_join'`: Jugador uneix
-- `'player_leave'`: Jugador deixa
+- `'car_update'`: Vehicle update
+- `'lap_complete'`: Lap completed
+- `'split_time'`: Sector time
+- `'player_join'`: Player joins
+- `'player_leave'`: Player leaves
 
-#### Exemple
+#### Example
 
 ```python
 from src.connection import InSimClient
@@ -199,13 +199,13 @@ def on_car_update(telemetry):
 collector.register_callback('car_update', on_car_update)
 collector.start(interval=100)
 
-# ... després ...
+# ... later ...
 collector.stop()
 ```
 
 ### `TelemetryProcessor`
 
-Processa i valida dades telemètriques.
+Processes and validates telemetry data.
 
 #### Constructor
 
@@ -213,35 +213,35 @@ Processa i valida dades telemètriques.
 TelemetryProcessor(max_speed: float = 150.0)
 ```
 
-#### Mètodes
+#### Methods
 
 ##### `validate_telemetry(telemetry: CarTelemetry) -> bool`
 
-Valida dades telemètriques.
+Validate telemetry data.
 
-**Returns:** `True` si vàlid
+**Returns:** `True` if valid
 
 ##### `process_telemetry(telemetry_list: List[CarTelemetry]) -> ProcessedTelemetry`
 
-Processa telemetria i calcula estadístiques.
+Process telemetry and calculate statistics.
 
 ##### `calculate_statistics(telemetry_list: List[CarTelemetry]) -> Dict[str, Any]`
 
-Calcula estadístiques detallades.
+Calculate detailed statistics.
 
 ##### `filter_by_speed_range(telemetry_list, min_speed, max_speed) -> List`
 
-Filtra per rang de velocitat.
+Filter by speed range.
 
 ##### `detect_anomalies(telemetry_list, threshold_stdev: float = 3.0) -> List[int]`
 
-Detecta anomalies utilitzant desviació estàndard.
+Detect anomalies using standard deviation.
 
-## Mòdul `export`
+## `export` Module
 
 ### `CSVExporter`
 
-Exporta dades a format CSV.
+Export data to CSV format.
 
 #### Constructor
 
@@ -249,17 +249,17 @@ Exporta dades a format CSV.
 CSVExporter(filename: str, delimiter: str = ',')
 ```
 
-#### Mètodes
+#### Methods
 
 ##### `export(telemetry_data: List[CarTelemetry], overwrite: bool = True) -> bool`
 
-Exporta telemetria a CSV.
+Export telemetry to CSV.
 
 ##### `export_processed(processed_data: ProcessedTelemetry) -> bool`
 
-Exporta dades processades a CSV.
+Export processed data to CSV.
 
-#### Exemple
+#### Example
 
 ```python
 from src.export import CSVExporter
@@ -270,7 +270,7 @@ exporter.export(telemetry_data)
 
 ### `JSONExporter`
 
-Exporta dades a format JSON.
+Export data to JSON format.
 
 #### Constructor
 
@@ -278,27 +278,27 @@ Exporta dades a format JSON.
 JSONExporter(filename: str, indent: int = 2)
 ```
 
-#### Mètodes
+#### Methods
 
 ##### `export(telemetry_data, metadata: Dict = None) -> bool`
 
-Exporta telemetria a JSON.
+Export telemetry to JSON.
 
 ##### `export_processed(processed_data, metadata: Dict = None) -> bool`
 
-Exporta dades processades a JSON.
+Export processed data to JSON.
 
 ##### `append(telemetry_data) -> bool`
 
-Afegeix dades a fitxer existent.
+Append data to existing file.
 
-## Mòdul `config`
+## `config` Module
 
 ### `Settings`
 
-Configuració de l'aplicació.
+Application configuration.
 
-#### Atributs
+#### Attributes
 
 - `connection`: `ConnectionSettings`
 - `telemetry`: `TelemetrySettings`
@@ -306,41 +306,41 @@ Configuració de l'aplicació.
 - `visualization`: `VisualizationSettings`
 - `logging`: `LoggingSettings`
 
-#### Funcions
+#### Functions
 
 ##### `load_config(filename: str = "config.yaml") -> Settings`
 
-Carrega configuració des de fitxer YAML.
+Load configuration from YAML file.
 
 ##### `save_config(settings: Settings, filename: str = "config.yaml") -> bool`
 
-Desa configuració a fitxer YAML.
+Save configuration to YAML file.
 
 ##### `create_default_config(filename: str = "config.yaml") -> Settings`
 
-Crea configuració per defecte.
+Create default configuration.
 
-#### Exemple
+#### Example
 
 ```python
 from src.config import Settings, load_config, save_config
 
-# Carregar configuració
+# Load configuration
 settings = load_config('config.yaml')
 
-# Modificar
+# Modify
 settings.connection.host = "192.168.1.100"
 settings.telemetry.interval = 50
 
-# Desar
+# Save
 save_config(settings, 'config.yaml')
 ```
 
-## Mòdul `utils`
+## `utils` Module
 
 ### `setup_logger()`
 
-Configura el sistema de logging.
+Configure the logging system.
 
 ```python
 setup_logger(
@@ -352,7 +352,7 @@ setup_logger(
 ) -> logging.Logger
 ```
 
-#### Exemple
+#### Example
 
 ```python
 from src.utils import setup_logger
@@ -365,35 +365,35 @@ logger.info("Application started")
 
 ### `CarTelemetry`
 
-Dades telemètriques d'un vehicle.
+Vehicle telemetry data.
 
-**Atributs:**
-- `timestamp`: Marca temporal
+**Attributes:**
+- `timestamp`: Timestamp
 - `plid`: Player ID
-- `node`: Node actual
-- `lap`: Volta actual
-- `position`: Dict amb x, y, z
-- `speed`: Velocitat en m/s
-- `direction`: Direcció
-- `heading`: Orientació
-- `angular_velocity`: Velocitat angular
+- `node`: Current node
+- `lap`: Current lap
+- `position`: Dict with x, y, z
+- `speed`: Speed in m/s
+- `direction`: Direction
+- `heading`: Heading
+- `angular_velocity`: Angular velocity
 
 ### `ProcessedTelemetry`
 
-Dades processades amb estadístiques.
+Processed data with statistics.
 
-**Atributs:**
-- `avg_speed`: Velocitat mitjana
-- `max_speed`: Velocitat màxima
-- `min_speed`: Velocitat mínima
-- `total_distance`: Distància total
-- `sample_count`: Nombre de mostres
+**Attributes:**
+- `avg_speed`: Average speed
+- `max_speed`: Maximum speed
+- `min_speed`: Minimum speed
+- `total_distance`: Total distance
+- `sample_count`: Number of samples
 
-## Enumeracions
+## Enumerations
 
 ### `PacketType`
 
-Tipus de paquets InSim.
+InSim packet types.
 
 ```python
 class PacketType(IntEnum):
@@ -402,10 +402,10 @@ class PacketType(IntEnum):
     ISP_TINY = 3    # Tiny
     ISP_STA = 5     # State
     ISP_MCI = 38    # Multi Car Info
-    # ... més tipus
+    # ... more types
 ```
 
-## Referències
+## References
 
 - [InSim Protocol](insim_protocol.md)
 - [Development Guide](development.md)

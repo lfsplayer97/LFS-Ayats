@@ -2,7 +2,7 @@
 Utility classes and data models for analysis module.
 
 This file contains les data structures and models used
-pels diferents components del mòdul d'anàlisi.
+for the different components of the analysis module.
 """
 
 from dataclasses import dataclass, field
@@ -23,7 +23,7 @@ class AlertLevel(Enum):
 @dataclass
 class Alert:
     """
-    Alerta generada pel sistema d'anàlisi.
+    Alerta generada pel sistema d'analysis.
 
     Attributes:
         level: Nivell de gravetat de l'alerta
@@ -67,13 +67,13 @@ class LapComparison:
     Complete comparison between two laps.
 
     Attributes:
-        lap1_id: ID de la primera volta
-        lap2_id: ID de la segona volta
-        time_difference: Time difference total (seconds)
+        lap1_id: ID of the first lap
+        lap2_id: ID of the second lap
+        time_difference: Total time difference (seconds)
         sector_comparisons: List of comparisons per sector
-        speed_trace_comparison: Comparació de traces de velocitat
+        speed_trace_comparison: Speed trace comparison
         racing_line_difference: Difference in racing line
-        suggestions: Suggeriments de millora
+        suggestions: Improvement suggestions
     """
 
     lap1_id: int
@@ -92,10 +92,10 @@ class BrakingPoint:
 
     Attributes:
         position: Braking point position (x, y)
-        lap: Número de volta
+        lap: Número de lap
         distance: Distància des de l'inici del sector
-        speed_before: Velocitat abans de frenar
-        speed_after: Velocitat després de frenar
+        speed_before: Speed before braking
+        speed_after: Speed after braking
         brake_duration: Braking duration (seconds)
         consistency_score: Consistency score (0-1)
     """
@@ -112,15 +112,15 @@ class BrakingPoint:
 @dataclass
 class ThrottleAnalysis:
     """
-    Anàlisi d'aplicació de gas en corbes.
+    Throttle application analysis in corners.
 
     Attributes:
         corner_id: Corner identifier
-        entry_speed: Velocitat d'entrada
-        apex_speed: Velocitat a l'apex
-        exit_speed: Velocitat de sortida
-        throttle_application_point: Throttle application point (% de la corba)
-        full_throttle_point: Full throttle point (% de la corba)
+        entry_speed: Entry speed
+        apex_speed: Apex speed
+        exit_speed: Exit speed
+        throttle_application_point: Throttle application point (% of corner)
+        full_throttle_point: Full throttle point (% of corner)
         time_in_corner: Total time in corner (seconds)
     """
 
@@ -156,12 +156,12 @@ class TimeDelta:
 @dataclass
 class RacingLine:
     """
-    Línia de carrera òptima.
+    Optimal racing line.
 
     Attributes:
         points: List of points (x, y) of the trajectory
-        speeds: Velocitats corresponents a cada punt
-        sector: Número de sector
+        speeds: Speeds corresponding to each point
+        sector: Sector number
         lap_time: Associated lap time
     """
 

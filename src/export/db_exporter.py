@@ -42,7 +42,7 @@ class DatabaseExporter:
         create_tables: bool = True,
     ):
         """
-        Inicialitza l'exportador de base de dades.
+        Initialize the database exporter.
 
         Args:
             connection_string: Database connection string
@@ -61,7 +61,7 @@ class DatabaseExporter:
             self.repository.create_tables()
 
         logger.info(
-            f"DatabaseExporter inicialitzat: "
+            f"DatabaseExporter initialized: "
             f"{_mask_connection_string_password(connection_string)}"
         )
 
@@ -373,7 +373,7 @@ class DatabaseExporter:
             )
 
         except Exception as e:
-            logger.error(f"Error en setup inicial: {e}")
+            logger.error(f"Error in initial setup: {e}")
             raise
 
     def get_session_statistics(self, session_id: int) -> Dict[str, Any]:
@@ -391,4 +391,4 @@ class DatabaseExporter:
     def close(self) -> None:
         """Close database connections."""
         self.repository.close()
-        logger.info("DatabaseExporter tancat")
+        logger.info("DatabaseExporter closed")

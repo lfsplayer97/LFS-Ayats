@@ -1,10 +1,10 @@
 """
 Performance Predictor
-Predicció de rendiment i temps de volta per Live for Speed.
+Performance and lap time prediction for Live for Speed.
 
-Aquest mòdul utilitza tècniques estadístiques i d'aprenentatge automàtic
-per predir temps de volta, pit stops, desgast de pneumàtics i altres
-mètriques de rendiment.
+This module uses statistical and machine learning techniques
+to predict lap times, pit stops, tire wear, and other
+performance metrics.
 """
 
 import logging
@@ -16,25 +16,25 @@ logger = logging.getLogger(__name__)
 
 class PerformancePredictor:
     """
-    Predictor de rendiment en carreres.
+    Race performance predictor.
 
-    Utilitza dades històriques i actuals per predir:
-    - Temps de volta finals
-    - Finestres òptimes de pit stop
-    - Vida útil dels pneumàtics
-    - Ritme òptim per gestió de combustible
-    - Canvis de posició predits
+    Uses historical and current data to predict:
+    - Final lap times
+    - Optimal pit stop windows
+    - Tire life
+    - Optimal pace for fuel management
+    - Predicted position changes
 
-    Exemple:
+    Example:
         >>> predictor = PerformancePredictor()
         >>> predicted_time = predictor.predict_lap_time([28.5, 31.2], historical_data)
-        >>> print(f"Temps predit: {predicted_time:.3f}s")
+        >>> print(f"Predicted time: {predicted_time:.3f}s")
     """
 
     def __init__(self):
-        """Inicialitza el predictor de rendiment."""
+        """Initialize the performance predictor."""
         self.historical_predictions: List[Dict[str, Any]] = []
-        logger.info("PerformancePredictor inicialitzat")
+        logger.info("PerformancePredictor initialized")
 
     def predict_lap_time(
         self,
@@ -42,17 +42,17 @@ class PerformancePredictor:
         historical_data: Optional[List[Dict[str, Any]]] = None,
     ) -> float:
         """
-        Prediu el temps de volta final basat en sectors actuals.
+        Prediu el lap time final basat en sectors actuals.
 
-        Utilitza els temps de sectors completats i dades històriques
-        per predir el temps de volta final.
+        Uses the completed sector times i historical data
+        to predict el lap time final.
 
         Args:
             current_sector_times: Temps dels sectors completats fins ara
-            historical_data: Dades històriques de voltes anteriors
+            historical_data: Dades històriques de laps anteriors
 
         Returns:
-            Temps de volta predit (segons)
+            Lap time predit (segons)
 
         Example:
             >>> predictor = PerformancePredictor()
@@ -66,15 +66,15 @@ class PerformancePredictor:
         # Si tenim tots els sectors, retornar la suma
         num_sectors = len(current_sector_times)
 
-        # Si no hi ha dades històriques, fer estimació simple
+        # Si no hi ha historical data, fer estimació simple
         if not historical_data or len(historical_data) == 0:
-            # Estimar sectors restants basant-se en la mitjana dels completats
+            # Estimate remaining sectors based on the average of completed ones
             avg_sector = statistics.mean(current_sector_times)
             total_sectors = 3  # Assumir 3 sectors per defecte
             remaining_sectors = max(0, total_sectors - num_sectors)
             return sum(current_sector_times) + (avg_sector * remaining_sectors)
 
-        # Analitzar dades històriques
+        # Analitzar historical data
         sector_averages: Dict[int, List[float]] = {}
         for lap in historical_data:
             if "sector_times" in lap:
@@ -83,12 +83,12 @@ class PerformancePredictor:
                         sector_averages[i] = []
                     sector_averages[i].append(sector_time)
 
-        # Calcular mitjanes històriques per cada sector
+        # Calculate historical averages for each sector
         historical_means = {
             i: statistics.mean(times) for i, times in sector_averages.items()
         }
 
-        # Predir sectors restants
+        # Predict remaining sectors
         predicted_total = sum(current_sector_times)
         for i in range(num_sectors, len(historical_means)):
             if i in historical_means:
@@ -107,45 +107,45 @@ class PerformancePredictor:
         """
         Prediu quan cal fer pit stop.
 
-        Analitza el consum de combustible i desgast de pneumàtics
-        per determinar la finestra òptima de pit stop.
+        Analyzes fuel i desgast of tires
+        to determine the optimal window optimala de pit stop.
 
         Args:
-            fuel_consumption: Consum de combustible per volta (%)
-            tire_wear: Desgast de pneumàtics per volta (%)
-            laps_remaining: Voltes restants a la cursa
+            fuel_consumption: Fuel consumption per lap (%)
+            tire_wear: Tire wear per lap (%)
+            laps_remaining: Remaining laps a la cursa
 
         Returns:
-            Tuple amb (voltes fins pit stop, raó principal)
+            Tuple with (laps fins pit stop, raó principal)
 
         Example:
             >>> predictor = PerformancePredictor()
             >>> laps, reason = predictor.predict_pit_window(2.5, 1.8, 20)
-            >>> print(f"Pit stop en {laps} voltes per {reason}")
+            >>> print(f"Pit stop en {laps} laps per {reason}")
         """
         if fuel_consumption <= 0 or tire_wear <= 0:
-            return laps_remaining, "No pit stop necessari"
+            return laps_remaining, "No pit stop necessary"
 
-        # Calcular voltes disponibles segons combustible (assumir 100% inicial)
+        # Calculate available laps based on fuel (assume 100% initial)
         fuel_laps = 100.0 / fuel_consumption
 
-        # Calcular voltes disponibles segons pneumàtics (assumir 100% de vida)
+        # Calculate available laps based on tires (assume 100% life)
         tire_laps = 100.0 / tire_wear
 
-        # Determinar factor limitant
+        # Determine limiting factor
         if fuel_laps < tire_laps:
-            pit_lap = max(1, int(fuel_laps * 0.9))  # 90% de seguretat
-            reason = "combustible"
+            pit_lap = max(1, int(fuel_laps * 0.9))  # 90% safety margin
+            reason = "fuel"
         else:
-            pit_lap = max(1, int(tire_laps * 0.9))  # 90% de seguretat
-            reason = "pneumàtics"
+            pit_lap = max(1, int(tire_laps * 0.9))  # 90% safety margin
+            reason = "tires"
 
-        # Ajustar si és més enllà de les voltes restants
+        # Adjust if it is beyond the remaining laps
         pit_lap = min(pit_lap, laps_remaining)
 
         logger.info(
-            f"Pit stop predit en {pit_lap} voltes per {reason} "
-            f"(combustible: {fuel_laps:.1f}, pneumàtics: {tire_laps:.1f})"
+            f"Pit stop predit en {pit_lap} laps per {reason} "
+            f"(fuel: {fuel_laps:.1f}, tires: {tire_laps:.1f})"
         )
 
         return pit_lap, reason
@@ -154,36 +154,36 @@ class PerformancePredictor:
         self, current_wear: float, laps_completed: int
     ) -> Tuple[int, float]:
         """
-        Estima quantes voltes més poden durar els pneumàtics.
+        Estimate how many more laps can last the tires.
 
         Args:
-            current_wear: Desgast actual dels pneumàtics (%)
-            laps_completed: Voltes completades amb aquests pneumàtics
+            current_wear: Current tire wear (%)
+            laps_completed: Laps completed with these tires
 
         Returns:
-            Tuple amb (voltes restants, confiança de l'estimació 0-1)
+            Tuple with (remaining laps, confidence of the estimate 0-1)
 
         Example:
             >>> predictor = PerformancePredictor()
             >>> laps, confidence = predictor.estimate_tire_life(25.0, 5)
-            >>> print(f"Resten {laps} voltes (confiança: {confidence:.0%})")
+            >>> print(f"Resten {laps} laps (confiança: {confidence:.0%})")
         """
         if current_wear <= 0 or laps_completed <= 0:
             return 0, 0.0
 
-        # Calcular taxa de desgast per volta
+        # Calculate taxa of wear per lap
         wear_per_lap = current_wear / laps_completed
 
-        # Calcular voltes restants fins al 100% de desgast
+        # Calculate remaining laps until 100% of wear
         remaining_wear = 100.0 - current_wear
         laps_remaining = int(remaining_wear / wear_per_lap)
 
-        # Calcular confiança basada en mostres
-        # Més voltes completades = més confiança
+        # Calculate confiança basada en mostres
+        # Més laps completades = més confiança
         confidence = min(1.0, laps_completed / 10.0)
 
         logger.debug(
-            f"Vida útil pneumàtics: {laps_remaining} voltes "
+            f"Tire life: {laps_remaining} laps "
             f"(desgast: {current_wear:.1f}%, confiança: {confidence:.0%})"
         )
 
@@ -193,33 +193,33 @@ class PerformancePredictor:
         self, fuel_target: float, laps_remaining: int, current_fuel: float
     ) -> float:
         """
-        Calcula el ritme òptim per arribar amb el combustible just.
+        Calculate the optimal pace to arrive with the right fuel.
 
         Args:
-            fuel_target: Combustible objectiu al final (%)
-            laps_remaining: Voltes restants
+            fuel_target: Target fuel at finish (%)
+            laps_remaining: Remaining laps
             current_fuel: Combustible actual (%)
 
         Returns:
-            Consum de combustible per volta recomanat (%)
+            Fuel consumption per lap recomanat (%)
 
         Example:
             >>> predictor = PerformancePredictor()
             >>> pace = predictor.calculate_optimal_pace(5.0, 20, 55.0)
-            >>> print(f"Consum recomanat: {pace:.2f}% per volta")
+            >>> print(f"Consum recomanat: {pace:.2f}% per lap")
         """
         if laps_remaining <= 0:
             return 0.0
 
-        # Calcular combustible disponible per gastar
+        # Calculate fuel available to spend
         available_fuel = current_fuel - fuel_target
 
-        # Calcular consum òptim per volta
+        # Calculate optimal consumption per lap
         optimal_consumption = available_fuel / laps_remaining
 
         logger.debug(
-            f"Ritme òptim: {optimal_consumption:.2f}% per volta "
-            f"(combustible disponible: {available_fuel:.1f}%)"
+            f"Optimal pace: {optimal_consumption:.2f}% per lap "
+            f"(fuel disponible: {available_fuel:.1f}%)"
         )
 
         return max(0.0, optimal_consumption)
@@ -231,15 +231,15 @@ class PerformancePredictor:
         laps_remaining: int,
     ) -> Dict[str, Any]:
         """
-        Prediu canvis de posició basant-se en ritmes.
+        Prediu canvis de posició based on ritmes.
 
         Args:
-            current_pace: Ritme actual (segons per volta)
-            competitors_pace: Llista de (posició, ritme) dels competidors
-            laps_remaining: Voltes restants
+            current_pace: Current pace (segons per lap)
+            competitors_pace: List of (posició, ritme) dels competidors
+            laps_remaining: Remaining laps
 
         Returns:
-            Diccionari amb predicció de posició final i canvis esperats
+            Dictionary amb predicció de posició final i canvis esperats
 
         Example:
             >>> predictor = PerformancePredictor()
@@ -250,13 +250,13 @@ class PerformancePredictor:
         if not competitors_pace or laps_remaining <= 0:
             return {"final_position": None, "changes": []}
 
-        # Calcular temps total per cada competidor
+        # Calculate temps total per cada competidor
         time_projections = []
         for position, pace in competitors_pace:
             total_time = pace * laps_remaining
             time_projections.append((position, total_time))
 
-        # Calcular temps propi
+        # Calculate temps propi
         own_time = current_pace * laps_remaining
         time_projections.append((0, own_time))  # 0 = posició pròpia
 
@@ -274,11 +274,11 @@ class PerformancePredictor:
         changes = []
         if final_position:
             for pos, pace in competitors_pace:
-                # Calcular guany/pèrdua de temps per volta
+                # Calculate gain/loss de temps per lap
                 time_diff_per_lap = pace - current_pace
                 total_diff = time_diff_per_lap * laps_remaining
 
-                if abs(total_diff) > 1.0:  # Diferència significativa
+                if abs(total_diff) > 1.0:  # Significant difference
                     changes.append(
                         {
                             "position": pos,
@@ -304,15 +304,15 @@ class PerformancePredictor:
         self, x_data: List[float], y_data: List[float], x_predict: float
     ) -> float:
         """
-        Predicció utilitzant regressió lineal simple.
+        Prediction using simple linear regression.
 
         Args:
-            x_data: Valors X (per exemple, número de volta)
-            y_data: Valors Y (per exemple, temps de volta)
-            x_predict: Valor X per predir
+            x_data: X values (e.g., lap number)
+            y_data: Y values (e.g., lap time)
+            x_predict: X value to predict
 
         Returns:
-            Valor Y predit
+            Predicted Y value
 
         Example:
             >>> predictor = PerformancePredictor()
@@ -323,11 +323,11 @@ class PerformancePredictor:
         if len(x_data) != len(y_data) or len(x_data) < 2:
             return 0.0
 
-        # Calcular mitjanes
+        # Calculate averages
         x_mean = statistics.mean(x_data)
         y_mean = statistics.mean(y_data)
 
-        # Calcular pendent (slope)
+        # Calculate slope (slope)
         numerator = sum(
             (x_data[i] - x_mean) * (y_data[i] - y_mean) for i in range(len(x_data))
         )
@@ -348,17 +348,17 @@ class PerformancePredictor:
         self, historical_values: List[float], periods_ahead: int = 1
     ) -> List[float]:
         """
-        Prediu tendència futura basant-se en valors històrics.
+        Predict trend future based on historical values.
 
-        Utilitza una mitjana ponderada que dona més importància
-        a valors recents.
+        Uses a weighted average that gives more importance
+        to recent values.
 
         Args:
-            historical_values: Valors històrics (ordenats cronològicament)
-            periods_ahead: Nombre de períodes a predir
+            historical_values: Historical values (ordered chronologically)
+            periods_ahead: Number of periods to predict
 
         Returns:
-            Llista de valors predits
+            List of predicted values
 
         Example:
             >>> predictor = PerformancePredictor()
@@ -369,18 +369,18 @@ class PerformancePredictor:
         if not historical_values or periods_ahead <= 0:
             return []
 
-        # Calcular pesos exponencials (més pes als valors recents)
+        # Calculate exponential weights (more weight to recent values)
         n = len(historical_values)
         weights = [2**i for i in range(n)]
         total_weight = sum(weights)
         normalized_weights = [w / total_weight for w in weights]
 
-        # Calcular mitjana ponderada
+        # Calculate average ponderada
         weighted_mean = sum(
             historical_values[i] * normalized_weights[i] for i in range(n)
         )
 
-        # Calcular tendència (pendent)
+        # Calculate trend (slope)
         if n >= 2:
             recent_change = historical_values[-1] - historical_values[-2]
         else:
@@ -391,9 +391,9 @@ class PerformancePredictor:
         last_value = historical_values[-1]
 
         for i in range(periods_ahead):
-            # Combinar tendència amb regressió a la mitjana
-            trend_component = recent_change * 0.7  # 70% de la tendència
-            mean_component = (weighted_mean - last_value) * 0.3  # 30% cap a la mitjana
+            # Combine trend amb regression to the average
+            trend_component = recent_change * 0.7  # 70% of the trend
+            mean_component = (weighted_mean - last_value) * 0.3  # 30% towards the average
 
             next_value = last_value + trend_component + mean_component
             predictions.append(next_value)
@@ -405,27 +405,27 @@ class PerformancePredictor:
         self, sector_times_per_lap: List[List[float]]
     ) -> Tuple[float, List[float]]:
         """
-        Calcula el millor temps teòric combinant els millors sectors.
+        Calculate the best theoretical time combining the best sectors.
 
         Args:
-            sector_times_per_lap: Llista de llistes amb temps de sectors per volta
+            sector_times_per_lap: List of lists with sector times per lap
 
         Returns:
-            Tuple amb (temps teòric, millors temps per sector)
+            Tuple with (theoretical time, best times per sector)
 
         Example:
             >>> predictor = PerformancePredictor()
             >>> laps = [[28.5, 31.2, 25.8], [28.3, 31.5, 25.6]]
             >>> theoretical, best_sectors = predictor.calculate_theoretical_best(laps)
-            >>> print(f"Millor teòric: {theoretical:.3f}s")
+            >>> print(f"Best theoretical: {theoretical:.3f}s")
         """
         if not sector_times_per_lap:
             return 0.0, []
 
-        # Determinar nombre de sectors
+        # Determinar number of sectors
         num_sectors = max(len(lap) for lap in sector_times_per_lap)
 
-        # Trobar millor temps per cada sector
+        # Find best time per cada sector
         best_sectors = []
         for sector_idx in range(num_sectors):
             sector_times = [
@@ -434,11 +434,11 @@ class PerformancePredictor:
             if sector_times:
                 best_sectors.append(min(sector_times))
 
-        # Calcular temps teòric
+        # Calculate theoretical time
         theoretical_best = sum(best_sectors)
 
         logger.info(
-            f"Millor temps teòric: {theoretical_best:.3f}s "
+            f"Best theoretical time: {theoretical_best:.3f}s "
             f"(sectors: {[f'{t:.3f}' for t in best_sectors]})"
         )
 
@@ -449,6 +449,6 @@ class PerformancePredictor:
         Retorna l'historial de prediccions realitzades.
 
         Returns:
-            Llista de prediccions històriques
+            List of prediccions històriques
         """
         return self.historical_predictions.copy()

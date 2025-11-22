@@ -1,86 +1,86 @@
-# Configuració LFS-Ayats
-# Exemple de configuració per defecte
+# LFS-Ayats Configuration
+# Example default configuration
 
-# Connexió InSim
+# InSim Connection
 connection:
-  host: 127.0.0.1          # IP del servidor LFS
-  port: 29999              # Port InSim (per defecte 29999)
-  admin_password: ''       # Contrasenya admin (si cal)
-  app_name: LFS-Ayats      # Nom de l'aplicació (màx 16 caràcters)
-  udp: false               # Utilitzar UDP en lloc de TCP
-  timeout: 5.0             # Timeout de connexió en segons
+  host: 127.0.0.1          # LFS server IP
+  port: 29999              # InSim port (default 29999)
+  admin_password: ''       # Admin password (if needed)
+  app_name: LFS-Ayats      # Application name (max 16 characters)
+  udp: false               # Use UDP instead of TCP
+  timeout: 5.0             # Connection timeout in seconds
 
-# Telemetria
+# Telemetry
 telemetry:
-  interval: 100            # Interval MCI/NLP en ms (100ms = 10Hz)
-  max_history: 10000       # Màxim de mostres a mantenir en memòria
-  auto_export: false       # Exportar automàticament
-  export_interval: 60      # Interval d'exportació automàtica (segons)
+  interval: 100            # MCI/NLP interval in ms (100ms = 10Hz)
+  max_history: 10000       # Maximum samples to keep in memory
+  auto_export: false       # Export automatically
+  export_interval: 60      # Automatic export interval (seconds)
 
-# Exportació
+# Export
 export:
-  format: csv              # Format: csv, json, database, o both
-  output_dir: data         # Directori de sortida
-  filename_template: telemetry_{timestamp}  # Plantilla de nom de fitxer
-  auto_compression: false  # Comprimir fitxers automàticament
+  format: csv              # Format: csv, json, database, or both
+  output_dir: data         # Output directory
+  filename_template: telemetry_{timestamp}  # File name template
+  auto_compression: false  # Compress files automatically
 
-# Base de dades
+# Database
 database:
   type: sqlite             # sqlite, postgresql, mysql
   sqlite:
-    path: ./data/telemetry.db  # Ruta del fitxer SQLite
+    path: ./data/telemetry.db  # SQLite file path
   postgresql:
     host: localhost
     port: 5432
     database: lfs_telemetry
     user: lfs_user
-    password: ${DB_PASSWORD}  # Des de variable d'entorn
-  pool_size: 5             # Mida del pool de connexions (PostgreSQL/MySQL)
-  max_overflow: 10         # Connexions addicionals permeses
-  echo: false              # Logging de consultes SQL (debug)
+    password: ${DB_PASSWORD}  # From environment variable
+  pool_size: 5             # Connection pool size (PostgreSQL/MySQL)
+  max_overflow: 10         # Additional connections allowed
+  echo: false              # SQL query logging (debug)
 
-# Visualització
+# Visualization
 visualization:
-  refresh_rate: 10         # Taxa de refresc en Hz
-  show_realtime: true      # Mostrar dades en temps real
-  plot_history: 100        # Nombre de mostres a mostrar en gràfics
+  refresh_rate: 10         # Refresh rate in Hz
+  show_realtime: true      # Show real-time data
+  plot_history: 100        # Number of samples to show in charts
 
 # Logging
 logging:
-  level: INFO              # Nivell: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: INFO              # Level: DEBUG, INFO, WARNING, ERROR, CRITICAL
   format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-  file: null               # Fitxer de log (null per no usar fitxer)
-  console: true            # Mostrar logs a la consola
+  file: null               # Log file (null to not use file)
+  console: true            # Show logs in console
 
-# Integracions externes
+# External integrations
 integrations:
   # Discord notifications
   discord:
-    enabled: false         # Activar integració amb Discord
-    webhook_url: null      # URL del webhook de Discord
-    bot_token: null        # Token del bot (opcional, des de variable d'entorn)
+    enabled: false         # Enable Discord integration
+    webhook_url: null      # Discord webhook URL
+    bot_token: null        # Bot token (optional, from environment variable)
     notifications:
-      personal_best: true  # Notificar millor temps personal
-      session_summary: true  # Notificar resum de sessió
-      anomalies: true      # Notificar anomalies detectades
+      personal_best: true  # Notify personal best time
+      session_summary: true  # Notify session summary
+      anomalies: true      # Notify detected anomalies
   
   # Telegram bot
   telegram:
-    enabled: false         # Activar integració amb Telegram
-    bot_token: null        # Token del bot (des de variable d'entorn)
-    chat_id: null          # ID del xat per defecte
+    enabled: false         # Enable Telegram integration
+    bot_token: null        # Bot token (from environment variable)
+    chat_id: null          # Default chat ID
   
   # Streaming overlay (OBS)
   streaming:
-    enabled: false         # Activar overlay per streaming
-    overlay_port: 5000     # Port del servidor overlay
-    update_rate: 10        # Freqüència d'actualització (Hz)
+    enabled: false         # Enable streaming overlay
+    overlay_port: 5000     # Overlay server port
+    update_rate: 10        # Update frequency (Hz)
   
   # Cloud backup
   cloud_backup:
-    enabled: false         # Activar backup automàtic
-    provider: google_drive # Proveïdor: google_drive, dropbox
-    auto_backup: true      # Backup automàtic
-    backup_interval: 3600  # Interval de backup (segons)
-    credentials_path: ./credentials.json  # Ruta de credencials
-    folder_id: null        # ID de carpeta (Google Drive) o path (Dropbox)
+    enabled: false         # Enable automatic backup
+    provider: google_drive # Provider: google_drive, dropbox
+    auto_backup: true      # Automatic backup
+    backup_interval: 3600  # Backup interval (seconds)
+    credentials_path: ./credentials.json  # Credentials path
+    folder_id: null        # Folder ID (Google Drive) or path (Dropbox)

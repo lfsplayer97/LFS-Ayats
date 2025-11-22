@@ -214,13 +214,13 @@ class AnomalyDetector:
         self, wheel_wear_pattern: List[float]
     ) -> Tuple[bool, Optional[Alert]]:
         """
-        Detecta flat spots als pneumàtics.
+        Detecta flat spots on tires.
 
         Analyze wheel wear pattern to detect zones
         with excessive wear (flat spots).
 
         Args:
-            wheel_wear_pattern: List of values de desgast al voltant de la roda
+            wheel_wear_pattern: List of wear values around the wheel
 
         Returns:
             Tuple with (detection bool, optional Alert)
@@ -320,12 +320,12 @@ class AnomalyDetector:
         self, fuel_level: float, fuel_per_lap: float, laps_remaining: int
     ) -> Tuple[bool, Optional[Alert]]:
         """
-        Detecta si el combustible és insuficient.
+        Detect if fuel is insufficient.
 
         Args:
-            fuel_level: Nivell actual de combustible (%)
-            fuel_per_lap: Consum mitjà per volta (%)
-            laps_remaining: Voltes restants a la cursa
+            fuel_level: Current level of fuel (%)
+            fuel_per_lap: Average consumption per lap (%)
+            laps_remaining: Remaining laps a la cursa
 
         Returns:
             Tuple with (detection bool, optional Alert)
@@ -369,7 +369,7 @@ class AnomalyDetector:
             threshold: Llindar personalitzat (None per usar el per defecte)
 
         Returns:
-            Llista d'índexs que són outliers
+            List of indices that are outliers
         """
         if len(data) < 3:
             return []
@@ -397,7 +397,7 @@ class AnomalyDetector:
             data: List of values a analitzar
 
         Returns:
-            Llista d'índexs que són outliers
+            List of indices that are outliers
         """
         if len(data) < 4:
             return []
@@ -431,11 +431,11 @@ class AnomalyDetector:
 
         Args:
             data: List of values a analitzar
-            window_size: Mida de la finestra per la mitjana mòbil
-            sensitivity: Sensibilitat de detecció (múltiple de desviació)
+            window_size: Mida de la finestra per la average mòbil
+            sensitivity: Sensibilitat de detecció (múltiple de deviation)
 
         Returns:
-            Llista d'índexs on es detecten canvis sobtats
+            List of indices on es detecten canvis sobtats
         """
         if len(data) < window_size + 1:
             return []
@@ -524,6 +524,6 @@ class AnomalyDetector:
         return self.anomaly_history.copy()
 
     def clear_history(self) -> None:
-        """Neteja l'historial d'anomalies."""
+        """Clear the anomaly history."""
         self.anomaly_history.clear()
-        logger.debug("Historial d'anomalies netejat")
+        logger.debug("Anomaly history cleared")

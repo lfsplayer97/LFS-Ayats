@@ -15,36 +15,36 @@ class CSVExporter:
     """
     Export telemetry data to CSV format.
 
-    Exemple:
+    Example:
         >>> exporter = CSVExporter('telemetry.csv')
         >>> exporter.export(telemetry_data)
     """
 
     def __init__(self, filename: str, delimiter: str = ","):
         """
-        Inicialitza l'exportador CSV.
+        Initialize the CSV exporter.
 
         Args:
-            filename: Nom del fitxer de sortida
-            delimiter: Delimitador CSV (by default ',')
+            filename: Output file name
+            delimiter: CSV delimiter (by default ',')
         """
         self.filename = Path(filename)
         self.delimiter = delimiter
-        logger.info(f"CSVExporter inicialitzat: {filename}")
+        logger.info(f"CSVExporter initialized: {filename}")
 
     def export(self, telemetry_data: List[Any], overwrite: bool = True) -> bool:
         """
         Export telemetry data to CSV.
 
         Args:
-            telemetry_data: Llista d'objectes CarTelemetry
-            overwrite: Sobreescriure fitxer existent
+            telemetry_data: List of CarTelemetry objects
+            overwrite: Overwrite existing file
 
         Returns:
             bool: True if export is successful
         """
         if not telemetry_data:
-            logger.warning("No hi ha dades per exportar")
+            logger.warning("No data to export")
             return False
 
         try:
@@ -52,7 +52,7 @@ class CSVExporter:
             file_exists = self.filename.exists() and not overwrite
 
             with open(self.filename, mode, newline="", encoding="utf-8") as f:
-                # Obtenir camps del primer objecte
+                # Get fields from first object
                 telemetry_data[0]
 
                 # Basic fields
@@ -78,7 +78,7 @@ class CSVExporter:
                 if not file_exists:
                     writer.writeheader()
 
-                # Escriure dades
+                # Write data
                 for item in telemetry_data:
                     row = {
                         "timestamp": item.timestamp,
@@ -104,10 +104,10 @@ class CSVExporter:
 
     def export_processed(self, processed_data: Any) -> bool:
         """
-        Exporta dades processades a CSV.
+        Export processed data to CSV.
 
         Args:
-            processed_data: Objecte ProcessedTelemetry
+            processed_data: ProcessedTelemetry object
 
         Returns:
             bool: True if export is successful

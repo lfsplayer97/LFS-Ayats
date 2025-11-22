@@ -20,7 +20,7 @@ class AlertHandler(ABC):
     """
     Classe base per gestors d'alertes.
 
-    Els gestors personalitzats han d'heretar d'aquesta classe
+    Custom handlers must inherit from this class
     i implementar el mètode handle().
     """
 
@@ -55,7 +55,7 @@ class LogAlertHandler(AlertHandler):
     """Handler that logs alerts to the logging system."""
 
     def handle(self, alert: Alert) -> None:
-        """Registra l'alerta al sistema de logging."""
+        """Register the alert to the logging system."""
         log_methods = {
             AlertLevel.INFO: logger.info,
             AlertLevel.WARNING: logger.warning,
@@ -92,12 +92,12 @@ class AlertSystem:
     Alert management system.
 
     Manages creation, distribution and alert history
-    del sistema d'anàlisi telemètric.
+    of the telemetry analysis system.
 
-    Exemple:
+    Example:
         >>> system = AlertSystem()
         >>> system.register_handler(ConsoleAlertHandler())
-        >>> alert = Alert(AlertLevel.WARNING, "Temperatura alta")
+        >>> alert = Alert(AlertLevel.WARNING, "High temperature")
         >>> system.trigger_alert(alert)
     """
 
@@ -152,11 +152,11 @@ class AlertSystem:
         Dispara una alerta.
 
         Args:
-            alert: Alerta a disparar
+            alert: Alert to trigger
             min_interval: Minimum interval between alerts of the same type (seconds)
 
         Returns:
-            True si l'alerta s'ha processat, False si s'ha filtrat
+            True if the alert was processed, False if filtered
 
         Example:
             >>> system = AlertSystem()
@@ -211,16 +211,16 @@ class AlertSystem:
             level: Nivell de l'alerta
             message: Missatge de l'alerta
             data: Additional data
-            min_interval: Interval mínim entre alertes
+            min_interval: Minimum interval between alerts
 
         Returns:
-            True si l'alerta s'ha processat
+            True if the alert was processed
 
         Example:
             >>> system = AlertSystem()
             >>> system.create_and_trigger(
             ...     AlertLevel.WARNING,
-            ...     "Temperatura elevada",
+            ...     "Elevated temperature",
             ...     {"temp": 95.5}
             ... )
         """
@@ -232,7 +232,7 @@ class AlertSystem:
         Check conditions and generate automatic alerts.
 
         This method can be used to integrate with detectors
-        d'anomalies i altres sistemes d'anàlisi.
+        d'anomalies i altres sistemes d'analysis.
 
         Args:
             telemetry_data: Telemetry data to analyze
@@ -248,7 +248,7 @@ class AlertSystem:
         generated_alerts = []
 
         # Example of automatic conditions
-        # En una implementació real, aquests serien més complexos
+        # In a real implementation, these would be more complex
 
         # Check engine temperature
         if "engine_temp" in telemetry_data:
@@ -264,7 +264,7 @@ class AlertSystem:
             elif temp > 95:
                 alert = Alert(
                     level=AlertLevel.WARNING,
-                    message=f"Temperatura elevada: {temp}°C",
+                    message=f"Elevated temperature: {temp}°C",
                     data={"temperature": temp},
                 )
                 if self.trigger_alert(alert, min_interval=30.0):
