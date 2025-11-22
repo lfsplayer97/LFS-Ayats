@@ -1,28 +1,28 @@
-# Tutorial 4: Anàlisi Avançada
+# Tutorial 4: Advanced Analysis
 
-Aquest tutorial cobreix tècniques avançades d'anàlisi de telemetria: detecció d'anomalies, predicció de temps de volta i optimització de traçada.
+This tutorial covers advanced telemetry analysis techniques: anomaly detection, lap time prediction, and racing line optimization.
 
-## Objectius
+## Objectives
 
-- ✅ Detectar anomalies en la conducció
-- ✅ Predir temps de volta
-- ✅ Identificar punts d'optimització
-- ✅ Generar reports automàtics
+- ✅ Detect anomalies in driving
+- ✅ Predict lap times
+- ✅ Identify optimization points
+- ✅ Generate automated reports
 
-## Prerequisits
+## Prerequisites
 
-- Tutorials anteriors completats
-- Coneixements de pandas i numpy
-- Dades de múltiples sessions
+- Previous tutorials completed
+- Knowledge of pandas and numpy
+- Data from multiple sessions
 
-## Temps Estimat: 60 minuts
+## Estimated Time: 60 minutes
 
-## Pas 1: Detecció d'Anomalies
+## Step 1: Anomaly Detection
 
 ```python
 """
-Anàlisi Avançada de Telemetria
-Detecció d'anomalies i prediccions.
+Advanced Telemetry Analysis
+Anomaly detection and predictions.
 """
 
 import numpy as np
@@ -39,46 +39,46 @@ logger = setup_logger("advanced_analysis", "INFO")
 def detect_anomalies(telemetry_data: pd.DataFrame, 
                     contamination: float = 0.05) -> pd.DataFrame:
     """
-    Detecta anomalies en les dades de telemetria.
+    Detects anomalies in telemetry data.
     
     Args:
-        telemetry_data: DataFrame amb dades
-        contamination: Proporció esperada d'anomalies (0-1)
+        telemetry_data: DataFrame with data
+        contamination: Expected proportion of anomalies (0-1)
         
     Returns:
-        DataFrame amb columna 'anomaly' (-1 = anomalia, 1 = normal)
+        DataFrame with 'anomaly' column (-1 = anomaly, 1 = normal)
     """
-    logger.info("Detectant anomalies...")
+    logger.info("Detecting anomalies...")
     
-    # Seleccionar característiques
+    # Select features
     features = ['speed', 'rpm', 'throttle', 'brake']
     X = telemetry_data[features].fillna(0)
     
-    # Model Isolation Forest
+    # Isolation Forest model
     model = IsolationForest(contamination=contamination, random_state=42)
     telemetry_data['anomaly'] = model.fit_predict(X)
     
     anomaly_count = (telemetry_data['anomaly'] == -1).sum()
-    logger.info(f"✓ Trobades {anomaly_count} anomalies ({anomaly_count/len(telemetry_data)*100:.1f}%)")
+    logger.info(f"✓ Found {anomaly_count} anomalies ({anomaly_count/len(telemetry_data)*100:.1f}%)")
     
     return telemetry_data
 
 
 def analyze_anomalies(telemetry_data: pd.DataFrame):
-    """Analitza les anomalies detectades."""
+    """Analyzes detected anomalies."""
     anomalies = telemetry_data[telemetry_data['anomaly'] == -1]
     
     if len(anomalies) == 0:
-        logger.info("No s'han trobat anomalies")
+        logger.info("No anomalies found")
         return
     
-    logger.info(f"\n=== Anàlisi d'Anomalies ===")
+    logger.info(f"\n=== Anomaly Analysis ===")
     logger.info(f"Total anomalies: {len(anomalies)}")
-    logger.info(f"\nEstadístiques d'anomalies:")
+    logger.info(f"\nAnomaly statistics:")
     logger.info(anomalies[['speed', 'rpm', 'throttle', 'brake']].describe())
 ```
 
-## Pas 2: Predicció de Temps de Volta
+## Step 2: Lap Time Prediction
 
 ```python
 from sklearn.linear_model import LinearRegression
@@ -87,13 +87,13 @@ from sklearn.model_selection import train_test_split
 
 def prepare_lap_features(laps_data: List[Dict]) -> pd.DataFrame:
     """
-    Prepara característiques per predicció de temps de volta.
+    Prepares features for lap time prediction.
     
     Args:
-        laps_data: Llista de voltes amb dades
+        laps_data: List of laps with data
         
     Returns:
-        DataFrame amb característiques
+        DataFrame with features
     """
     features = []
     
@@ -119,19 +119,19 @@ def prepare_lap_features(laps_data: List[Dict]) -> pd.DataFrame:
 
 def train_lap_predictor(laps_data: List[Dict]) -> LinearRegression:
     """
-    Entrena model per predir temps de volta.
+    Trains model to predict lap times.
     
     Args:
-        laps_data: Dades d'entrenament
+        laps_data: Training data
         
     Returns:
-        Model entrenat
+        Trained model
     """
-    logger.info("Entrenant model de predicció...")
+    logger.info("Training prediction model...")
     
     df = prepare_lap_features(laps_data)
     
-    # Separar features i target
+    # Separate features and target
     X = df[['avg_speed', 'max_speed', 'speed_std', 'avg_rpm']]
     y = df['lap_time']
     
@@ -140,15 +140,15 @@ def train_lap_predictor(laps_data: List[Dict]) -> LinearRegression:
         X, y, test_size=0.2, random_state=42
     )
     
-    # Entrenar model
+    # Train model
     model = LinearRegression()
     model.fit(X_train, y_train)
     
-    # Avaluar
+    # Evaluate
     train_score = model.score(X_train, y_train)
     test_score = model.score(X_test, y_test)
     
-    logger.info(f"✓ Model entrenat")
+    logger.info(f"✓ Model trained")
     logger.info(f"   Train R²: {train_score:.3f}")
     logger.info(f"   Test R²: {test_score:.3f}")
     
@@ -160,33 +160,33 @@ def predict_lap_time(model: LinearRegression,
                     max_speed: float,
                     speed_std: float,
                     avg_rpm: float) -> float:
-    """Prediu temps de volta basant-se en característiques."""
+    """Predicts lap time based on features."""
     features = np.array([[avg_speed, max_speed, speed_std, avg_rpm]])
     predicted_time = model.predict(features)[0]
     return predicted_time
 ```
 
-## Pas 3: Optimització de Traçada
+## Step 3: Racing Line Optimization
 
 ```python
 def find_optimal_racing_line(telemetry_data: pd.DataFrame,
                             speed_threshold: float = 150.0) -> pd.DataFrame:
     """
-    Identifica la línia de cursa òptima basant-se en velocitat.
+    Identifies optimal racing line based on speed.
     
     Args:
-        telemetry_data: Dades de telemetria
-        speed_threshold: Velocitat mínima per considerar òptim
+        telemetry_data: Telemetry data
+        speed_threshold: Minimum speed to consider optimal
         
     Returns:
-        DataFrame amb segments òptims
+        DataFrame with optimal segments
     """
-    logger.info("Buscant línia de cursa òptima...")
+    logger.info("Searching for optimal racing line...")
     
-    # Filtrar per velocitat alta
+    # Filter by high speed
     optimal_segments = telemetry_data[telemetry_data['speed'] >= speed_threshold]
     
-    logger.info(f"✓ Trobats {len(optimal_segments)} punts òptims")
+    logger.info(f"✓ Found {len(optimal_segments)} optimal points")
     
     return optimal_segments
 
@@ -194,16 +194,16 @@ def find_optimal_racing_line(telemetry_data: pd.DataFrame,
 def calculate_corner_speeds(telemetry_data: pd.DataFrame,
                            corner_threshold: float = 100.0) -> List[Dict]:
     """
-    Analitza velocitats en corbes (zones de baixa velocitat).
+    Analyzes speeds in corners (low speed zones).
     
     Args:
-        telemetry_data: Dades de telemetria
-        corner_threshold: Velocitat màxima per considerar corba
+        telemetry_data: Telemetry data
+        corner_threshold: Maximum speed to consider a corner
         
     Returns:
-        Llista de corbes amb estadístiques
+        List of corners with statistics
     """
-    logger.info("Analitzant velocitats en corbes...")
+    logger.info("Analyzing corner speeds...")
     
     corners = []
     in_corner = False
@@ -216,8 +216,8 @@ def calculate_corner_speeds(telemetry_data: pd.DataFrame,
             in_corner = True
             corner_data.append(row)
         elif in_corner and speed >= corner_threshold:
-            # Fi de corba
-            if len(corner_data) > 5:  # Mínim 5 punts
+            # End of corner
+            if len(corner_data) > 5:  # Minimum 5 points
                 corners.append({
                     'entry_speed': corner_data[0]['speed'],
                     'min_speed': min(c['speed'] for c in corner_data),
@@ -228,42 +228,42 @@ def calculate_corner_speeds(telemetry_data: pd.DataFrame,
             corner_data = []
             in_corner = False
     
-    logger.info(f"✓ Identificades {len(corners)} corbes")
+    logger.info(f"✓ Identified {len(corners)} corners")
     
     return corners
 ```
 
-## Pas 4: Generació de Reports
+## Step 4: Report Generation
 
 ```python
 def generate_analysis_report(telemetry_data: pd.DataFrame,
                             laps_data: List[Dict],
                             output_file: str = "analysis_report.html"):
     """
-    Genera report HTML complet d'anàlisi.
+    Generates complete HTML analysis report.
     
     Args:
-        telemetry_data: Dades de telemetria
-        laps_data: Dades de voltes
-        output_file: Fitxer de sortida
+        telemetry_data: Telemetry data
+        laps_data: Lap data
+        output_file: Output file
     """
-    logger.info("Generant report d'anàlisi...")
+    logger.info("Generating analysis report...")
     
-    # Detectar anomalies
+    # Detect anomalies
     telemetry_data = detect_anomalies(telemetry_data)
     
-    # Entrenar predictor
+    # Train predictor
     model = train_lap_predictor(laps_data)
     
-    # Analitzar corbes
+    # Analyze corners
     corners = calculate_corner_speeds(telemetry_data)
     
-    # Crear HTML
+    # Create HTML
     html_content = f"""
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Report d'Anàlisi Avançada</title>
+        <title>Advanced Analysis Report</title>
         <style>
             body {{ font-family: Arial, sans-serif; margin: 20px; }}
             h1 {{ color: #2c3e50; }}
@@ -274,26 +274,26 @@ def generate_analysis_report(telemetry_data: pd.DataFrame,
         </style>
     </head>
     <body>
-        <h1>Report d'Anàlisi Avançada de Telemetria</h1>
+        <h1>Advanced Telemetry Analysis Report</h1>
         
-        <h2>Resum General</h2>
+        <h2>General Summary</h2>
         <div class="stat">
-            <p><strong>Total de mostres:</strong> {len(telemetry_data)}</p>
-            <p><strong>Total de voltes:</strong> {len(laps_data)}</p>
-            <p><strong>Anomalies detectades:</strong> {(telemetry_data['anomaly'] == -1).sum()}</p>
+            <p><strong>Total samples:</strong> {len(telemetry_data)}</p>
+            <p><strong>Total laps:</strong> {len(laps_data)}</p>
+            <p><strong>Anomalies detected:</strong> {(telemetry_data['anomaly'] == -1).sum()}</p>
         </div>
         
-        <h2>Anàlisi de Corbes</h2>
+        <h2>Corner Analysis</h2>
         <div class="stat">
-            <p><strong>Corbes identificades:</strong> {len(corners)}</p>
-            <p><strong>Velocitat mitjana en corbes:</strong> 
+            <p><strong>Corners identified:</strong> {len(corners)}</p>
+            <p><strong>Average corner speed:</strong> 
                {np.mean([c['avg_speed'] for c in corners]):.1f} km/h</p>
         </div>
         
-        <h2>Prediccions</h2>
+        <h2>Predictions</h2>
         <div class="stat">
-            <p>Model de predicció entrenat amb {len(laps_data)} voltes</p>
-            <p>Utilitza el model per predir temps de futures voltes</p>
+            <p>Prediction model trained with {len(laps_data)} laps</p>
+            <p>Use the model to predict future lap times</p>
         </div>
     </body>
     </html>
@@ -302,28 +302,28 @@ def generate_analysis_report(telemetry_data: pd.DataFrame,
     with open(output_file, 'w') as f:
         f.write(html_content)
     
-    logger.info(f"✓ Report guardat: {output_file}")
+    logger.info(f"✓ Report saved: {output_file}")
 ```
 
-## Pas 5: Funció Principal
+## Step 5: Main Function
 
 ```python
 def main():
-    """Funció principal d'anàlisi avançada."""
-    logger.info("=== Anàlisi Avançada de Telemetria ===\n")
+    """Main advanced analysis function."""
+    logger.info("=== Advanced Telemetry Analysis ===\n")
     
-    # Carregar dades
+    # Load data
     df = pd.read_csv("data/session_20240115_143022.csv")
     laps = extract_laps_from_dataframe(df)
     
-    # 1. Detecció d'anomalies
+    # 1. Anomaly detection
     df = detect_anomalies(df)
     analyze_anomalies(df)
     
-    # 2. Predicció de temps de volta
+    # 2. Lap time prediction
     model = train_lap_predictor(laps)
     
-    # Predir temps de volta següent
+    # Predict next lap time
     next_lap_time = predict_lap_time(
         model, 
         avg_speed=145.0, 
@@ -331,40 +331,40 @@ def main():
         speed_std=35.0,
         avg_rpm=5500
     )
-    logger.info(f"\n🔮 Predicció per següent volta: {next_lap_time:.2f}s")
+    logger.info(f"\n🔮 Prediction for next lap: {next_lap_time:.2f}s")
     
-    # 3. Optimització de traçada
+    # 3. Racing line optimization
     optimal_line = find_optimal_racing_line(df, speed_threshold=150.0)
     corners = calculate_corner_speeds(df)
     
-    # 4. Generar report
+    # 4. Generate report
     generate_analysis_report(df, laps, "advanced_analysis_report.html")
     
-    logger.info("\n✓ Anàlisi avançada completada!")
+    logger.info("\n✓ Advanced analysis completed!")
 
 
 if __name__ == "__main__":
     main()
 ```
 
-## Exercicis
+## Exercises
 
-1. **Millora del Model**: Afegeix més característiques (throttle, brake, gear)
-2. **Clustering**: Agrupa voltes similars amb K-means
-3. **Anàlisi Temporal**: Detecta tendències en el temps
+1. **Model Improvement**: Add more features (throttle, brake, gear)
+2. **Clustering**: Group similar laps with K-means
+3. **Temporal Analysis**: Detect trends over time
 
-## Consells
+## Tips
 
-- Necessites múltiples sessions per models precisos
-- Normalitza les característiques per millors resultats
-- Valida models amb dades no vistes
+- You need multiple sessions for accurate models
+- Normalize features for better results
+- Validate models with unseen data
 
-## Recursos
+## Resources
 
 - [scikit-learn Documentation](https://scikit-learn.org/)
 - [Pandas User Guide](https://pandas.pydata.org/)
-- [Documentació d'Anàlisi](../analysis_module.md)
+- [Analysis Documentation](../analysis_module.md)
 
 ---
 
-Ara domines l'anàlisi avançada! 🎓
+You now master advanced analysis! 🎓
