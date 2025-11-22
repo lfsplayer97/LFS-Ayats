@@ -161,7 +161,7 @@ def example_4_lap_comparison():
     """
     Example 4: Lap Comparison
 
-    Demostra com comparar dues voltes en detall.
+    Demonstrates how to compare two laps in detail.
     """
     print("=" * 70)
     print("Example 4: Lap Comparison")

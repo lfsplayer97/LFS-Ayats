@@ -20,7 +20,7 @@ class AlertHandler(ABC):
     """
     Classe base per gestors d'alertes.
 
-    Els gestors personalitzats han d'heretar d'aquesta classe
+    Custom handlers must inherit from this class
     i implementar el mètode handle().
     """
 
@@ -248,7 +248,7 @@ class AlertSystem:
         generated_alerts = []
 
         # Example of automatic conditions
-        # En una implementació real, aquests serien més complexos
+        # In a real implementation, these would be more complex
 
         # Check engine temperature
         if "engine_temp" in telemetry_data:

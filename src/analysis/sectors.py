@@ -202,7 +202,7 @@ class SectorAnalyzer:
             # Coeficient de variació
             cv = stdev / mean_time if mean_time > 0 else 0
 
-            # Consistència (1 = perfect, 0 = very inconsistent)
+            # Consistency (1 = perfect, 0 = very inconsistent)
             consistency[sector_num + 1] = max(0.0, 1.0 - cv)
 
         return consistency
@@ -309,7 +309,7 @@ class SectorAnalyzer:
             mean_distance = statistics.mean(distances)
             stdev_distance = statistics.stdev(distances) if len(distances) > 1 else 0
 
-            # Consistència (lower deviation = greater consistency)
+            # Consistency (lower deviation = greater consistency)
             consistency = (
                 1.0 - min(1.0, stdev_distance / mean_distance)
                 if mean_distance > 0

@@ -72,7 +72,7 @@ class AdvancedComparator:
         # Comparar línies de carrera
         line_difference = self._compare_racing_lines(lap1_data, lap2_data)
 
-        # Generar suggeriments
+        # Generate suggestions
         suggestions = self._generate_suggestions(
             sector_comparisons, speed_comparison, line_difference
         )
@@ -155,7 +155,7 @@ class AdvancedComparator:
         lap1_speeds = [t.get("speed", 0) for t in lap1_telemetry]
         lap2_speeds = [t.get("speed", 0) for t in lap2_telemetry]
 
-        # Calculate estadístiques
+        # Calculate statistics
         comparison = {
             "lap1_avg_speed": statistics.mean(lap1_speeds) if lap1_speeds else 0,
             "lap2_avg_speed": statistics.mean(lap2_speeds) if lap2_speeds else 0,
@@ -236,7 +236,7 @@ class AdvancedComparator:
             line_difference: Racing line difference
 
         Returns:
-            List of suggeriments
+            List of suggestions
         """
         suggestions = []
 
@@ -344,7 +344,7 @@ class AdvancedComparator:
                 {
                     "type": "total_time",
                     "value": time_diff,
-                    "description": f"Diferència de temps total: {time_diff:+.3f}s",
+                    "description": f"Total time difference: {time_diff:+.3f}s",
                     "significant": abs(time_diff) > 0.5,
                 }
             )
