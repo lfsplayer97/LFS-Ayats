@@ -232,7 +232,7 @@ class AlertSystem:
         Check conditions and generate automatic alerts.
 
         This method can be used to integrate with detectors
-        d'anomalies i altres sistemes d'anàlisi.
+        d'anomalies i altres sistemes d'analysis.
 
         Args:
             telemetry_data: Telemetry data to analyze

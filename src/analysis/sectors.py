@@ -1,9 +1,9 @@
 """
 Sector Analyzer
-Anàlisi detallada del performance for sectors.
+Detailed sector performance analysis.
 
-Aquest mòdul proporciona eines per analitzar el performance in diferents
-sectors of the track, identify weak points i optimize the racing line.
+This module provides tools for analyzing performance in different
+track sectors, identifying weak points, and optimizing the racing line.
 """
 
 import logging
@@ -91,7 +91,7 @@ class SectorAnalyzer:
             percentile: Percentil per considerar un sector "feble" (0.9 = top 10%)
 
         Returns:
-            List of weak sectors ordenats per temps perdut
+            List of weak sectors ordered by time lost
 
         Example:
             >>> analyzer = SectorAnalyzer()
@@ -123,16 +123,16 @@ class SectorAnalyzer:
             if len(times) < 2:
                 continue
 
-            # Calculate estadístiques
+            # Calculate statistics
             mean_time = statistics.mean(times)
             best_time = min(times)
             # worst_time = max(times)  # Not currently used
             stdev = statistics.stdev(times)
 
-            # Calculate temps perdut respecte al millor
+            # Calculate time lost relative to best
             time_lost = mean_time - best_time
 
-            # Calculate consistència (inversa del coeficient de variació)
+            # Calculate consistency (inverse of coefficient of variation)
             consistency = 1.0 - min(1.0, stdev / mean_time) if mean_time > 0 else 0.0
 
             # Identificar si és un sector feble
@@ -159,16 +159,16 @@ class SectorAnalyzer:
         self, laps: List[Dict[str, Any]]
     ) -> Dict[int, float]:
         """
-        Calcula la consistència per cada sector.
+        Calculate consistency per cada sector.
 
-        La consistència es mesura com 1 - CV (coeficient de variació),
-        on valors més alts indiquen major consistència.
+        Consistency is measured com 1 - CV (coefficient of variation),
+        on higher values indicate greater consistency.
 
         Args:
             laps: List of lap data
 
         Returns:
-            Dictionary amb consistència per sector number
+            Dictionary with consistency per sector number
 
         Example:
             >>> analyzer = SectorAnalyzer()
@@ -188,7 +188,7 @@ class SectorAnalyzer:
                     sector_times[i] = []
                 sector_times[i].append(time)
 
-        # Calculate consistència per sector
+        # Calculate consistency per sector
         consistency = {}
 
         for sector_num, times in sector_times.items():
@@ -202,7 +202,7 @@ class SectorAnalyzer:
             # Coeficient de variació
             cv = stdev / mean_time if mean_time > 0 else 0
 
-            # Consistència (1 = perfecte, 0 = molt inconsistent)
+            # Consistència (1 = perfect, 0 = very inconsistent)
             consistency[sector_num + 1] = max(0.0, 1.0 - cv)
 
         return consistency
@@ -304,12 +304,12 @@ class SectorAnalyzer:
             if not zones:
                 continue
 
-            # Calculate estadístiques
+            # Calculate statistics
             distances = [z["distance"] for z in zones]
             mean_distance = statistics.mean(distances)
             stdev_distance = statistics.stdev(distances) if len(distances) > 1 else 0
 
-            # Consistència (menor deviation = major consistència)
+            # Consistència (lower deviation = greater consistency)
             consistency = (
                 1.0 - min(1.0, stdev_distance / mean_distance)
                 if mean_distance > 0

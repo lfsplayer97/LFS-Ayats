@@ -185,7 +185,7 @@ class MetricsCalculator:
         Calculate fuel efficiency.
 
         Args:
-            fuel_used: Combustible utilitzat (%)
+            fuel_used: Fuel used (%)
             distance_covered: Distance covered (metres)
 
         Returns:
@@ -259,7 +259,7 @@ class MetricsCalculator:
                     sector_data[i] = []
                 sector_data[i].append(time)
 
-        # Calculate mitjanes per sector
+        # Calculate averages per sector
         sector_means = {i: statistics.mean(times) for i, times in sector_data.items()}
         overall_mean = statistics.mean(
             [t for times in sector_data.values() for t in times]
@@ -288,8 +288,8 @@ class MetricsCalculator:
         Args:
             lap_times: List of lap time
             reference_time: Reference time (e.g., best on server)
-            consistency_weight: Pes de la consistència (0-1)
-            pace_weight: Pes del ritme (0-1)
+            consistency_weight: Consistency weight (0-1)
+            pace_weight: Pace weight (0-1)
 
         Returns:
             Índex de rendiment (0-100)

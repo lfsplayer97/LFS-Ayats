@@ -2,7 +2,7 @@
 Utility classes and data models for analysis module.
 
 This file contains les data structures and models used
-pels diferents components del mòdul d'anàlisi.
+for the different components of the analysis module.
 """
 
 from dataclasses import dataclass, field
@@ -23,7 +23,7 @@ class AlertLevel(Enum):
 @dataclass
 class Alert:
     """
-    Alerta generada pel sistema d'anàlisi.
+    Alerta generada pel sistema d'analysis.
 
     Attributes:
         level: Nivell de gravetat de l'alerta

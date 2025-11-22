@@ -1,10 +1,10 @@
 """
 Performance Predictor
-Prediction of rendiment i lap time per Live for Speed.
+Performance and lap time prediction for Live for Speed.
 
-Aquest mòdul utilitza tècniques estadístiques i d'aprenentatge automàtic
-to predict lap time, pit stops, desgast of tires i altres
-mètriques de rendiment.
+This module uses statistical and machine learning techniques
+to predict lap times, pit stops, tire wear, and other
+performance metrics.
 """
 
 import logging
@@ -28,7 +28,7 @@ class PerformancePredictor:
     Example:
         >>> predictor = PerformancePredictor()
         >>> predicted_time = predictor.predict_lap_time([28.5, 31.2], historical_data)
-        >>> print(f"Temps predit: {predicted_time:.3f}s")
+        >>> print(f"Predicted time: {predicted_time:.3f}s")
     """
 
     def __init__(self):
@@ -44,7 +44,7 @@ class PerformancePredictor:
         """
         Prediu el lap time final basat en sectors actuals.
 
-        Utilitza els sector times completats i dades històriques
+        Uses the completed sector times i historical data
         to predict el lap time final.
 
         Args:
@@ -66,15 +66,15 @@ class PerformancePredictor:
         # Si tenim tots els sectors, retornar la suma
         num_sectors = len(current_sector_times)
 
-        # Si no hi ha dades històriques, fer estimació simple
+        # Si no hi ha historical data, fer estimació simple
         if not historical_data or len(historical_data) == 0:
-            # Estimate remaining sectors based on la average dels completats
+            # Estimate remaining sectors based on the average of completed ones
             avg_sector = statistics.mean(current_sector_times)
             total_sectors = 3  # Assumir 3 sectors per defecte
             remaining_sectors = max(0, total_sectors - num_sectors)
             return sum(current_sector_times) + (avg_sector * remaining_sectors)
 
-        # Analitzar dades històriques
+        # Analitzar historical data
         sector_averages: Dict[int, List[float]] = {}
         for lap in historical_data:
             if "sector_times" in lap:
@@ -83,7 +83,7 @@ class PerformancePredictor:
                         sector_averages[i] = []
                     sector_averages[i].append(sector_time)
 
-        # Calculate mitjanes històriques per cada sector
+        # Calculate historical averages for each sector
         historical_means = {
             i: statistics.mean(times) for i, times in sector_averages.items()
         }
@@ -323,11 +323,11 @@ class PerformancePredictor:
         if len(x_data) != len(y_data) or len(x_data) < 2:
             return 0.0
 
-        # Calculate mitjanes
+        # Calculate averages
         x_mean = statistics.mean(x_data)
         y_mean = statistics.mean(y_data)
 
-        # Calculate pendent (slope)
+        # Calculate slope (slope)
         numerator = sum(
             (x_data[i] - x_mean) * (y_data[i] - y_mean) for i in range(len(x_data))
         )
@@ -348,7 +348,7 @@ class PerformancePredictor:
         self, historical_values: List[float], periods_ahead: int = 1
     ) -> List[float]:
         """
-        Prediu tendència futura based on valors històrics.
+        Predict trend future based on historical values.
 
         Uses a weighted average that gives more importance
         to recent values.
@@ -369,7 +369,7 @@ class PerformancePredictor:
         if not historical_values or periods_ahead <= 0:
             return []
 
-        # Calculate pesos exponencials (més pes als valors recents)
+        # Calculate exponential weights (more weight to recent values)
         n = len(historical_values)
         weights = [2**i for i in range(n)]
         total_weight = sum(weights)
@@ -380,7 +380,7 @@ class PerformancePredictor:
             historical_values[i] * normalized_weights[i] for i in range(n)
         )
 
-        # Calculate tendència (pendent)
+        # Calculate trend (slope)
         if n >= 2:
             recent_change = historical_values[-1] - historical_values[-2]
         else:
@@ -391,9 +391,9 @@ class PerformancePredictor:
         last_value = historical_values[-1]
 
         for i in range(periods_ahead):
-            # Combinar tendència amb regressió a la average
-            trend_component = recent_change * 0.7  # 70% de la tendència
-            mean_component = (weighted_mean - last_value) * 0.3  # 30% cap a la average
+            # Combine trend amb regression to the average
+            trend_component = recent_change * 0.7  # 70% of the trend
+            mean_component = (weighted_mean - last_value) * 0.3  # 30% towards the average
 
             next_value = last_value + trend_component + mean_component
             predictions.append(next_value)
@@ -405,19 +405,19 @@ class PerformancePredictor:
         self, sector_times_per_lap: List[List[float]]
     ) -> Tuple[float, List[float]]:
         """
-        Calcula el millor temps teòric combinant els millors sectors.
+        Calculate the best theoretical time combining the best sectors.
 
         Args:
             sector_times_per_lap: List of lists with sector times per lap
 
         Returns:
-            Tuple with (temps teòric, millors temps per sector)
+            Tuple with (theoretical time, best times per sector)
 
         Example:
             >>> predictor = PerformancePredictor()
             >>> laps = [[28.5, 31.2, 25.8], [28.3, 31.5, 25.6]]
             >>> theoretical, best_sectors = predictor.calculate_theoretical_best(laps)
-            >>> print(f"Millor teòric: {theoretical:.3f}s")
+            >>> print(f"Best theoretical: {theoretical:.3f}s")
         """
         if not sector_times_per_lap:
             return 0.0, []
@@ -425,7 +425,7 @@ class PerformancePredictor:
         # Determinar number of sectors
         num_sectors = max(len(lap) for lap in sector_times_per_lap)
 
-        # Trobar millor temps per cada sector
+        # Find best time per cada sector
         best_sectors = []
         for sector_idx in range(num_sectors):
             sector_times = [
@@ -434,11 +434,11 @@ class PerformancePredictor:
             if sector_times:
                 best_sectors.append(min(sector_times))
 
-        # Calculate temps teòric
+        # Calculate theoretical time
         theoretical_best = sum(best_sectors)
 
         logger.info(
-            f"Millor temps teòric: {theoretical_best:.3f}s "
+            f"Best theoretical time: {theoretical_best:.3f}s "
             f"(sectors: {[f'{t:.3f}' for t in best_sectors]})"
         )
 

@@ -1,9 +1,9 @@
 """
 Advanced Comparator
-Comparació avançada de laps i anàlisi de diferències.
+Comparació avançada de laps i analysis de diferències.
 
-Aquest mòdul proporciona eines per comparar laps en detall,
-identificar diferències de rendiment i generar suggeriments de millora.
+This module provides tools for detailed lap comparison,
+identify performance differences, and generate improvement suggestions.
 """
 
 import logging
@@ -244,7 +244,7 @@ class AdvancedComparator:
         for sector in sector_comparisons:
             if sector.difference > 0.1:  # Perdre més de 0.1s
                 suggestions.append(
-                    f"Millorar sector {sector.sector_number}: "
+                    f"Improve sector {sector.sector_number}: "
                     f"perdent {sector.difference:.3f}s ({sector.percentage_diff:+.1f}%)"
                 )
 
@@ -389,7 +389,7 @@ class AdvancedComparator:
 
         Args:
             lap1_id: ID of the first lap
-            lap2_id: ID de la segona lap
+            lap2_id: ID of the second lap
 
         Returns:
             LapComparison si existeix, None altrament
