@@ -1,19 +1,19 @@
-# Guia de Testing
+# Testing Guide
 
-Aquesta guia explica com escriure i executar tests per LFS-Ayats.
+This guide explains how to write and run tests for LFS-Ayats.
 
-## Tipus de Tests
+## Types of Tests
 
-### 1. Tests Unitaris (`tests/unit/`)
-Testen funcions individuals de forma aïllada.
+### 1. Unit Tests (`tests/unit/`)
+Test individual functions in isolation.
 
-### 2. Tests d'Integració (`tests/integration/`)
-Testen la interacció entre múltiples components.
+### 2. Integration Tests (`tests/integration/`)
+Test the interaction between multiple components.
 
-### 3. Tests End-to-End (`tests/e2e/`)
-Testen el sistema complet amb LFS real.
+### 3. End-to-End Tests (`tests/e2e/`)
+Test the complete system with real LFS.
 
-## Estructura de Tests
+## Test Structure
 
 ```
 tests/
@@ -33,12 +33,12 @@ tests/
 ├── fixtures/
 │   ├── sample_packets.py
 │   └── mock_data.json
-└── conftest.py  # Fixtures compartides
+└── conftest.py  # Shared fixtures
 ```
 
-## Escriure Tests Unitaris
+## Writing Unit Tests
 
-### Exemple Bàsic
+### Basic Example
 
 ```python
 import pytest
@@ -46,15 +46,15 @@ from src.telemetry import TelemetryProcessor
 
 
 class TestTelemetryProcessor:
-    """Tests per TelemetryProcessor."""
+    """Tests for TelemetryProcessor."""
     
     @pytest.fixture
     def processor(self):
-        """Fixture que crea un processor."""
+        """Fixture that creates a processor."""
         return TelemetryProcessor(max_speed=200.0)
     
     def test_validate_speed_with_valid_value(self, processor):
-        """Test validació de velocitat vàlida."""
+        """Test validation of valid speed."""
         # Arrange
         speed = 150.0
         
@@ -65,7 +65,7 @@ class TestTelemetryProcessor:
         assert result is True
     
     def test_validate_speed_with_negative_value(self, processor):
-        """Test validació de velocitat negativa."""
+        """Test validation of negative speed."""
         # Arrange
         speed = -10.0
         
@@ -74,7 +74,7 @@ class TestTelemetryProcessor:
             processor.validate_speed(speed)
 ```
 
-### Utilitzar Fixtures
+### Using Fixtures
 
 ```python
 # conftest.py
@@ -84,15 +84,15 @@ from src.connection import InSimClient
 
 @pytest.fixture
 def mock_client():
-    """Client InSim mockat."""
+    """Mocked InSim client."""
     client = InSimClient(host="127.0.0.1", port=29999)
-    # No connectar realment
+    # Don't actually connect
     return client
 
 
 @pytest.fixture
 def sample_telemetry_data():
-    """Dades de telemetria d'exemple."""
+    """Sample telemetry data."""
     return [
         {'speed': 100, 'rpm': 5000, 'gear': 3},
         {'speed': 120, 'rpm': 5500, 'gear': 4},
@@ -101,25 +101,25 @@ def sample_telemetry_data():
 
 # test_file.py
 def test_something(mock_client, sample_telemetry_data):
-    """Test utilitzant fixtures."""
-    # Utilitza mock_client i sample_telemetry_data
+    """Test using fixtures."""
+    # Use mock_client and sample_telemetry_data
     pass
 ```
 
 ## Mocking
 
-### Mock de Connexió de Xarxa
+### Network Connection Mock
 
 ```python
 from unittest.mock import Mock, patch, MagicMock
 
 def test_connect_success():
-    """Test connexió exitosa."""
+    """Test successful connection."""
     with patch('socket.socket') as mock_socket:
-        # Configurar mock
+        # Configure mock
         mock_socket.return_value.connect.return_value = None
         
-        # Crear client
+        # Create client
         client = InSimClient(host="127.0.0.1", port=29999)
         
         # Act
@@ -130,12 +130,12 @@ def test_connect_success():
         mock_socket.return_value.connect.assert_called_once()
 ```
 
-### Mock de Base de Dades
+### Database Mock
 
 ```python
 def test_save_session(mocker):
-    """Test guardar sessió."""
-    # Mock de repository
+    """Test save session."""
+    # Mock repository
     mock_repo = mocker.patch('src.database.repository.TelemetryRepository')
     mock_repo.return_value.create_session.return_value = Mock(id=1)
     
@@ -147,7 +147,7 @@ def test_save_session(mocker):
     mock_repo.return_value.create_session.assert_called_once()
 ```
 
-## Tests Parametritzats
+## Parametrized Tests
 
 ```python
 @pytest.mark.parametrize("speed,expected", [
@@ -158,7 +158,7 @@ def test_save_session(mocker):
     (500, False),
 ])
 def test_validate_speed_parametrized(processor, speed, expected):
-    """Test validació amb múltiples valors."""
+    """Test validation with multiple values."""
     if expected:
         assert processor.validate_speed(speed) is True
     else:
@@ -166,7 +166,7 @@ def test_validate_speed_parametrized(processor, speed, expected):
             processor.validate_speed(speed)
 ```
 
-## Tests Asíncrons
+## Asynchronous Tests
 
 ```python
 import pytest
@@ -175,7 +175,7 @@ import asyncio
 
 @pytest.mark.asyncio
 async def test_async_telemetry_stream():
-    """Test streaming asíncron de telemetria."""
+    """Test asynchronous telemetry streaming."""
     # Arrange
     collector = AsyncTelemetryCollector()
     
@@ -183,10 +183,10 @@ async def test_async_telemetry_stream():
     async for data in collector.stream():
         # Assert
         assert 'speed' in data
-        break  # Test primer element només
+        break  # Test first element only
 ```
 
-## Markers (Etiquetes)
+## Markers (Labels)
 
 ```python
 # pytest.ini
@@ -194,12 +194,12 @@ async def test_async_telemetry_stream():
 markers =
     unit: Unit tests
     integration: Integration tests
-    network: Tests que requereixen xarxa
-    slow: Tests lents (>1s)
-    skip_ci: Skip en CI
+    network: Tests requiring network
+    slow: Slow tests (>1s)
+    skip_ci: Skip in CI
 
 
-# Utilitzar markers
+# Using markers
 @pytest.mark.unit
 def test_fast_unit():
     pass
@@ -211,20 +211,20 @@ def test_slow_integration():
 
 @pytest.mark.skip_ci
 def test_requires_lfs():
-    """Aquest test requereix LFS executant."""
+    """This test requires LFS running."""
     pass
 ```
 
-Executar per marker:
+Run by marker:
 ```bash
-pytest -m unit          # Només unit tests
-pytest -m "not slow"    # Excloure tests lents
+pytest -m unit          # Only unit tests
+pytest -m "not slow"    # Exclude slow tests
 pytest -m "integration and not network"
 ```
 
-## Cobertura de Codi
+## Code Coverage
 
-### Configuració
+### Configuration
 
 ```ini
 # .coveragerc
@@ -244,30 +244,30 @@ exclude_lines =
     if __name__ == .__main__.:
 ```
 
-### Executar amb Cobertura
+### Run with Coverage
 
 ```bash
-# Generar report
+# Generate report
 pytest --cov=src --cov-report=html
 
-# Veure report
+# View report
 open htmlcov/index.html  # Mac
 xdg-open htmlcov/index.html  # Linux
 start htmlcov/index.html  # Windows
 
-# Report en terminal
+# Terminal report
 pytest --cov=src --cov-report=term-missing
 ```
 
-### Objectius de Cobertura
+### Coverage Goals
 
-- **Mínim acceptable**: 70%
-- **Objectiu**: 80%
+- **Minimum acceptable**: 70%
+- **Target**: 80%
 - **Ideal**: 90%+
 
-Mòduls crítics (connexió, telemetria): 85%+
+Critical modules (connection, telemetry): 85%+
 
-## Tests d'Integració
+## Integration Tests
 
 ```python
 import pytest
@@ -277,10 +277,10 @@ from src.telemetry import TelemetryCollector
 
 @pytest.mark.integration
 class TestTelemetryWorkflow:
-    """Tests d'integració del workflow complet."""
+    """Integration tests for complete workflow."""
     
     def test_full_telemetry_collection(self, mock_lfs_server):
-        """Test recollida completa de telemetria."""
+        """Test complete telemetry collection."""
         # Arrange
         client = InSimClient(host="127.0.0.1", port=29999)
         collector = TelemetryCollector(client)
@@ -290,7 +290,7 @@ class TestTelemetryWorkflow:
         client.initialize()
         collector.start()
         
-        # Simular recepció de dades
+        # Simulate data reception
         mock_lfs_server.send_telemetry_packet()
         
         # Assert
@@ -303,7 +303,7 @@ class TestTelemetryWorkflow:
         client.disconnect()
 ```
 
-## Fixtures Avançades
+## Advanced Fixtures
 
 ```python
 # conftest.py
@@ -313,7 +313,7 @@ from contextlib import contextmanager
 
 @pytest.fixture(scope="session")
 def database_engine():
-    """Engine de DB per tots els tests."""
+    """DB engine for all tests."""
     engine = create_engine('sqlite:///:memory:')
     Base.metadata.create_all(engine)
     yield engine
@@ -322,7 +322,7 @@ def database_engine():
 
 @pytest.fixture(scope="function")
 def db_session(database_engine):
-    """Sessió de DB per cada test."""
+    """DB session for each test."""
     Session = sessionmaker(bind=database_engine)
     session = Session()
     yield session
@@ -332,59 +332,59 @@ def db_session(database_engine):
 
 @pytest.fixture
 def temp_data_dir(tmp_path):
-    """Directori temporal per dades."""
+    """Temporary directory for data."""
     data_dir = tmp_path / "data"
     data_dir.mkdir()
     yield data_dir
-    # Cleanup automàtic per pytest
+    # Automatic cleanup by pytest
 ```
 
-## Executar Tests
+## Running Tests
 
-### Comandes Bàsiques
+### Basic Commands
 
 ```bash
-# Tots els tests
+# All tests
 pytest
 
-# Directori específic
+# Specific directory
 pytest tests/unit/
 
-# Fitxer específic
+# Specific file
 pytest tests/unit/test_collector.py
 
-# Test específic
+# Specific test
 pytest tests/unit/test_collector.py::TestCollector::test_start
 
 # Verbose
 pytest -v
 
-# Mostrar print statements
+# Show print statements
 pytest -s
 
-# Aturar al primer error
+# Stop at first error
 pytest -x
 
-# Executar últims tests fallits
+# Run last failed tests
 pytest --lf
 
-# Executar tests en paral·lel (requereix pytest-xdist)
+# Run tests in parallel (requires pytest-xdist)
 pytest -n auto
 ```
 
-### Opcions Útils
+### Useful Options
 
 ```bash
-# Debugger en error
+# Debugger on error
 pytest --pdb
 
-# Mostrar durada de tests
+# Show test duration
 pytest --durations=10
 
-# Només tests modificats recentment
+# Only recently modified tests
 pytest --testmon
 
-# Amb warnings
+# With warnings
 pytest -W all
 
 # HTML report
@@ -404,7 +404,7 @@ def test_something():
     assert data is not None
 ```
 
-Comandes PDB:
+PDB Commands:
 - `n` - Next line
 - `s` - Step into
 - `c` - Continue
@@ -435,21 +435,21 @@ Comandes PDB:
 }
 ```
 
-## Bones Pràctiques
+## Best Practices
 
-### 1. Tests Independents
+### 1. Independent Tests
 
 ```python
-# ✅ Correcte - cada test és independent
+# ✅ Correct - each test is independent
 def test_a():
     data = create_data()
     assert process(data) == expected
 
 def test_b():
-    data = create_data()  # Nova creació
+    data = create_data()  # New creation
     assert validate(data) is True
 
-# ❌ Incorrecte - tests depenen entre si
+# ❌ Incorrect - tests depend on each other
 shared_data = None
 
 def test_create():
@@ -457,32 +457,32 @@ def test_create():
     shared_data = create_data()
 
 def test_process():
-    assert process(shared_data) == expected  # Depèn de test_create
+    assert process(shared_data) == expected  # Depends on test_create
 ```
 
-### 2. Tests Ràpids
+### 2. Fast Tests
 
 ```python
-# ✅ Ràpid - utilitza mocks
+# ✅ Fast - uses mocks
 def test_save_session(mock_db):
     session = save_session(data, mock_db)
     assert session.id is not None
 
-# ❌ Lent - utilitza DB real
+# ❌ Slow - uses real DB
 def test_save_session_slow():
-    db = create_database()  # Lent
+    db = create_database()  # Slow
     session = save_session(data, db)
     assert session.id is not None
 ```
 
-### 3. Assertions Clares
+### 3. Clear Assertions
 
 ```python
-# ✅ Missatge clar
+# ✅ Clear message
 assert len(results) == 5, f"Expected 5 results, got {len(results)}"
 
-# ✅ Utilitzar funcions específiques
-assert result is True  # En lloc de assert result == True
+# ✅ Use specific functions
+assert result is True  # Instead of assert result == True
 assert 'key' in dictionary
 assert value is None
 
@@ -491,16 +491,16 @@ from pytest import approx
 assert 0.1 + 0.2 == approx(0.3)
 ```
 
-### 4. Setup i Teardown
+### 4. Setup and Teardown
 
 ```python
 class TestCollector:
     def setup_method(self):
-        """Executat abans de cada test."""
+        """Run before each test."""
         self.collector = TelemetryCollector()
     
     def teardown_method(self):
-        """Executat després de cada test."""
+        """Run after each test."""
         self.collector.stop()
         self.collector = None
     
@@ -537,7 +537,7 @@ jobs:
         uses: codecov/codecov-action@v2
 ```
 
-## Referències
+## References
 
 - [Pytest Documentation](https://docs.pytest.org/)
 - [Python unittest.mock](https://docs.python.org/3/library/unittest.mock.html)
@@ -545,4 +545,4 @@ jobs:
 
 ---
 
-Ara pots escriure tests professionals! ✅
+Now you can write professional tests! ✅
