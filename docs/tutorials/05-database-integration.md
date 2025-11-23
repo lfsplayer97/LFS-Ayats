@@ -64,11 +64,14 @@ def setup_sqlite_database(db_path: str = "data/telemetry.db") -> TelemetryReposi
     # Ensure data directory exists
     Path(db_path).parent.mkdir(parents=True, exist_ok=True)
     
-    # Create repository (automatically creates tables)
+    # Create repository
     repository = TelemetryRepository(
         connection_string=f'sqlite:///{db_path}',
         echo=False  # Set to True for SQL query logging
     )
+    
+    # Create tables
+    repository.create_tables()
     
     logger.info("✓ Database initialized")
     logger.info(f"✓ Tables created at: {db_path}")
@@ -106,12 +109,15 @@ def setup_postgresql_database(
     # Build connection string
     conn_string = f'postgresql://{user}:{password}@{host}:{port}/{database}'
     
-    # Create repository (automatically creates tables)
+    # Create repository
     repository = TelemetryRepository(
         connection_string=conn_string,
         echo=False,
         pool_size=5  # Connection pool size
     )
+    
+    # Create tables
+    repository.create_tables()
     
     logger.info("✓ Connected to PostgreSQL")
     logger.info("✓ Tables created/verified")
@@ -225,8 +231,8 @@ def save_session_to_database(
     Args:
         repository: TelemetryRepository instance
         telemetry_data: Telemetry data from collection
-        circuit_name: Name of the circuit
-        vehicle_name: Name of the vehicle
+        circuit_name: Name of the circuit (short name like "BL1")
+        vehicle_name: Name of the vehicle (short name like "XFG")
         driver_name: Name of the driver
         
     Returns:
@@ -237,14 +243,28 @@ def save_session_to_database(
     # Separate into laps
     laps = extract_laps(telemetry_data)
     
-    # Save session with all data at once
-    session_data = {
-        'datetime': datetime.now(),
-        'circuit_name': circuit_name,
-        'vehicle_name': vehicle_name,
-        'driver_name': driver_name,
-        'laps': []
-    }
+    # First, ensure circuit and vehicle exist
+    repository.get_or_create_circuit(
+        name=circuit_name,
+        short_name="BL1",  # Use appropriate short code
+        length=2000.0  # Circuit length in meters
+    )
+    repository.get_or_create_vehicle(
+        name=vehicle_name,
+        short_name="XFG",  # Use appropriate short code
+        class_type="TBO"
+    )
+    
+    # Create session (without laps)
+    session_id = repository.save_session(
+        datetime_start=datetime.now(),
+        circuit_name="BL1",  # Use short name
+        vehicle_name="XFG",  # Use short name
+        driver_name=driver_name,
+        duration=None  # Will calculate later if needed
+    )
+    
+    logger.info(f"✓ Session created: ID {session_id}")
     
     # Process each lap
     for lap_idx, lap_data in enumerate(laps):
@@ -256,14 +276,16 @@ def save_session_to_database(
         else:
             lap_time = 0
         
-        lap_dict = {
-            'lap_number': lap_idx + 1,
-            'lap_time': lap_time,
-            'valid': True,
-            'telemetry_points': []
-        }
+        # Save lap
+        lap_id = repository.save_lap(
+            session_id=session_id,
+            lap_number=lap_idx + 1,
+            lap_time=lap_time,
+            valid=True
+        )
         
-        # Add telemetry points
+        # Prepare telemetry points for batch insert
+        telemetry_points = []
         for point in lap_data:
             telemetry_point = {
                 'timestamp': int(point.get('timestamp', 0) * 1000),  # ms
@@ -276,13 +298,11 @@ def save_session_to_database(
                 'position_y': float(point.get('pos_y', 0)),
                 'position_z': float(point.get('pos_z', 0))
             }
-            lap_dict['telemetry_points'].append(telemetry_point)
+            telemetry_points.append(telemetry_point)
         
-        session_data['laps'].append(lap_dict)
-        logger.info(f"  Lap {lap_idx + 1}: {len(lap_data)} points prepared")
-    
-    # Save to database using repository
-    session_id = repository.save_session(session_data)
+        # Save telemetry points in batch
+        count = repository.save_telemetry_points(lap_id, telemetry_points)
+        logger.info(f"  Lap {lap_idx + 1}: {count} points saved")
     
     logger.info(f"✓ Session saved: ID {session_id}, {len(laps)} laps")
     
@@ -297,7 +317,7 @@ import numpy as np
 
 def query_best_laps(repository: TelemetryRepository, circuit_name: str = None, limit: int = 10):
     """
-    Query the best laps from the database.
+    Query the best laps from the database across all sessions.
     
     Args:
         repository: TelemetryRepository instance
@@ -309,20 +329,32 @@ def query_best_laps(repository: TelemetryRepository, circuit_name: str = None, l
     """
     logger.info("Querying best laps...")
     
-    best_laps = repository.get_best_laps(circuit_name=circuit_name, limit=limit)
+    # Get all sessions (filtered by circuit if specified)
+    sessions = repository.get_sessions(circuit=circuit_name, limit=100)
     
-    logger.info(f"\n🏆 Top {limit} Best Laps:")
-    for idx, lap in enumerate(best_laps, 1):
+    # Collect best lap from each session
+    all_best_laps = []
+    for session in sessions:
+        best_lap = repository.get_best_lap(session.id)
+        if best_lap:
+            all_best_laps.append((best_lap, session))
+    
+    # Sort by lap time and limit
+    all_best_laps.sort(key=lambda x: x[0].lap_time if x[0].lap_time else float('inf'))
+    best_laps = all_best_laps[:limit]
+    
+    logger.info(f"\n🏆 Top {len(best_laps)} Best Laps:")
+    for idx, (lap, session) in enumerate(best_laps, 1):
         lap_time_seconds = lap.lap_time / 1000.0  # Convert ms to seconds
-        circuit = lap.session.circuit.name if lap.session.circuit else "Unknown"
-        driver = lap.session.driver_name or "Unknown"
+        circuit = session.circuit.name if session.circuit else "Unknown"
+        driver = session.driver_name or "Unknown"
         
         logger.info(f"{idx}. Lap {lap.lap_number} - "
                    f"Time: {lap_time_seconds:.3f}s - "
                    f"Circuit: {circuit} - "
                    f"Driver: {driver}")
     
-    return best_laps
+    return [lap for lap, _ in best_laps]
 
 
 def query_session_statistics(repository: TelemetryRepository, session_id: int):
@@ -335,7 +367,8 @@ def query_session_statistics(repository: TelemetryRepository, session_id: int):
     """
     logger.info(f"Querying session {session_id} statistics...")
     
-    session = repository.get_session(session_id, include_laps=True)
+    # Get session (relationships are eagerly loaded)
+    session = repository.get_session(session_id)
     
     if not session:
         logger.error(f"Session {session_id} not found")
@@ -375,16 +408,17 @@ def compare_sessions(repository: TelemetryRepository, session_id1: int, session_
     """
     logger.info(f"\n=== Comparing Sessions {session_id1} vs {session_id2} ===")
     
-    s1 = repository.get_session(session_id1, include_laps=True)
-    s2 = repository.get_session(session_id2, include_laps=True)
+    # Get both sessions
+    s1 = repository.get_session(session_id1)
+    s2 = repository.get_session(session_id2)
     
     if not s1 or not s2:
         logger.error("One or both sessions do not exist")
         return
     
-    # Compare best laps
-    best_lap1 = min(s1.laps, key=lambda l: l.lap_time) if s1.laps else None
-    best_lap2 = min(s2.laps, key=lambda l: l.lap_time) if s2.laps else None
+    # Get best laps using repository method
+    best_lap1 = repository.get_best_lap(session_id1)
+    best_lap2 = repository.get_best_lap(session_id2)
     
     if best_lap1 and best_lap2:
         time1 = best_lap1.lap_time / 1000.0
@@ -420,11 +454,12 @@ def list_all_sessions(repository: TelemetryRepository):
     """
     logger.info("\n📋 All Sessions:")
     
-    sessions = repository.get_all_sessions()
+    # Get all sessions (limit can be increased if needed)
+    sessions = repository.get_sessions(limit=100)
     
     if not sessions:
         logger.info("   No sessions found in database")
-        return
+        return []
     
     for session in sessions:
         circuit = session.circuit.name if session.circuit else "Unknown"
@@ -526,8 +561,8 @@ def export_session_to_json(repository: TelemetryRepository, session_id: int,
     """
     logger.info(f"Exporting session {session_id} to {output_file}...")
     
-    # Get session with all related data
-    session = repository.get_session(session_id, include_laps=True, include_telemetry=True)
+    # Get session
+    session = repository.get_session(session_id)
     
     if not session:
         logger.error(f"Session {session_id} not found")
@@ -556,21 +591,22 @@ def export_session_to_json(repository: TelemetryRepository, session_id: int,
             'telemetry_points': []
         }
         
-        # Export telemetry points (if loaded)
-        if hasattr(lap, 'telemetry_points'):
-            for point in lap.telemetry_points:
-                telemetry_point = {
-                    'timestamp': point.timestamp,
-                    'speed': point.speed,
-                    'rpm': point.rpm,
-                    'gear': point.gear,
-                    'throttle': point.throttle,
-                    'brake': point.brake,
-                    'position_x': point.position_x,
-                    'position_y': point.position_y,
-                    'position_z': point.position_z
-                }
-                lap_data['telemetry_points'].append(telemetry_point)
+        # Get telemetry points for this lap
+        telemetry_points = repository.get_telemetry_points(lap.id)
+        
+        for point in telemetry_points:
+            telemetry_point = {
+                'timestamp': point.timestamp,
+                'speed': point.speed,
+                'rpm': point.rpm,
+                'gear': point.gear,
+                'throttle': point.throttle,
+                'brake': point.brake,
+                'position_x': point.position_x,
+                'position_y': point.position_y,
+                'position_z': point.position_z
+            }
+            lap_data['telemetry_points'].append(telemetry_point)
         
         data['laps'].append(lap_data)
     
@@ -596,7 +632,7 @@ def export_all_sessions(repository: TelemetryRepository, output_dir: str = "expo
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     
     # Get all sessions
-    sessions = repository.get_all_sessions()
+    sessions = repository.get_sessions(limit=1000)
     
     for session in sessions:
         # Generate filename
@@ -629,20 +665,36 @@ def import_session_from_json(repository: TelemetryRepository, json_file: str) ->
     with open(json_file, 'r') as f:
         data = json.load(f)
     
-    # Prepare session data (repository handles the rest)
-    session_data = {
-        'datetime': datetime.fromisoformat(data['datetime']) if 'datetime' in data else datetime.now(),
-        'circuit_name': data.get('circuit', 'Unknown'),
-        'vehicle_name': data.get('vehicle', 'Unknown'),
-        'driver_name': data.get('driver', 'Unknown'),
-        'laps': data.get('laps', [])
-    }
+    # Create session
+    session_id = repository.save_session(
+        datetime_start=datetime.fromisoformat(data['datetime']) if 'datetime' in data else datetime.now(),
+        circuit_name=data.get('circuit', 'Unknown'),
+        vehicle_name=data.get('vehicle', 'Unknown'),
+        driver_name=data.get('driver', 'Unknown'),
+        duration=None
+    )
     
-    # Save using repository
-    session_id = repository.save_session(session_data)
+    # Import laps
+    laps_data = data.get('laps', [])
+    for lap_data in laps_data:
+        # Save lap
+        lap_id = repository.save_lap(
+            session_id=session_id,
+            lap_number=lap_data['lap_number'],
+            lap_time=lap_data.get('lap_time'),
+            sector1_time=lap_data.get('sector1_time'),
+            sector2_time=lap_data.get('sector2_time'),
+            sector3_time=lap_data.get('sector3_time'),
+            valid=lap_data.get('valid', True)
+        )
+        
+        # Import telemetry points
+        telemetry_points = lap_data.get('telemetry_points', [])
+        if telemetry_points:
+            repository.save_telemetry_points(lap_id, telemetry_points)
     
     logger.info(f"✓ Session imported: ID {session_id}")
-    logger.info(f"  {len(data.get('laps', []))} laps imported")
+    logger.info(f"  {len(laps_data)} laps imported")
     
     return session_id
 ```
