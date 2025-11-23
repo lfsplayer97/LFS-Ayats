@@ -57,12 +57,12 @@ Configuració completa per gestionar telemetria en lligues amb múltiples pilots
 - Reports automàtics
 - Dashboard públic
 
-### [📈 Entrenament de Pilots](use-cases/driver-coaching.md)
-Sistema de coaching basat en dades per millorar rendiment:
-- Anàlisi de consistència
-- Comparació amb referència
-- Identificació d'àrees de millora
-- Seguiment de progressió
+### [📈 Driver Coaching](use-cases/driver-coaching.md)
+Data-driven coaching system to improve performance:
+- Consistency analysis
+- Reference comparison
+- Improvement areas identification
+- Progress tracking
 
 ## 👨‍💻 Guies per Desenvolupadors
 
