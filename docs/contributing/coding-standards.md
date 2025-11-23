@@ -1,12 +1,12 @@
-# Estàndards de Codi
+# Coding Standards
 
-Convencions i estàndards de codi per contribuir a LFS-Ayats.
+Conventions and coding standards for contributing to LFS-Ayats.
 
-## Estil General: PEP 8
+## General Style: PEP 8
 
-Seguim [PEP 8](https://pep8.org/) amb algunes adaptacions.
+We follow [PEP 8](https://pep8.org/) with some adaptations.
 
-## Nomenclatura
+## Naming Conventions
 
 ### Classes
 ```python
@@ -18,7 +18,7 @@ class TelemetryCollector:
     pass
 ```
 
-### Funcions i Mètodes
+### Functions and Methods
 ```python
 # snake_case
 def connect_to_server():
@@ -36,7 +36,7 @@ DEFAULT_PORT = 29999
 PACKET_SIZE = 1024
 ```
 
-### Variables Privades
+### Private Variables
 ```python
 # _leading_underscore
 class MyClass:
@@ -45,11 +45,11 @@ class MyClass:
         self.__very_private = None
 ```
 
-## Formatació
+## Formatting
 
 ### Line Length
-- **Màxim 88 caràcters** (convenció de Black)
-- Excepcions per URLs llargues o strings
+- **Maximum 88 characters** (Black convention)
+- Exceptions for long URLs or strings
 
 ### Imports
 ```python
@@ -63,19 +63,19 @@ import numpy as np
 import pandas as pd
 from fastapi import FastAPI
 
-# 3. Local/aplicació
+# 3. Local/application
 from src.connection import InSimClient
 from src.telemetry import TelemetryCollector
 ```
 
-### Espais en Blanc
+### Whitespace
 ```python
-# Correcte
+# Correct
 def function(a, b, c=None):
     result = a + b
     return result
 
-# Incorrecte
+# Incorrect
 def function( a,b,c = None ):
     result=a+b
     return result
@@ -83,7 +83,7 @@ def function( a,b,c = None ):
 
 ## Type Hints
 
-**Obligatori** per totes les funcions públiques:
+**Required** for all public functions:
 
 ```python
 from typing import List, Dict, Optional, Union
@@ -92,7 +92,7 @@ def process_telemetry(
     data: List[Dict[str, float]], 
     filter_speed: Optional[float] = None
 ) -> Dict[str, any]:
-    """Processa dades telemètriques."""
+    """Process telemetry data."""
     pass
 
 class TelemetryProcessor:
@@ -105,27 +105,27 @@ class TelemetryProcessor:
 
 ## Docstrings: Google Style
 
-### Funcions
+### Functions
 ```python
 def calculate_lap_time(lap_data: List[Dict], method: str = "sum") -> float:
     """
-    Calcula el temps total d'una volta.
+    Calculate the total lap time.
     
-    Aquesta funció analitza les dades telemètriques d'una volta i calcula
-    el temps total utilitzant el mètode especificat.
+    This function analyzes telemetry data from a lap and calculates
+    the total time using the specified method.
     
     Args:
-        lap_data: Llista de diccionaris amb dades de telemetria.
-            Cada diccionari ha de contenir almenys 'timestamp'.
-        method: Mètode de càlcul ('sum', 'interval', 'official').
-            Per defecte 'sum'.
+        lap_data: List of dictionaries with telemetry data.
+            Each dictionary must contain at least 'timestamp'.
+        method: Calculation method ('sum', 'interval', 'official').
+            Defaults to 'sum'.
     
     Returns:
-        Temps de volta en segons. Retorna float('inf') si no hi ha dades.
+        Lap time in seconds. Returns float('inf') if no data available.
     
     Raises:
-        ValueError: Si method no és vàlid.
-        KeyError: Si falta camp 'timestamp' a les dades.
+        ValueError: If method is not valid.
+        KeyError: If 'timestamp' field is missing in the data.
     
     Example:
         >>> lap_data = [{'timestamp': '2024-01-01 10:00:00'}, ...]
@@ -133,7 +133,7 @@ def calculate_lap_time(lap_data: List[Dict], method: str = "sum") -> float:
         95.342
         
     Note:
-        El mètode 'official' utilitza el temps del paquet IS_LAP quan disponible.
+        The 'official' method uses the time from IS_LAP packet when available.
     
     Reference:
         https://en.lfsmanual.net/wiki/InSim.txt#IS_LAP
@@ -141,7 +141,7 @@ def calculate_lap_time(lap_data: List[Dict], method: str = "sum") -> float:
     if method not in ('sum', 'interval', 'official'):
         raise ValueError(f"Invalid method: {method}")
     
-    # Implementació...
+    # Implementation...
     pass
 ```
 
@@ -149,98 +149,98 @@ def calculate_lap_time(lap_data: List[Dict], method: str = "sum") -> float:
 ```python
 class TelemetryCollector:
     """
-    Recull telemetria en temps real de LFS.
+    Collect telemetry in real-time from LFS.
     
-    Aquesta classe gestiona la recollida contínua de dades telemètriques
-    des d'un servidor LFS via protocol InSim. Utilitza un thread separat
-    per evitar bloquejar l'aplicació principal.
+    This class manages continuous telemetry data collection
+    from an LFS server via InSim protocol. It uses a separate thread
+    to avoid blocking the main application.
     
     Attributes:
-        client: Client InSim connectat al servidor.
-        max_history: Nombre màxim de mostres a mantenir en memòria.
-        callbacks: Diccionari de callbacks per esdeveniments.
-        telemetry_history: Històric de telemetria per jugador.
+        client: InSim client connected to the server.
+        max_history: Maximum number of samples to keep in memory.
+        callbacks: Dictionary of callbacks for events.
+        telemetry_history: Telemetry history per player.
     
     Example:
         >>> client = InSimClient(host="127.0.0.1", port=29999)
         >>> collector = TelemetryCollector(client)
         >>> collector.start()
-        >>> # ... conduir en LFS ...
+        >>> # ... drive in LFS ...
         >>> data = collector.get_latest_telemetry()
         >>> collector.stop()
     """
     
     def __init__(self, client: InSimClient, max_history: int = 10000):
         """
-        Inicialitza el col·lector.
+        Initialize the collector.
         
         Args:
-            client: Client InSim ja connectat.
-            max_history: Màxim nombre de mostres a guardar.
+            client: InSim client already connected.
+            max_history: Maximum number of samples to store.
         """
         self.client = client
         self.max_history = max_history
 ```
 
-### Mòduls
+### Modules
 ```python
 """
-Mòdul de connexió InSim.
+InSim connection module.
 
-Aquest mòdul proporciona classes per gestionar la comunicació amb
-Live for Speed mitjançant el protocol InSim.
+This module provides classes to manage communication with
+Live for Speed via the InSim protocol.
 
 Classes:
-    InSimClient: Client TCP/UDP per connexió InSim.
-    PacketHandler: Parsejador de paquets InSim.
+    InSimClient: TCP/UDP client for InSim connection.
+    PacketHandler: InSim packet parser.
 
 Reference:
     https://en.lfsmanual.net/wiki/InSim.txt
 """
 ```
 
-## Comentaris
+## Comments
 
-### Quan Comentar
+### When to Comment
 
-✅ **Comentar**:
-- Algoritmes complexos
-- Workarounds per bugs coneguts
-- Referències a issues o documentació
+✅ **Comment**:
+- Complex algorithms
+- Workarounds for known bugs
+- References to issues or documentation
 - TODO/FIXME/NOTE
 
-❌ **No comentar**:
-- Codi evident
-- Paràfrasis del codi
-- Codi comentat (eliminar-lo)
+❌ **Don't comment**:
+- Obvious code
+- Paraphrasing the code
+- Commented-out code (delete it)
 
-### Exemples
+### Examples
 
 ```python
-# ✅ Bon comentari
-# Workaround per bug en InSim 0.6V on IS_MCI pot contenir dades corruptes
-# Vegeu: https://github.com/lfsplayer97/LFS-Ayats/issues/42
+# ✅ Good comment
+# Workaround for bug in InSim 0.6V where IS_MCI may contain corrupt data
+# See: https://github.com/lfsplayer97/LFS-Ayats/issues/42
 if packet_type == PacketType.IS_MCI:
     data = self._sanitize_mci_data(data)
 
-# TODO(username): Implementar suport per IS_NLP
-# FIXME: Aquest càlcul no és precís per circuits amb desnivell
-# NOTE: Aquest mètode és costós, considerar caching
+# TODO(username): Implement support for IS_NLP
+# FIXME: This calculation is not accurate for tracks with elevation changes
+# NOTE: This method is expensive, consider caching
 
-# ❌ Mal comentari
-# Suma a i b
+# ❌ Bad comment
+# Add a and b
 result = a + b
 
-# Retorna True si la velocitat és vàlida
+# Returns True if speed is valid
 return 0 <= speed <= 500
 ```
 
-## Gestió d'Errors
+## Error Handling
 
-### Excepcions Específiques
+### Specific Exceptions
 
 ```python
-# Correcte
+# Correct
 try:
     speed = float(data['speed'])
 except KeyError:
@@ -250,11 +250,11 @@ except ValueError:
     logger.error(f"Invalid speed value: {data.get('speed')}")
     raise
 
-# Incorrecte
+# Incorrect
 try:
     speed = float(data['speed'])
-except Exception:  # Massa genèric
-    pass  # No capturar sense gestionar
+except Exception:  # Too generic
+    pass  # Don't catch without handling
 ```
 
 ### Logging
@@ -263,23 +263,23 @@ except Exception:  # Massa genèric
 import logging
 logger = logging.getLogger(__name__)
 
-# Nivells apropiats
-logger.debug("Raw packet: %s", raw_data)  # Detalls tècnics
-logger.info("Connected to server")        # Esdeveniments normals
-logger.warning("High memory usage: %d MB", mem_usage)  # Situacions anòmales
-logger.error("Failed to parse packet", exc_info=True)  # Errors recuperables
-logger.critical("Database corruption detected")  # Errors crítics
+# Appropriate levels
+logger.debug("Raw packet: %s", raw_data)  # Technical details
+logger.info("Connected to server")        # Normal events
+logger.warning("High memory usage: %d MB", mem_usage)  # Abnormal situations
+logger.error("Failed to parse packet", exc_info=True)  # Recoverable errors
+logger.critical("Database corruption detected")  # Critical errors
 ```
 
 ## Testing
 
-### Nomenclatura de Tests
+### Test Naming
 
 ```python
-def test_<funcionalitat>_<condició>_<resultat_esperat>():
+def test_<functionality>_<condition>_<expected_result>():
     pass
 
-# Exemples
+# Examples
 def test_connect_with_valid_credentials_succeeds():
     pass
 
@@ -290,7 +290,7 @@ def test_get_telemetry_when_empty_returns_none():
     pass
 ```
 
-### Estructura AAA
+### AAA Structure
 
 ```python
 def test_calculate_lap_time():
@@ -308,12 +308,12 @@ def test_calculate_lap_time():
     assert isinstance(result, float)
 ```
 
-## Bones Pràctiques
+## Best Practices
 
 ### 1. DRY (Don't Repeat Yourself)
 
 ```python
-# ❌ Incorrecte
+# ❌ Incorrect
 def get_session_stats(session_id):
     session = db.query(Session).filter_by(id=session_id).first()
     # ...
@@ -322,9 +322,9 @@ def delete_session(session_id):
     session = db.query(Session).filter_by(id=session_id).first()
     # ...
 
-# ✅ Correcte
+# ✅ Correct
 def _get_session(session_id):
-    """Helper per obtenir sessió."""
+    """Helper to get session."""
     return db.query(Session).filter_by(id=session_id).first()
 
 def get_session_stats(session_id):
@@ -339,19 +339,19 @@ def delete_session(session_id):
 ### 2. Single Responsibility
 
 ```python
-# ❌ Massa responsabilitats
+# ❌ Too many responsibilities
 def process_and_save_telemetry(data):
-    # Valida dades
+    # Validate data
     validated = validate(data)
-    # Calcula derivades
+    # Calculate derivatives
     processed = calculate_derivatives(validated)
-    # Guarda a DB
+    # Save to DB
     save_to_database(processed)
-    # Notifica subscriptors
+    # Notify subscribers
     notify_subscribers(processed)
     return processed
 
-# ✅ Una responsabilitat per funció
+# ✅ One responsibility per function
 def process_telemetry(data):
     validated = validate(data)
     return calculate_derivatives(validated)
@@ -363,14 +363,14 @@ def notify_telemetry_update(data):
     notify_subscribers(data)
 ```
 
-### 3. Immutabilitat Quan Possible
+### 3. Immutability When Possible
 
 ```python
-# ✅ Preferir retornar nou objecte
+# ✅ Prefer returning new object
 def add_timestamp(data: Dict) -> Dict:
     return {**data, 'timestamp': datetime.now()}
 
-# En lloc de modificar in-place
+# Instead of modifying in-place
 def add_timestamp(data: Dict) -> None:
     data['timestamp'] = datetime.now()
 ```
@@ -378,10 +378,10 @@ def add_timestamp(data: Dict) -> None:
 ### 4. List/Dict Comprehensions
 
 ```python
-# ✅ Clar i concís
+# ✅ Clear and concise
 speeds = [sample['speed'] for sample in telemetry if sample['speed'] > 0]
 
-# ❌ Menys pythonic
+# ❌ Less pythonic
 speeds = []
 for sample in telemetry:
     if sample['speed'] > 0:
@@ -391,32 +391,32 @@ for sample in telemetry:
 ### 5. Context Managers
 
 ```python
-# ✅ Amb context manager
+# ✅ With context manager
 with open('data.json', 'r') as f:
     data = json.load(f)
 
-# ❌ Sense context manager
+# ❌ Without context manager
 f = open('data.json', 'r')
 data = json.load(f)
 f.close()
 ```
 
-## Checklist Pre-commit
+## Pre-commit Checklist
 
-- [ ] Codi formatat amb Black
-- [ ] Flake8 passa sense errors
-- [ ] Type hints afegits
-- [ ] Docstrings complets
-- [ ] Tests escrits i passen
-- [ ] No hi ha codi comentat
-- [ ] Imports organitzats
-- [ ] Logs apropiats
-- [ ] Documentació actualitzada
+- [ ] Code formatted with Black
+- [ ] Flake8 passes without errors
+- [ ] Type hints added
+- [ ] Complete docstrings
+- [ ] Tests written and passing
+- [ ] No commented-out code
+- [ ] Imports organized
+- [ ] Appropriate logs
+- [ ] Documentation updated
 
-## Eines Recomanades
+## Recommended Tools
 
 ```bash
-# Formatació automàtica
+# Automatic formatting
 black src/ tests/
 
 # Linting
@@ -435,7 +435,7 @@ radon cc src/ -a
 bandit -r src/
 ```
 
-## Referències
+## References
 
 - [PEP 8](https://pep8.org/)
 - [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
@@ -444,4 +444,4 @@ bandit -r src/
 
 ---
 
-Seguint aquests estàndards mantenim un codi net i consistent! ✨
+Following these standards keeps our code clean and consistent! ✨
