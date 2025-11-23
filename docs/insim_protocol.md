@@ -1,144 +1,144 @@
-# Protocol InSim de Live for Speed
+# Live for Speed InSim Protocol
 
-Aquest document proporciona una visió detallada del protocol InSim utilitzat per Live for Speed.
+This document provides a detailed overview of the InSim protocol used by Live for Speed.
 
-## Què és InSim?
+## What is InSim?
 
-InSim (Internet Simulator) és el protocol de comunicació que permet a aplicacions externes interactuar amb Live for Speed en temps real. Utilitza sockets TCP o UDP per enviar i rebre paquets de dades.
+InSim (Internet Simulator) is the communication protocol that allows external applications to interact with Live for Speed in real-time. It uses TCP or UDP sockets to send and receive data packets.
 
-**Referència oficial**: https://en.lfsmanual.net/wiki/InSim.txt
+**Official reference**: https://en.lfsmanual.net/wiki/InSim.txt
 
-## Connexió Bàsica
+## Basic Connection
 
-### Habilitar InSim a LFS
+### Enabling InSim in LFS
 
-Per habilitar InSim al servidor o client de LFS:
+To enable InSim on the LFS server or client:
 
 ```
 /insim 29999
 ```
 
-On `29999` és el port (pot ser qualsevol port disponible).
+Where `29999` is the port (can be any available port).
 
-### Inicialització
+### Initialization
 
-La connexió InSim segueix aquests passos:
+The InSim connection follows these steps:
 
-1. **Establir connexió TCP/UDP** al host i port especificats
-2. **Enviar paquet IS_ISI** per inicialitzar la sessió InSim
-3. **Rebre paquet IS_VER** com a confirmació
-4. **Començar a rebre paquets** segons els flags configurats
+1. **Establish TCP/UDP connection** to the specified host and port
+2. **Send IS_ISI packet** to initialize the InSim session
+3. **Receive IS_VER packet** as confirmation
+4. **Start receiving packets** according to configured flags
 
-### Paquet IS_ISI (InSim Init)
+### IS_ISI Packet (InSim Init)
 
-El paquet d'inicialització té aquesta estructura:
+The initialization packet has this structure:
 
 ```c
 struct IS_ISI {
-    byte Size;        // 44 (bytes del paquet / 4)
+    byte Size;        // 44 (packet bytes / 4)
     byte Type;        // ISP_ISI (1)
-    byte ReqI;        // Request ID (0 normalment)
+    byte ReqI;        // Request ID (0 normally)
     byte Zero;        // 0
-    word UDPPort;     // Port UDP (0 per TCP)
-    word Flags;       // Flags de configuració
-    byte InSimVer;    // Versió InSim (9 actualment)
-    byte Prefix;      // Prefix per comandaments (ex: '!')
-    word Interval;    // Interval MCI/NLP en centèssimes de segon
-    char Admin[16];   // Contrasenya admin (si cal)
-    char IName[16];   // Nom de l'aplicació
+    word UDPPort;     // UDP Port (0 for TCP)
+    word Flags;       // Configuration flags
+    byte InSimVer;    // InSim version (9 currently)
+    byte Prefix;      // Prefix for commands (e.g., '!')
+    word Interval;    // MCI/NLP interval in hundredths of a second
+    char Admin[16];   // Admin password (if needed)
+    char IName[16];   // Application name
 };
 ```
 
-## Tipus de Paquets Principals
+## Main Packet Types
 
-### Paquets d'Informació del Servidor
+### Server Information Packets
 
-| Paquet | Codi | Descripció |
-|--------|------|------------|
-| IS_VER | 2 | Versió de LFS i InSim |
-| IS_STA | 5 | Estat del servidor |
-| IS_ISM | 10 | Informació InSim Multi |
+| Packet | Code | Description |
+|--------|------|-------------|
+| IS_VER | 2 | LFS and InSim version |
+| IS_STA | 5 | Server state |
+| IS_ISM | 10 | InSim Multi information |
 
-### Paquets de Connexions i Jugadors
+### Connection and Player Packets
 
-| Paquet | Codi | Descripció |
-|--------|------|------------|
-| IS_NCN | 18 | Nova connexió de jugador |
-| IS_CNL | 19 | Jugador desconnecta |
-| IS_CPR | 20 | Canvi de nom de jugador |
-| IS_NPL | 21 | Nou jugador a la pista |
-| IS_PLP | 22 | Jugador surt dels pits |
-| IS_PLL | 23 | Jugador deixa la pista |
+| Packet | Code | Description |
+|--------|------|-------------|
+| IS_NCN | 18 | New player connection |
+| IS_CNL | 19 | Player disconnects |
+| IS_CPR | 20 | Player name change |
+| IS_NPL | 21 | New player on track |
+| IS_PLP | 22 | Player leaves pits |
+| IS_PLL | 23 | Player leaves track |
 
-### Paquets de Telemetria
+### Telemetry Packets
 
-| Paquet | Codi | Descripció | Freqüència |
-|--------|------|------------|------------|
-| IS_MCI | 38 | Multi Car Info - Posició i estat de vehicles | Configurable (Interval) |
-| IS_NLP | 37 | Node and Lap - Posició en nodes de pista | Configurable (Interval) |
+| Packet | Code | Description | Frequency |
+|--------|------|-------------|-----------|
+| IS_MCI | 38 | Multi Car Info - Vehicle position and state | Configurable (Interval) |
+| IS_NLP | 37 | Node and Lap - Position at track nodes | Configurable (Interval) |
 
-### Paquets d'Esdeveniments de Cursa
+### Race Event Packets
 
-| Paquet | Codi | Descripció |
-|--------|------|------------|
-| IS_RST | 17 | Inici de cursa |
-| IS_LAP | 24 | Temps de volta completada |
-| IS_SPX | 25 | Temps de sector |
-| IS_PIT | 26 | Entrada als pits |
-| IS_PSF | 27 | Fi de parada als pits |
-| IS_PEN | 30 | Penalització |
-| IS_FIN | 34 | Final de cursa |
-| IS_RES | 35 | Resultats |
+| Packet | Code | Description |
+|--------|------|-------------|
+| IS_RST | 17 | Race start |
+| IS_LAP | 24 | Completed lap time |
+| IS_SPX | 25 | Sector time |
+| IS_PIT | 26 | Pit entry |
+| IS_PSF | 27 | Pit stop finished |
+| IS_PEN | 30 | Penalty |
+| IS_FIN | 34 | Race finish |
+| IS_RES | 35 | Results |
 
-### Paquets de Control
+### Control Packets
 
-| Paquet | Codi | Descripció |
-|--------|------|------------|
-| IS_TINY | 3 | Paquets de control petit |
-| IS_SMALL | 4 | Paquets de dades petit |
-| IS_MSO | 11 | Missatges del servidor |
-| IS_III | 12 | Informació general |
+| Packet | Code | Description |
+|--------|------|-------------|
+| IS_TINY | 3 | Small control packets |
+| IS_SMALL | 4 | Small data packets |
+| IS_MSO | 11 | Server messages |
+| IS_III | 12 | General information |
 
-## Telemetria Detallada
+## Detailed Telemetry
 
 ### IS_MCI - Multi Car Info
 
-El paquet més important per telemetria en temps real:
+The most important packet for real-time telemetry:
 
 ```c
 struct IS_MCI {
     byte Size;      // 4 + NumC * 28
     byte Type;      // ISP_MCI (38)
     byte ReqI;      // 0
-    byte NumC;      // Nombre de cotxes (màx 8)
-    CompCar Info[8]; // Informació de cada cotxe
+    byte NumC;      // Number of cars (max 8)
+    CompCar Info[8]; // Information for each car
 };
 
 struct CompCar {
-    word Node;          // Node actual (0-65535)
-    word Lap;           // Volta actual
+    word Node;          // Current node (0-65535)
+    word Lap;           // Current lap
     byte PLID;          // Player ID
-    byte Position;      // Posició a la cursa
-    byte Info;          // Informació adicional
+    byte Position;      // Race position
+    byte Info;          // Additional information
     byte Sp3;           // Spare
-    int X;              // Posició X * 65536
-    int Y;              // Posició Y * 65536
-    int Z;              // Posició Z * 65536
-    word Speed;         // Velocitat * 32768 / m/s
-    word Direction;     // Direcció del cotxe
-    word Heading;       // Orientació del cotxe
-    short AngVel;       // Velocitat angular
+    int X;              // X position * 65536
+    int Y;              // Y position * 65536
+    int Z;              // Z position * 65536
+    word Speed;         // Speed * 32768 / m/s
+    word Direction;     // Car direction
+    word Heading;       // Car heading
+    short AngVel;       // Angular velocity
 };
 ```
 
-**Conversions importants:**
-- Posició real (metres): `X / 65536.0`
-- Velocitat real (m/s): `Speed / 32768.0`
-- Velocitat (km/h): `(Speed / 32768.0) * 3.6`
+**Important conversions:**
+- Real position (meters): `X / 65536.0`
+- Real speed (m/s): `Speed / 32768.0`
+- Speed (km/h): `(Speed / 32768.0) * 3.6`
 
 ### IS_LAP - Lap Time
 
-Informació de volta completada:
+Completed lap information:
 
 ```c
 struct IS_LAP {
@@ -146,20 +146,20 @@ struct IS_LAP {
     byte Type;      // ISP_LAP (24)
     byte ReqI;      // 0
     byte PLID;      // Player ID
-    unsigned LTime; // Temps de volta (ms)
-    unsigned ETime; // Temps total (ms)
-    word LapsDone;  // Voltes completades
-    word Flags;     // Flags de la volta
+    unsigned LTime; // Lap time (ms)
+    unsigned ETime; // Total time (ms)
+    word LapsDone;  // Completed laps
+    word Flags;     // Lap flags
     byte Sp0;
-    byte Penalty;   // Penalització en segons
-    byte NumStops;  // Número de parades
+    byte Penalty;   // Penalty in seconds
+    byte NumStops;  // Number of stops
     byte Sp3;
 };
 ```
 
 ### IS_SPX - Split Time
 
-Temps de sector:
+Sector time:
 
 ```c
 struct IS_SPX {
@@ -167,65 +167,65 @@ struct IS_SPX {
     byte Type;      // ISP_SPX (25)
     byte ReqI;      // 0
     byte PLID;      // Player ID
-    unsigned STime; // Temps del sector (ms)
-    unsigned ETime; // Temps total (ms)
-    byte Split;     // Número de sector (1, 2, 3)
-    byte Penalty;   // Penalització acumulada
-    byte NumStops;  // Parades als pits
+    unsigned STime; // Sector time (ms)
+    unsigned ETime; // Total time (ms)
+    byte Split;     // Sector number (1, 2, 3)
+    byte Penalty;   // Accumulated penalty
+    byte NumStops;  // Pit stops
     byte Sp3;
 };
 ```
 
-## Flags d'InSim
+## InSim Flags
 
-Els flags al paquet IS_ISI controlen quin tipus d'informació es rep:
+The flags in the IS_ISI packet control what type of information is received:
 
 ```c
 #define ISF_RES_0       1       // Reserved
 #define ISF_RES_1       2       // Reserved
-#define ISF_LOCAL       4       // Connexió local
-#define ISF_MSO_COLS    8       // Enviar colors als missatges
-#define ISF_NLP         16      // Enviar paquets NLP
-#define ISF_MCI         32      // Enviar paquets MCI
-#define ISF_CON         64      // Informació de contactes
-#define ISF_OBH         128     // Colisions amb objectes
+#define ISF_LOCAL       4       // Local connection
+#define ISF_MSO_COLS    8       // Send colors in messages
+#define ISF_NLP         16      // Send NLP packets
+#define ISF_MCI         32      // Send MCI packets
+#define ISF_CON         64      // Contact information
+#define ISF_OBH         128     // Object collisions
 #define ISF_HLV         256     // Hot lap validity
-#define ISF_AXM_LOAD    512     // Objectes d'autocross
-#define ISF_AXM_EDIT    1024    // Edició d'objectes
+#define ISF_AXM_LOAD    512     // Autocross objects
+#define ISF_AXM_EDIT    1024    // Object editing
 ```
 
-**Exemple per telemetria:**
+**Example for telemetry:**
 ```python
-flags = ISF_MCI | ISF_NLP  # Rebre paquets MCI i NLP
-flags = 32 | 16  # Equivalent en decimal
+flags = ISF_MCI | ISF_NLP  # Receive MCI and NLP packets
+flags = 32 | 16  # Equivalent in decimal
 ```
 
-## Intervals de Telemetria
+## Telemetry Intervals
 
-El paràmetre `Interval` al paquet IS_ISI controla la freqüència dels paquets MCI/NLP:
+The `Interval` parameter in the IS_ISI packet controls the frequency of MCI/NLP packets:
 
-- **Valor en centèssimes de segon** (1 = 10ms)
-- **Mínim recomanat**: 50 (500ms = 2Hz)
-- **Típic per telemetria**: 100 (1 segon = 1Hz)
-- **Alta freqüència**: 10 (100ms = 10Hz)
+- **Value in hundredths of a second** (1 = 10ms)
+- **Recommended minimum**: 50 (500ms = 2Hz)
+- **Typical for telemetry**: 100 (1 second = 1Hz)
+- **High frequency**: 10 (100ms = 10Hz)
 
 ```python
-interval = 100  # 1 segon (1Hz)
+interval = 100  # 1 second (1Hz)
 interval = 50   # 500ms (2Hz)
 interval = 10   # 100ms (10Hz)
 ```
 
-## Exemple Complet
+## Complete Example
 
 ```python
 import socket
 import struct
 
-# Connexió
+# Connection
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect(('127.0.0.1', 29999))
 
-# Paquet IS_ISI
+# IS_ISI packet
 packet = struct.pack(
     "=4BH2BH16s16s",
     44,                    # Size
@@ -236,30 +236,30 @@ packet = struct.pack(
     48,                    # Flags (ISF_MCI | ISF_NLP)
     9,                     # InSimVer
     ord('!'),              # Prefix
-    100,                   # Interval (1 segon)
+    100,                   # Interval (1 second)
     b'',                   # Admin password
     b'MyApp'.ljust(16, b'\x00')  # App name
 )
 
 sock.sendall(packet)
 
-# Rebre paquets
+# Receive packets
 while True:
     data = sock.recv(1024)
     if data:
         process_packet(data)
 ```
 
-## Referències
+## References
 
-### Documentació Oficial
+### Official Documentation
 - **InSim.txt**: https://en.lfsmanual.net/wiki/InSim.txt
 - **LFS Manual**: https://en.lfsmanual.net/wiki/Main_Page
 
-### Protocols Relacionats
-- **OutGauge**: Dades del dashboard del vehicle
-- **OutSim**: Dades de física del vehicle
+### Related Protocols
+- **OutGauge**: Vehicle dashboard data
+- **OutSim**: Vehicle physics data
 
-### Recursos
+### Resources
 - **LFS Forum**: https://www.lfs.net/forum
 - **LFS World**: https://www.lfs.net/
