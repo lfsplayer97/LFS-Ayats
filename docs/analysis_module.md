@@ -1,75 +1,75 @@
-# Mòdul d'Anàlisi en Temps Real
+# Real-Time Analysis Module
 
-Mòdul d'anàlisi avançada per LFS-Ayats amb capacitats de detecció d'anomalies, predicció de rendiment i anàlisi de sectors.
+Advanced analysis module for LFS-Ayats with anomaly detection, performance prediction, and sector analysis capabilities.
 
-## 📋 Característiques
+## 📋 Features
 
-### 🔍 Detecció d'Anomalies (`anomaly.py`)
-- **Sobreescalfament del motor**: Detecció amb nivells WARNING i CRITICAL
-- **Patinatge de rodes**: Comparació velocitat lineal vs rotacional
-- **Subviratge/Sobreviratge**: Anàlisi de comportament de direcció
-- **Flat spots**: Detecció de desgast irregular als pneumàtics
-- **Frenades inconsistents**: Anàlisi de variabilitat en punts de frenada
-- **Avís de combustible**: Predicció de combustible insuficient
-- **Mètodes estadístics**: Z-score, IQR, mitjanes mòbils
+### 🔍 Anomaly Detection (`anomaly.py`)
+- **Engine overheating**: Detection with WARNING and CRITICAL levels
+- **Wheel spin**: Linear speed vs rotational speed comparison
+- **Understeer/Oversteer**: Steering behavior analysis
+- **Flat spots**: Irregular tire wear detection
+- **Inconsistent braking**: Braking point variability analysis
+- **Fuel warning**: Insufficient fuel prediction
+- **Statistical methods**: Z-score, IQR, moving averages
 
-### 📊 Predicció de Rendiment (`predictor.py`)
-- **Temps de volta**: Predicció basada en sectors completats
-- **Finestra de pit stop**: Càlcul òptim segons combustible i pneumàtics
-- **Vida útil pneumàtics**: Estimació de voltes restants
-- **Ritme òptim**: Gestió de combustible per arribar just
-- **Canvis de posició**: Predicció basada en ritmes dels competidors
-- **Millor temps teòric**: Combinació dels millors sectors
+### 📊 Performance Prediction (`predictor.py`)
+- **Lap time**: Prediction based on completed sectors
+- **Pit stop window**: Optimal calculation based on fuel and tires
+- **Tire lifespan**: Remaining laps estimation
+- **Optimal pace**: Fuel management to finish exactly
+- **Position changes**: Prediction based on competitor pace
+- **Theoretical best time**: Combination of best sectors
 
-### 📏 Anàlisi de Sectors (`sectors.py`)
-- **Comparació de sectors**: Entre diferents voltes
-- **Sectors febles**: Identificació d'àrees de millora
-- **Consistència**: Càlcul per cada sector
-- **Línia òptima**: Basada en voltes ràpides
-- **Punts de frenada**: Anàlisi i consistència
-- **Aplicació de gas**: Anàlisi per corbes
+### 📏 Sector Analysis (`sectors.py`)
+- **Sector comparison**: Between different laps
+- **Weak sectors**: Identification of improvement areas
+- **Consistency**: Calculation for each sector
+- **Optimal line**: Based on fast laps
+- **Braking points**: Analysis and consistency
+- **Throttle application**: Analysis per corner
 
-### 🔄 Comparador Avançat (`comparator.py`)
-- **Comparació completa**: Entre dues voltes
-- **Delta punt a punt**: Temps guanyat/perdut
-- **Traces de velocitat**: Comparació detallada
-- **Línies de carrera**: Diferències de trajectòria
-- **Suggeriments**: Recomanacions automàtiques de millora
+### 🔄 Advanced Comparator (`comparator.py`)
+- **Complete comparison**: Between two laps
+- **Point-to-point delta**: Time gained/lost
+- **Speed traces**: Detailed comparison
+- **Racing lines**: Trajectory differences
+- **Suggestions**: Automatic improvement recommendations
 
-### 🔔 Sistema d'Alertes (`alerts.py`)
-- **Gestors múltiples**: Console, Log, Callback personalitzats
-- **Filtratge**: Evitar duplicats amb intervals mínims
-- **Historial**: Amb estadístiques i cerca
-- **Condicions automàtiques**: Verificació de telemetria
+### 🔔 Alert System (`alerts.py`)
+- **Multiple handlers**: Console, Log, custom Callback
+- **Filtering**: Avoid duplicates with minimum intervals
+- **History**: With statistics and search
+- **Automatic conditions**: Telemetry verification
 
-### 📐 Càlcul de Mètriques (`metrics.py`)
-- **Consistència**: Mesura de regularitat en temps
-- **Puntuació de ritme**: Comparació amb referència
-- **Taxa de millora**: Evolució durant la sessió
-- **Racecraft**: Avaluació d'habilitat en carrera
-- **Eficiència**: Combustible i degradació
-- **Índexs compostos**: Combinació de múltiples mètriques
+### 📐 Metrics Calculation (`metrics.py`)
+- **Consistency**: Measure of time regularity
+- **Pace score**: Comparison with reference
+- **Improvement rate**: Evolution during session
+- **Racecraft**: Racing skill evaluation
+- **Efficiency**: Fuel and degradation
+- **Composite indices**: Combination of multiple metrics
 
-## 🚀 Instal·lació
+## 🚀 Installation
 
-El mòdul està inclòs en LFS-Ayats. Assegura't que tens instal·lades les dependències:
+The module is included in LFS-Ayats. Make sure you have the dependencies installed:
 
 ```bash
 pip install -r requirements.txt
 pip install -e .
 ```
 
-## 💡 Exemples d'Ús
+## 💡 Usage Examples
 
-### Exemple 1: Detecció d'Anomalies
+### Example 1: Anomaly Detection
 
 ```python
 from src.analysis import AnomalyDetector
 
-# Crear detector
+# Create detector
 detector = AnomalyDetector()
 
-# Comprovar telemetria
+# Check telemetry
 current_data = {
     "engine_temp": 102.0,
     "linear_speed": 50.0,
@@ -81,81 +81,81 @@ for alert in alerts:
     print(alert)
 ```
 
-### Exemple 2: Predicció de Temps de Volta
+### Example 2: Lap Time Prediction
 
 ```python
 from src.analysis import PerformancePredictor
 
-# Crear predictor
+# Create predictor
 predictor = PerformancePredictor()
 
-# Dades històriques
+# Historical data
 historical_data = [
     {"sector_times": [28.5, 31.2, 25.8]},
     {"sector_times": [28.3, 31.5, 25.6]},
 ]
 
-# Predir temps amb 2 sectors completats
+# Predict time with 2 completed sectors
 predicted_time = predictor.predict_lap_time(
     current_sector_times=[28.2, 31.0],
     historical_data=historical_data
 )
 
-print(f"Temps predit: {predicted_time:.3f}s")
+print(f"Predicted time: {predicted_time:.3f}s")
 ```
 
-### Exemple 3: Anàlisi de Sectors
+### Example 3: Sector Analysis
 
 ```python
 from src.analysis import SectorAnalyzer
 
-# Crear analitzador
+# Create analyzer
 analyzer = SectorAnalyzer()
 
-# Dades de múltiples voltes
+# Multiple laps data
 session_data = [
     {"sector_times": [28.5, 31.2, 25.8]},
     {"sector_times": [28.3, 31.5, 25.6]},
     {"sector_times": [28.4, 31.8, 25.7]},
 ]
 
-# Identificar sectors febles
+# Identify weak sectors
 weak_sectors = analyzer.identify_weak_sectors(session_data)
 for sector in weak_sectors:
-    print(f"Sector {sector.number}: perdent {sector.time_lost:.3f}s")
+    print(f"Sector {sector.number}: losing {sector.time_lost:.3f}s")
 ```
 
-### Exemple 4: Sistema d'Alertes
+### Example 4: Alert System
 
 ```python
 from src.analysis import AlertSystem, AlertLevel
 from src.analysis.alerts import ConsoleAlertHandler
 
-# Crear sistema
+# Create system
 system = AlertSystem()
 system.register_handler(ConsoleAlertHandler())
 
-# Generar alerta
+# Generate alert
 system.create_and_trigger(
     AlertLevel.WARNING,
-    "Temperatura elevada",
+    "High temperature",
     {"temp": 98.0}
 )
 
-# Comprovar condicions
+# Check conditions
 telemetry = {"engine_temp": 110.0, "fuel": 4.0}
 alerts = system.check_conditions(telemetry)
 ```
 
-### Exemple 5: Comparació de Voltes
+### Example 5: Lap Comparison
 
 ```python
 from src.analysis import AdvancedComparator
 
-# Crear comparador
+# Create comparator
 comparator = AdvancedComparator()
 
-# Dades de voltes
+# Lap data
 lap1 = {
     "lap_id": 5,
     "total_time": 85.5,
@@ -168,37 +168,37 @@ lap2 = {
     "sector_times": [28.3, 31.5, 25.4]
 }
 
-# Comparar
+# Compare
 comparison = comparator.compare_laps(lap1, lap2)
-print(f"Diferència: {comparison.time_difference:+.3f}s")
+print(f"Difference: {comparison.time_difference:+.3f}s")
 
 for suggestion in comparison.suggestions:
     print(f"• {suggestion}")
 ```
 
-### Exemple 6: Mètriques de Rendiment
+### Example 6: Performance Metrics
 
 ```python
 from src.analysis import MetricsCalculator
 
-# Crear calculadora
+# Create calculator
 calculator = MetricsCalculator()
 
-# Temps de voltes
+# Lap times
 lap_times = [86.5, 86.2, 85.9, 85.7, 85.5]
 reference = 85.0
 
-# Calcular mètriques
+# Calculate metrics
 consistency = calculator.calculate_consistency(lap_times)
 pace_score = calculator.calculate_pace_score(lap_times, reference)
 performance = calculator.calculate_performance_index(lap_times, reference)
 
-print(f"Consistència: {consistency:.1%}")
-print(f"Ritme: {pace_score:.1f}/100")
-print(f"Rendiment: {performance:.1f}/100")
+print(f"Consistency: {consistency:.1%}")
+print(f"Pace: {pace_score:.1f}/100")
+print(f"Performance: {performance:.1f}/100")
 ```
 
-## 📚 Executar Exemples Complets
+## 📚 Running Complete Examples
 
 ```bash
 cd /path/to/LFS-Ayats
@@ -207,30 +207,30 @@ PYTHONPATH=. python3 examples/analysis_examples.py
 
 ## 🧪 Tests
 
-El mòdul inclou 69 tests unitaris amb cobertura completa:
+The module includes 69 unit tests with complete coverage:
 
 ```bash
-# Executar tests del mòdul
+# Run module tests
 pytest tests/unit/analysis/ -v
 
-# Amb cobertura
+# With coverage
 pytest tests/unit/analysis/ --cov=src/analysis --cov-report=html
 ```
 
-## 📖 Documentació d'API
+## 📖 API Documentation
 
-### Classes Principals
+### Main Classes
 
 #### `AnomalyDetector`
 ```python
 detector = AnomalyDetector(
-    temp_warning=95.0,      # Temperatura d'avís (°C)
-    temp_critical=105.0,    # Temperatura crítica (°C)
-    z_score_threshold=3.0   # Llindar per detecció outliers
+    temp_warning=95.0,      # Warning temperature (°C)
+    temp_critical=105.0,    # Critical temperature (°C)
+    z_score_threshold=3.0   # Threshold for outlier detection
 )
 ```
 
-**Mètodes principals:**
+**Main methods:**
 - `detect_overheating(engine_temp)` → (bool, Alert)
 - `detect_wheel_spin(linear_speed, wheel_speed)` → (bool, Alert)
 - `detect_understeer(steering_angle, actual_rotation)` → (bool, Alert)
@@ -243,7 +243,7 @@ detector = AnomalyDetector(
 predictor = PerformancePredictor()
 ```
 
-**Mètodes principals:**
+**Main methods:**
 - `predict_lap_time(current_sector_times, historical_data)` → float
 - `predict_pit_window(fuel_consumption, tire_wear, laps_remaining)` → (int, str)
 - `estimate_tire_life(current_wear, laps_completed)` → (int, float)
@@ -255,7 +255,7 @@ predictor = PerformancePredictor()
 analyzer = SectorAnalyzer()
 ```
 
-**Mètodes principals:**
+**Main methods:**
 - `compare_sector_times(lap_data, reference_lap_data)` → List[Dict]
 - `identify_weak_sectors(session_data)` → List[Sector]
 - `calculate_sector_consistency(laps)` → Dict[int, float]
@@ -266,7 +266,7 @@ analyzer = SectorAnalyzer()
 comparator = AdvancedComparator()
 ```
 
-**Mètodes principals:**
+**Main methods:**
 - `compare_laps(lap1_data, lap2_data)` → LapComparison
 - `calculate_time_delta(lap1_data, lap2_data)` → TimeDelta
 - `find_performance_differences(lap1, lap2)` → List[Dict]
@@ -274,12 +274,12 @@ comparator = AdvancedComparator()
 #### `AlertSystem`
 ```python
 system = AlertSystem(
-    max_history=1000,       # Màxim d'alertes a l'historial
-    enable_filtering=True   # Filtratge de duplicats
+    max_history=1000,       # Maximum alerts in history
+    enable_filtering=True   # Duplicate filtering
 )
 ```
 
-**Mètodes principals:**
+**Main methods:**
 - `register_handler(handler)` → None
 - `trigger_alert(alert, min_interval)` → bool
 - `create_and_trigger(level, message, data, min_interval)` → bool
@@ -291,14 +291,14 @@ system = AlertSystem(
 calculator = MetricsCalculator()
 ```
 
-**Mètodes principals:**
+**Main methods:**
 - `calculate_consistency(lap_times)` → float
 - `calculate_pace_score(lap_times, reference_time)` → float
 - `calculate_improvement_rate(lap_times)` → float
 - `calculate_performance_index(lap_times, reference_time)` → float
 - `calculate_percentile_rank(value, dataset)` → float
 
-## 🔧 Models de Dades
+## 🔧 Data Models
 
 ### `Alert`
 ```python
@@ -334,14 +334,14 @@ class LapComparison:
     suggestions: List[str]
 ```
 
-## 🤝 Contribuir
+## 🤝 Contributing
 
-Consulta [CONTRIBUTING.md](../CONTRIBUTING.md) per a guies de contribució.
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for contribution guidelines.
 
-## 📝 Llicència
+## 📝 License
 
-Aquest projecte està sota llicència MIT. Consulta [LICENSE](../LICENSE) per més detalls.
+This project is licensed under the MIT License. See [LICENSE](../LICENSE) for more details.
 
-## 🙏 Crèdits
+## 🙏 Credits
 
-Desenvolupat com a part del projecte LFS-Ayats per proporcionar anàlisi avançada de telemetria per Live for Speed.
+Developed as part of the LFS-Ayats project to provide advanced telemetry analysis for Live for Speed.

@@ -42,7 +42,7 @@ Aprèn pas a pas amb els nostres tutorials detallats:
 
 ### Mòduls Específics
 
-- **[Mòdul d'Anàlisi](analysis_module.md)** - Funcions d'anàlisi avançada
+- **[Analysis Module](analysis_module.md)** - Advanced analysis features
 - **[Mòdul de Visualització](visualization.md)** - Gràfics i dashboards
 - **[Gestió d'Errors](error_handling_reconnection.md)** - Reconnexió i gestió d'errors
 
