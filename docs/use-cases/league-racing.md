@@ -1,40 +1,40 @@
-# Cas d'Ús: Carreres de Lliga
+# Use Case: League Racing
 
-Guia completa per utilitzar LFS-Ayats en un entorn de carreres de lliga amb múltiples pilots.
+Complete guide for using LFS-Ayats in a league racing environment with multiple drivers.
 
-## Escenari
+## Scenario
 
-**League Racing Team** organitza una lliga de carreres amb:
-- 20 pilots participants
-- Carreres setmanals
-- Classificació i cursa
-- Necessitat d'analitzar rendiment de pilots
-- Comparacions entre pilots
-- Seguiment de progressió
+**League Racing Team** organizes a racing league with:
+- 20 participating drivers
+- Weekly races
+- Qualifying and race sessions
+- Need to analyze driver performance
+- Comparisons between drivers
+- Progress tracking
 
-## Objectius
+## Objectives
 
-1. Recollir telemetria de tots els pilots durant les sessions
-2. Analitzar rendiment individual i comparar pilots
-3. Identificar millors voltes i estratègies
-4. Generar reports automàtics post-carrera
-5. Mantenir històric de tota la temporada
+1. Collect telemetry from all drivers during sessions
+2. Analyze individual performance and compare drivers
+3. Identify best laps and strategies
+4. Generate automatic post-race reports
+5. Maintain history for the entire season
 
-## Arquitectura Proposada
+## Proposed Architecture
 
 ```
 ┌─────────────────┐
-│  Servidor LFS   │  Port 29999 (InSim)
-│   (Dedicat)     │
+│   LFS Server    │  Port 29999 (InSim)
+│   (Dedicated)   │
 └────────┬────────┘
          │
     ┌────▼─────┐
-    │ LFS-Ayats│  Servidor central
+    │ LFS-Ayats│  Central server
     │  Server  │  PostgreSQL DB
     └────┬─────┘
          │
     ┌────▼──────────────────┐
-    │   Dashboard Web       │
+    │   Web Dashboard       │
     │  (Dash) Port 8050     │
     └───────────────────────┘
     ┌───────────────────────┐
@@ -43,22 +43,22 @@ Guia completa per utilitzar LFS-Ayats en un entorn de carreres de lliga amb múl
     └───────────────────────┘
 ```
 
-## Pas 1: Configuració del Servidor
+## Step 1: Server Configuration
 
-### 1.1 Configurar Base de Dades
+### 1.1 Configure Database
 
 ```bash
-# Instal·lar PostgreSQL
+# Install PostgreSQL
 sudo apt install postgresql
 
-# Crear base de dades
+# Create database
 sudo -u postgres psql
 CREATE DATABASE league_telemetry;
 CREATE USER league_user WITH PASSWORD 'secure_password';
 GRANT ALL PRIVILEGES ON DATABASE league_telemetry TO league_user;
 ```
 
-### 1.2 Configurar LFS-Ayats
+### 1.2 Configure LFS-Ayats
 
 `config_league.yaml`:
 ```yaml
@@ -67,7 +67,7 @@ insim:
   port: 29999
   admin_password: "admin_pass"
   app_name: "LeagueMonitor"
-  interval: 50  # Alta freqüència per competició
+  interval: 50  # High frequency for competition
 
 database:
   type: "postgresql"
@@ -95,13 +95,13 @@ dashboard:
   update_interval: 100
 ```
 
-### 1.3 Script Principal
+### 1.3 Main Script
 
 `league_monitor.py`:
 ```python
 """
-Monitor de telemetria per lliga.
-Recull dades de tots els pilots i genera reports.
+Telemetry monitor for league racing.
+Collects data from all drivers and generates reports.
 """
 
 import sys
@@ -119,10 +119,10 @@ logger = setup_logger("league_monitor", "INFO")
 
 
 class LeagueMonitor:
-    """Monitor de telemetria per lliga."""
+    """Telemetry monitor for league racing."""
     
     def __init__(self, config_file="config_league.yaml"):
-        """Inicialitza monitor."""
+        """Initialize monitor."""
         self.config = self._load_config(config_file)
         self.db_session = None
         self.client = None
@@ -130,21 +130,21 @@ class LeagueMonitor:
         self.race_session_id = None
     
     def _load_config(self, config_file):
-        """Carrega configuració."""
+        """Load configuration."""
         with open(config_file, 'r') as f:
             return yaml.safe_load(f)
     
     def setup(self):
-        """Configura tots els components."""
-        logger.info("=== Configurant League Monitor ===")
+        """Configure all components."""
+        logger.info("=== Setting up League Monitor ===")
         
-        # Base de dades
+        # Database
         db_config = self.config['database']
         self.db_session = setup_database(
             f"postgresql://{db_config['user']}:{db_config['password']}"
             f"@{db_config['host']}:{db_config['port']}/{db_config['database']}"
         )
-        logger.info("✓ Base de dades connectada")
+        logger.info("✓ Database connected")
         
         # InSim
         insim_config = self.config['insim']
@@ -156,19 +156,19 @@ class LeagueMonitor:
         )
         self.client.connect()
         self.client.initialize()
-        logger.info(f"✓ Connectat a servidor: {insim_config['host']}")
+        logger.info(f"✓ Connected to server: {insim_config['host']}")
         
-        # Col·lector
+        # Collector
         self.collector = TelemetryCollector(self.client)
         self._setup_callbacks()
-        logger.info("✓ Col·lector configurat")
+        logger.info("✓ Collector configured")
     
     def _setup_callbacks(self):
-        """Configura callbacks per esdeveniments."""
+        """Configure callbacks for events."""
         
         def on_race_start(data):
-            """Callback quan comença carrera."""
-            logger.info("🏁 Carrera iniciada!")
+            """Callback when race starts."""
+            logger.info("🏁 Race started!")
             repo = TelemetryRepository(self.db_session)
             session = repo.create_session(
                 start_time=datetime.now(),
@@ -176,15 +176,15 @@ class LeagueMonitor:
                 session_type='race'
             )
             self.race_session_id = session.id
-            logger.info(f"   Sessió ID: {self.race_session_id}")
+            logger.info(f"   Session ID: {self.race_session_id}")
         
         def on_lap_completed(lap_data):
-            """Callback quan es completa volta."""
+            """Callback when lap is completed."""
             player = lap_data.get('player_name', 'Unknown')
             lap_time = lap_data.get('lap_time', 0)
-            logger.info(f"🏁 {player} - Volta completada: {lap_time:.3f}s")
+            logger.info(f"🏁 {player} - Lap completed: {lap_time:.3f}s")
             
-            # Guardar a DB
+            # Save to DB
             if self.race_session_id:
                 repo = TelemetryRepository(self.db_session)
                 repo.create_lap(
@@ -195,8 +195,8 @@ class LeagueMonitor:
                 )
         
         def on_race_end(data):
-            """Callback quan acaba carrera."""
-            logger.info("🏁 Carrera finalitzada!")
+            """Callback when race ends."""
+            logger.info("🏁 Race finished!")
             self.generate_race_report()
         
         self.collector.register_callback('race_start', on_race_start)
@@ -204,46 +204,46 @@ class LeagueMonitor:
         self.collector.register_callback('race_end', on_race_end)
     
     def start_monitoring(self):
-        """Inicia monitorització."""
-        logger.info("🚀 Iniciant monitorització...")
+        """Start monitoring."""
+        logger.info("🚀 Starting monitoring...")
         self.collector.start()
-        logger.info("✓ Monitorització activa")
+        logger.info("✓ Monitoring active")
         
         try:
-            # Mantenir execució
+            # Keep running
             while True:
                 import time
                 time.sleep(1)
         except KeyboardInterrupt:
-            logger.info("\n⏹️  Aturant monitor...")
+            logger.info("\n⏹️  Stopping monitor...")
             self.stop()
     
     def stop(self):
-        """Atura monitor."""
+        """Stop monitor."""
         if self.collector:
             self.collector.stop()
         if self.client:
             self.client.disconnect()
-        logger.info("✓ Monitor aturat")
+        logger.info("✓ Monitor stopped")
     
     def generate_race_report(self):
-        """Genera report de carrera."""
+        """Generate race report."""
         if not self.race_session_id:
             return
         
-        logger.info("\n=== Generant Report de Carrera ===")
+        logger.info("\n=== Generating Race Report ===")
         
         repo = TelemetryRepository(self.db_session)
         session = repo.get_session(self.race_session_id, include_laps=True)
         
-        # Exportar a CSV
+        # Export to CSV
         export_dir = Path(self.config['telemetry']['export_directory'])
         export_dir.mkdir(parents=True, exist_ok=True)
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         csv_file = export_dir / f"race_{self.race_session_id}_{timestamp}.csv"
         
-        # Preparar dades
+        # Prepare data
         data = []
         for lap in session.laps:
             for point in lap.telemetry_points:
@@ -259,23 +259,23 @@ class LeagueMonitor:
                     'pos_y': point.pos_y
                 })
         
-        # Exportar
+        # Export
         exporter = CSVExporter(str(csv_file))
         exporter.export(data)
         
-        logger.info(f"✓ Report exportat: {csv_file}")
+        logger.info(f"✓ Report exported: {csv_file}")
         
-        # Estadístiques
+        # Statistics
         lap_times = [lap.lap_time for lap in session.laps]
         if lap_times:
-            logger.info(f"\n📊 Estadístiques de Carrera:")
-            logger.info(f"   Total voltes: {len(lap_times)}")
-            logger.info(f"   Millor volta: {min(lap_times):.3f}s")
-            logger.info(f"   Mitjana: {sum(lap_times)/len(lap_times):.3f}s")
+            logger.info(f"\n📊 Race Statistics:")
+            logger.info(f"   Total laps: {len(lap_times)}")
+            logger.info(f"   Best lap: {min(lap_times):.3f}s")
+            logger.info(f"   Average: {sum(lap_times)/len(lap_times):.3f}s")
 
 
 def main():
-    """Funció principal."""
+    """Main function."""
     monitor = LeagueMonitor("config_league.yaml")
     monitor.setup()
     monitor.start_monitoring()
@@ -285,12 +285,12 @@ if __name__ == "__main__":
     main()
 ```
 
-## Pas 2: Anàlisi Post-Carrera
+## Step 2: Post-Race Analysis
 
 `analyze_race.py`:
 ```python
 """
-Analitza resultats de carrera i genera comparacions.
+Analyzes race results and generates comparisons.
 """
 
 from src.database import TelemetryRepository, setup_database
@@ -299,13 +299,13 @@ import pandas as pd
 
 
 def analyze_race(session_id: int):
-    """Analitza una carrera."""
+    """Analyze a race."""
     db = setup_database("postgresql://...")
     repo = TelemetryRepository(db)
     
     session = repo.get_session(session_id, include_laps=True)
     
-    # Agrupar per pilot
+    # Group by driver
     pilots = {}
     for lap in session.laps:
         player = lap.player_name
@@ -313,13 +313,13 @@ def analyze_race(session_id: int):
             pilots[player] = []
         pilots[player].append(lap)
     
-    # Millor volta de cada pilot
-    print("\n🏆 Millors Voltes per Pilot:")
+    # Best lap for each driver
+    print("\n🏆 Best Laps per Driver:")
     for player, laps in pilots.items():
         best_lap = min(laps, key=lambda l: l.lap_time)
         print(f"   {player}: {best_lap.lap_time:.3f}s")
     
-    # Comparar dos millors pilots
+    # Compare two best drivers
     sorted_pilots = sorted(
         pilots.items(),
         key=lambda x: min(l.lap_time for l in x[1])
@@ -332,7 +332,7 @@ def analyze_race(session_id: int):
         p1_best = min(p1_laps, key=lambda l: l.lap_time)
         p2_best = min(p2_laps, key=lambda l: l.lap_time)
         
-        # Comparació visual
+        # Visual comparison
         comparator = LapComparator()
         comparator.add_lap(p1_name, p1_best.telemetry_points)
         comparator.add_lap(p2_name, p2_best.telemetry_points)
@@ -340,21 +340,21 @@ def analyze_race(session_id: int):
         fig = comparator.create_comparison_plot()
         fig.write_html(f"comparison_{session_id}.html")
         
-        print(f"\n📊 Comparació guardada: comparison_{session_id}.html")
+        print(f"\n📊 Comparison saved: comparison_{session_id}.html")
 
 
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
-        print("Ús: python analyze_race.py <session_id>")
+        print("Usage: python analyze_race.py <session_id>")
         sys.exit(1)
     
     analyze_race(int(sys.argv[1]))
 ```
 
-## Pas 3: Dashboard Públic
+## Step 3: Public Dashboard
 
-Crear dashboard web accessible per tots els membres:
+Create a web dashboard accessible to all members:
 
 ```python
 # league_dashboard.py
@@ -369,7 +369,7 @@ app.layout = html.Div([
     
     dcc.Dropdown(
         id='driver-selector',
-        options=[],  # Omplir dinàmicament
+        options=[],  # Fill dynamically
         multi=True
     ),
     
@@ -379,25 +379,25 @@ app.layout = html.Div([
     dcc.Interval(id='update-interval', interval=1000)
 ])
 
-# Callbacks per actualitzar...
+# Callbacks for updating...
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0', port=8050)
 ```
 
-## Consells per Lligues
+## Tips for Leagues
 
-1. **Backups Regulars**: Fes backup de la DB després de cada carrera
-2. **Monitoritza Rendiment**: Servidor adequat per 20+ connexions
-3. **Documentació**: Guia per pilots sobre com interpretar dades
-4. **Privacitat**: Considera qui pot accedir a quines dades
-5. **Automatització**: Scripts per reports automàtics
+1. **Regular Backups**: Back up the DB after each race
+2. **Monitor Performance**: Adequate server for 20+ connections
+3. **Documentation**: Guide for drivers on how to interpret data
+4. **Privacy**: Consider who can access which data
+5. **Automation**: Scripts for automatic reports
 
-## Recursos
+## Resources
 
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 - [Dash Multi-page Apps](https://dash.plotly.com/urls)
 
 ---
 
-Perfecte per gestionar lligues de forma professional! 🏆
+Perfect for managing leagues professionally! 🏆
