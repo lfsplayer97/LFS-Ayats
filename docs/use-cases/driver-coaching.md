@@ -1,51 +1,51 @@
-# Cas d'Ús: Entrenament de Pilots (Driver Coaching)
+# Use Case: Driver Coaching
 
-Guia per utilitzar LFS-Ayats com a eina d'entrenament i millora del rendiment de pilots.
+Guide for using LFS-Ayats as a training and driver performance improvement tool.
 
-## Escenari
+## Scenario
 
-**Racing School** ofereix entrenament personalitzat a pilots que volen millorar el seu rendiment. Necessiten:
-- Analitzar tècnica de conducció de cada alumne
-- Comparar amb pilots de referència (coaches)
-- Identificar àrees específiques de millora
-- Seguir progressió al llarg del temps
-- Proporcionar feedback basat en dades
+**Racing School** offers personalized training to drivers who want to improve their performance. They need to:
+- Analyze each student's driving technique
+- Compare with reference drivers (coaches)
+- Identify specific areas for improvement
+- Track progression over time
+- Provide data-driven feedback
 
-## Objectius de Coaching
+## Coaching Objectives
 
-1. **Anàlisi de Consistència**: Identificar variabilitat en voltes
-2. **Optimització de Traçada**: Millorar línia de cursa
-3. **Gestió de Pneumàtics**: Analitzar degradació
-4. **Eficiència de Frenada**: Optimitzar punts i intensitat de frenada
-5. **Utilització de Potència**: Maximitzar tracció a la sortida de corbes
+1. **Consistency Analysis**: Identify lap time variability
+2. **Racing Line Optimization**: Improve racing line
+3. **Tire Management**: Analyze tire degradation
+4. **Braking Efficiency**: Optimize braking points and intensity
+5. **Power Utilization**: Maximize traction on corner exits
 
-## Workflow de Coaching
+## Coaching Workflow
 
 ```
-1. Sessió Inicial (Baseline)
+1. Initial Session (Baseline)
    ↓
-2. Recollida de Dades
+2. Data Collection
    ↓
-3. Anàlisi Automàtica
+3. Automatic Analysis
    ↓
-4. Comparació amb Referència
+4. Reference Comparison
    ↓
-5. Identificació d'Àrees de Millora
+5. Improvement Areas Identification
    ↓
-6. Feedback al Pilot
+6. Driver Feedback
    ↓
-7. Sessions de Pràctica
+7. Practice Sessions
    ↓
-8. Seguiment de Progressió
+8. Progress Tracking
 ```
 
-## Pas 1: Configurar Sessió d'Entrenament
+## Step 1: Configure Training Session
 
 `coaching_session.py`:
 ```python
 """
-Sistema de coaching amb LFS-Ayats.
-Analitza rendiment i proporciona feedback.
+Coaching system with LFS-Ayats.
+Analyzes performance and provides feedback.
 """
 
 from typing import List, Dict
@@ -62,15 +62,15 @@ logger = setup_logger("coaching", "INFO")
 
 
 class CoachingSession:
-    """Gestiona sessió de coaching."""
+    """Manages coaching session."""
     
     def __init__(self, student_name: str, coach_name: str = None):
         """
-        Inicialitza sessió.
+        Initialize session.
         
         Args:
-            student_name: Nom de l'alumne
-            coach_name: Nom del coach (per comparació)
+            student_name: Student's name
+            coach_name: Coach's name (for comparison)
         """
         self.student_name = student_name
         self.coach_name = coach_name
@@ -80,12 +80,12 @@ class CoachingSession:
     
     def collect_baseline(self, num_laps: int = 10):
         """
-        Recull voltes de baseline de l'alumne.
+        Collect student's baseline laps.
         
         Args:
-            num_laps: Nombre de voltes a recollir
+            num_laps: Number of laps to collect
         """
-        logger.info(f"📊 Recollint {num_laps} voltes baseline de {self.student_name}...")
+        logger.info(f"📊 Collecting {num_laps} baseline laps from {self.student_name}...")
         
         client = InSimClient(host="127.0.0.1", port=29999)
         client.connect()
@@ -100,12 +100,12 @@ class CoachingSession:
             if lap_data['player_name'] == self.student_name:
                 self.student_laps.append(lap_data)
                 lap_count += 1
-                logger.info(f"   Volta {lap_count}/{num_laps}: {lap_data['lap_time']:.3f}s")
+                logger.info(f"   Lap {lap_count}/{num_laps}: {lap_data['lap_time']:.3f}s")
         
         collector.register_callback('lap', on_lap)
         collector.start()
         
-        # Esperar fins tenir totes les voltes
+        # Wait until all laps are collected
         import time
         while lap_count < num_laps:
             time.sleep(1)
@@ -113,16 +113,16 @@ class CoachingSession:
         collector.stop()
         client.disconnect()
         
-        logger.info(f"✓ Baseline completat: {len(self.student_laps)} voltes")
+        logger.info(f"✓ Baseline completed: {len(self.student_laps)} laps")
     
     def analyze_consistency(self) -> Dict:
         """
-        Analitza consistència de l'alumne.
+        Analyze student's consistency.
         
         Returns:
-            Diccionari amb mètriques de consistència
+            Dictionary with consistency metrics
         """
-        logger.info("\n=== Anàlisi de Consistència ===")
+        logger.info("\n=== Consistency Analysis ===")
         
         lap_times = [lap['lap_time'] for lap in self.student_laps]
         
@@ -144,33 +144,33 @@ class CoachingSession:
             'consistency_score': consistency_score
         }
         
-        logger.info(f"   Mitjana: {mean_time:.3f}s")
-        logger.info(f"   Desviació: {std_dev:.3f}s")
-        logger.info(f"   Millor: {best_time:.3f}s")
-        logger.info(f"   Pitjor: {worst_time:.3f}s")
-        logger.info(f"   Consistència: {consistency_score:.1f}/100")
+        logger.info(f"   Average: {mean_time:.3f}s")
+        logger.info(f"   Std Dev: {std_dev:.3f}s")
+        logger.info(f"   Best: {best_time:.3f}s")
+        logger.info(f"   Worst: {worst_time:.3f}s")
+        logger.info(f"   Consistency: {consistency_score:.1f}/100")
         
         # Feedback
         if consistency_score >= 98:
-            logger.info("   ✓ Excel·lent consistència!")
+            logger.info("   ✓ Excellent consistency!")
         elif consistency_score >= 95:
-            logger.info("   ✓ Bona consistència")
+            logger.info("   ✓ Good consistency")
         elif consistency_score >= 90:
-            logger.info("   ⚠️  Millorable - focus en reproduir millor volta")
+            logger.info("   ⚠️  Room for improvement - focus on reproducing best lap")
         else:
-            logger.info("   ❌ Inconsistent - practica més per estabilitzar")
+            logger.info("   ❌ Inconsistent - practice more to stabilize")
         
         return results
     
     def compare_with_coach(self):
-        """Compara millor volta d'alumne amb coach."""
+        """Compare student's best lap with coach."""
         if not self.coach_laps:
-            logger.warning("No hi ha dades del coach per comparar")
+            logger.warning("No coach data available for comparison")
             return
         
-        logger.info(f"\n=== Comparació amb {self.coach_name} ===")
+        logger.info(f"\n=== Comparison with {self.coach_name} ===")
         
-        # Millor volta de cada un
+        # Best lap from each
         student_best = min(self.student_laps, key=lambda l: l['lap_time'])
         coach_best = min(self.coach_laps, key=lambda l: l['lap_time'])
         
@@ -178,9 +178,9 @@ class CoachingSession:
         
         logger.info(f"   {self.student_name}: {student_best['lap_time']:.3f}s")
         logger.info(f"   {self.coach_name}: {coach_best['lap_time']:.3f}s")
-        logger.info(f"   Diferència: {time_diff:+.3f}s")
+        logger.info(f"   Difference: {time_diff:+.3f}s")
         
-        # Comparació visual
+        # Visual comparison
         comparator = LapComparator()
         comparator.add_lap(self.student_name, student_best['telemetry'])
         comparator.add_lap(f"{self.coach_name} (ref)", coach_best['telemetry'])
@@ -188,14 +188,14 @@ class CoachingSession:
         fig = comparator.create_comparison_plot()
         fig.write_html(f"comparison_{self.student_name}.html")
         
-        logger.info(f"   📊 Comparació guardada: comparison_{self.student_name}.html")
+        logger.info(f"   📊 Comparison saved: comparison_{self.student_name}.html")
         
-        # Anàlisi sector per sector
+        # Sector-by-sector analysis
         self._analyze_sectors(student_best, coach_best)
     
     def _analyze_sectors(self, student_lap, coach_lap, num_sectors=3):
-        """Analitza sectors comparant alumne i coach."""
-        logger.info(f"\n📍 Anàlisi per Sectors ({num_sectors} sectors):")
+        """Analyze sectors comparing student and coach."""
+        logger.info(f"\n📍 Sector Analysis ({num_sectors} sectors):")
         
         student_sectors = self._split_into_sectors(
             student_lap['telemetry'], 
@@ -214,18 +214,18 @@ class CoachingSession:
             diff = student_time - coach_time
             
             logger.info(f"\n   Sector {i+1}:")
-            logger.info(f"      Alumne: {student_time:.3f}s")
+            logger.info(f"      Student: {student_time:.3f}s")
             logger.info(f"      Coach: {coach_time:.3f}s")
-            logger.info(f"      Diferència: {diff:+.3f}s")
+            logger.info(f"      Difference: {diff:+.3f}s")
             
-            if diff > 0.1:  # Perd més de 0.1s
+            if diff > 0.1:  # Loses more than 0.1s
                 weakest_sectors.append((i+1, diff))
-                logger.info(f"      ⚠️  ÀREA DE MILLORA")
+                logger.info(f"      ⚠️  IMPROVEMENT AREA")
         
         return weakest_sectors
     
     def _split_into_sectors(self, telemetry, num_sectors):
-        """Divideix telemetria en sectors."""
+        """Split telemetry into sectors."""
         sector_size = len(telemetry) // num_sectors
         sectors = []
         
@@ -237,7 +237,7 @@ class CoachingSession:
         return sectors
     
     def _calculate_sector_time(self, sector_data):
-        """Calcula temps d'un sector."""
+        """Calculate sector time."""
         if len(sector_data) < 2:
             return 0
         
@@ -249,75 +249,75 @@ class CoachingSession:
     
     def identify_improvement_areas(self) -> List[str]:
         """
-        Identifica àrees específiques de millora.
+        Identify specific areas for improvement.
         
         Returns:
-            Llista de recomanacions
+            List of recommendations
         """
-        logger.info("\n=== Àrees de Millora ===")
+        logger.info("\n=== Improvement Areas ===")
         
         recommendations = []
         
-        # Analitzar millor volta
+        # Analyze best lap
         best_lap = min(self.student_laps, key=lambda l: l['lap_time'])
         telemetry = best_lap['telemetry']
         
-        # 1. Velocitat mínima en corbes
+        # 1. Minimum corner speed
         speeds = [t['speed'] for t in telemetry]
         min_speed = min(speeds)
         
         if min_speed < 60:
-            rec = "Velocitat mínima baixa en corbes - millora entrada i línia"
+            rec = "Low minimum corner speed - improve entry and line"
             recommendations.append(rec)
             logger.info(f"   • {rec}")
         
-        # 2. Ús de marxa
+        # 2. Gear usage
         gears = [t.get('gear', 0) for t in telemetry]
         gear_changes = sum(1 for i in range(1, len(gears)) if gears[i] != gears[i-1])
         
-        if gear_changes > 50:  # Molts canvis
-            rec = "Excessius canvis de marxa - suavitza conducció"
+        if gear_changes > 50:  # Too many changes
+            rec = "Excessive gear changes - smooth out driving"
             recommendations.append(rec)
             logger.info(f"   • {rec}")
         
-        # 3. Variabilitat de velocitat
+        # 3. Speed variability
         speed_std = np.std(speeds)
         if speed_std > 40:
-            rec = "Alta variabilitat de velocitat - mantingues ritme més constant"
+            rec = "High speed variability - maintain more consistent pace"
             recommendations.append(rec)
             logger.info(f"   • {rec}")
         
-        # 4. RPM excessiu
+        # 4. Excessive RPM
         rpms = [t.get('rpm', 0) for t in telemetry]
         max_rpm = max(rpms)
         if max_rpm > 7800:
-            rec = "RPM massa alts - canvia de marxa abans per preservar motor"
+            rec = "RPM too high - shift earlier to preserve engine"
             recommendations.append(rec)
             logger.info(f"   • {rec}")
         
         if not recommendations:
-            logger.info("   ✓ No s'han detectat problemes majors!")
-            recommendations.append("Continua practicant per millorar consistència")
+            logger.info("   ✓ No major issues detected!")
+            recommendations.append("Continue practicing to improve consistency")
         
         return recommendations
     
     def generate_coaching_report(self, output_file: str = None):
-        """Genera report complet de coaching."""
+        """Generate complete coaching report."""
         if output_file is None:
             output_file = f"coaching_report_{self.student_name}.html"
         
-        logger.info(f"\n=== Generant Report de Coaching ===")
+        logger.info(f"\n=== Generating Coaching Report ===")
         
-        # Recollir totes les anàlisis
+        # Collect all analyses
         consistency = self.analyze_consistency()
         improvements = self.identify_improvement_areas()
         
-        # Generar HTML
+        # Generate HTML
         html_content = f"""
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Report de Coaching - {self.student_name}</title>
+            <title>Coaching Report - {self.student_name}</title>
             <style>
                 body {{ font-family: Arial, sans-serif; margin: 20px; }}
                 h1 {{ color: #2c3e50; }}
@@ -331,31 +331,31 @@ class CoachingSession:
             </style>
         </head>
         <body>
-            <h1>Report de Coaching: {self.student_name}</h1>
+            <h1>Coaching Report: {self.student_name}</h1>
             
-            <h2>Consistència</h2>
+            <h2>Consistency</h2>
             <div class="metric">
-                <p><strong>Temps mitjà:</strong> {consistency.get('mean', 0):.3f}s</p>
-                <p><strong>Millor volta:</strong> {consistency.get('best', 0):.3f}s</p>
-                <p><strong>Pitjor volta:</strong> {consistency.get('worst', 0):.3f}s</p>
-                <p><strong>Score de consistència:</strong> 
+                <p><strong>Average time:</strong> {consistency.get('mean', 0):.3f}s</p>
+                <p><strong>Best lap:</strong> {consistency.get('best', 0):.3f}s</p>
+                <p><strong>Worst lap:</strong> {consistency.get('worst', 0):.3f}s</p>
+                <p><strong>Consistency score:</strong> 
                    <span class="{'good' if consistency.get('consistency_score', 0) >= 95 else 'warning'}">
                        {consistency.get('consistency_score', 0):.1f}/100
                    </span>
                 </p>
             </div>
             
-            <h2>Àrees de Millora</h2>
+            <h2>Improvement Areas</h2>
             <ul>
                 {''.join(f'<li>• {rec}</li>' for rec in improvements)}
             </ul>
             
-            <h2>Pròxims Passos</h2>
+            <h2>Next Steps</h2>
             <ol>
-                <li>Focus en sectors identificats com a febles</li>
-                <li>Practica 10-15 voltes més centrant-te en consistència</li>
-                <li>Revisa comparació amb volta de referència</li>
-                <li>Següent sessió: Revisió de progressió</li>
+                <li>Focus on identified weak sectors</li>
+                <li>Practice 10-15 more laps focusing on consistency</li>
+                <li>Review comparison with reference lap</li>
+                <li>Next session: Progress review</li>
             </ol>
         </body>
         </html>
@@ -364,45 +364,45 @@ class CoachingSession:
         with open(output_file, 'w') as f:
             f.write(html_content)
         
-        logger.info(f"✓ Report guardat: {output_file}")
-        logger.info(f"   Obre amb navegador per veure detalls complets")
+        logger.info(f"✓ Report saved: {output_file}")
+        logger.info(f"   Open with browser to view full details")
 
 
 def main():
-    """Exemple d'ús del sistema de coaching."""
-    # Crear sessió
+    """Example usage of coaching system."""
+    # Create session
     session = CoachingSession(
-        student_name="Alumne1",
+        student_name="Student1",
         coach_name="Coach_Pro"
     )
     
-    # Recollir dades
-    logger.info("Comença a conduir al circuit...")
+    # Collect data
+    logger.info("Start driving on the track...")
     session.collect_baseline(num_laps=10)
     
-    # Anàlisi
+    # Analysis
     session.analyze_consistency()
     session.identify_improvement_areas()
     
-    # Si tens dades del coach, comparar
+    # If you have coach data, compare
     # session.compare_with_coach()
     
-    # Generar report
+    # Generate report
     session.generate_coaching_report()
     
-    logger.info("\n✓ Sessió de coaching completada!")
+    logger.info("\n✓ Coaching session completed!")
 
 
 if __name__ == "__main__":
     main()
 ```
 
-## Pas 2: Seguiment de Progressió
+## Step 2: Progress Tracking
 
 `track_progress.py`:
 ```python
 """
-Segueix progressió d'un pilot al llarg del temps.
+Track a driver's progression over time.
 """
 
 import pandas as pd
@@ -411,11 +411,11 @@ from datetime import datetime
 
 
 def track_progress(student_name: str):
-    """Mostra progressió d'un alumne."""
-    # Carregar sessions històriques
+    """Show student's progression."""
+    # Load historical sessions
     sessions = load_student_sessions(student_name)
     
-    # Extreure temps de millor volta per sessió
+    # Extract best lap time per session
     progress_data = []
     for session in sessions:
         date = session['date']
@@ -430,41 +430,41 @@ def track_progress(student_name: str):
     
     df = pd.DataFrame(progress_data)
     
-    # Gràfic de progressió
+    # Progress chart
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
     
-    # Millor temps de volta
+    # Best lap time
     ax1.plot(df['date'], df['best_lap'], marker='o')
-    ax1.set_title(f'Progressió de {student_name}')
-    ax1.set_ylabel('Millor Temps (s)')
+    ax1.set_title(f'{student_name} Progression')
+    ax1.set_ylabel('Best Time (s)')
     ax1.grid(True)
     
-    # Consistència
+    # Consistency
     ax2.plot(df['date'], df['consistency'], marker='o', color='green')
-    ax2.set_ylabel('Consistència (%)')
-    ax2.set_xlabel('Data')
+    ax2.set_ylabel('Consistency (%)')
+    ax2.set_xlabel('Date')
     ax2.grid(True)
     
     plt.tight_layout()
     plt.savefig(f'progress_{student_name}.png')
-    print(f"✓ Gràfic de progressió guardat")
+    print(f"✓ Progress chart saved")
 ```
 
-## Consells per Coaches
+## Tips for Coaches
 
-1. **Estableix Baseline**: Sempre comença amb 10 voltes per tenir referència
-2. **Focus en 1-2 Àrees**: No intentar millorar tot alhora
-3. **Mesura Progressió**: Sessions setmanals per veure millora
-4. **Utilitza Dades Objectives**: Basar feedback en números, no impressions
-5. **Compara amb Referència**: Tenir volta ideal com a objectiu
+1. **Establish Baseline**: Always start with 10 laps to have a reference
+2. **Focus on 1-2 Areas**: Don't try to improve everything at once
+3. **Measure Progression**: Weekly sessions to see improvement
+4. **Use Objective Data**: Base feedback on numbers, not impressions
+5. **Compare with Reference**: Have an ideal lap as a goal
 
-## Mètriques Clau
+## Key Metrics
 
-- **Consistència**: >95% és excel·lent
-- **Sector Times**: Identificar on es perd més temps
-- **Corner Speed**: Velocitat mínima en corbes
-- **Throttle Control**: Suavitat a la sortida
+- **Consistency**: >95% is excellent
+- **Sector Times**: Identify where most time is lost
+- **Corner Speed**: Minimum speed in corners
+- **Throttle Control**: Smoothness on exit
 
 ---
 
-Coaching basat en dades per màxima millora! 🏎️📈
+Data-driven coaching for maximum improvement! 🏎️📈
