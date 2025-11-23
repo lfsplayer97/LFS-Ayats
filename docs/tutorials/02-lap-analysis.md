@@ -1,35 +1,35 @@
-# Tutorial 2: Anàlisi de Voltes
+# Tutorial 2: Lap Analysis
 
-Aquest tutorial t'ensenyarà a comparar voltes, identificar la millor volta, trobar sectors febles i visualitzar diferències de rendiment.
+This tutorial will teach you how to compare laps, identify the best lap, find weak sectors, and visualize performance differences.
 
-## Objectius d'Aprenentatge
+## Learning Objectives
 
-Al final d'aquest tutorial, sabràs:
+By the end of this tutorial, you will know how to:
 
-- ✅ Identificar la millor volta d'una sessió
-- ✅ Comparar dues o més voltes
-- ✅ Analitzar sectors i trobar àrees de millora
-- ✅ Visualitzar diferències de velocitat i traçada
-- ✅ Generar informes d'anàlisi
+- ✅ Identify the best lap in a session
+- ✅ Compare two or more laps
+- ✅ Analyze sectors and find areas for improvement
+- ✅ Visualize speed and racing line differences
+- ✅ Generate analysis reports
 
-## Prerequisits
+## Prerequisites
 
-- Tutorial 1 completat
-- Fitxers de dades d'una o més sessions
-- Coneixements bàsics de visualització amb matplotlib/plotly
+- Tutorial 1 completed
+- Data files from one or more sessions
+- Basic knowledge of visualization with matplotlib/plotly
 
-## Temps Estimat
+## Estimated Time
 
-45-60 minuts
+45-60 minutes
 
-## Pas 1: Carregar Dades d'una Sessió
+## Step 1: Load Session Data
 
-Crea un nou script `lap_analysis.py`:
+Create a new script `lap_analysis.py`:
 
 ```python
 """
-Anàlisi de Voltes
-Tutorial per comparar i analitzar voltes de conducció.
+Lap Analysis
+Tutorial for comparing and analyzing driving laps.
 """
 
 import json
@@ -46,81 +46,81 @@ logger = setup_logger("lap_analysis", "INFO")
 
 def load_session_data(filepath: str) -> List[Dict]:
     """
-    Carrega dades d'una sessió des d'un fitxer JSON.
+    Load session data from a JSON file.
     
     Args:
-        filepath: Camí al fitxer JSON
+        filepath: Path to the JSON file
         
     Returns:
-        Llista de registres de telemetria
+        List of telemetry records
     """
-    logger.info(f"Carregant dades: {filepath}")
+    logger.info(f"Loading data: {filepath}")
     
     with open(filepath, 'r') as f:
         data = json.load(f)
     
-    logger.info(f"✓ Carregades {len(data)} mostres")
+    logger.info(f"✓ Loaded {len(data)} samples")
     return data
 ```
 
-## Pas 2: Identificar Voltes Individuals
+## Step 2: Identify Individual Laps
 
 ```python
 def extract_laps(telemetry_data: List[Dict]) -> List[List[Dict]]:
     """
-    Separa les dades en voltes individuals.
+    Separate data into individual laps.
     
     Args:
-        telemetry_data: Dades de telemetria completes
+        telemetry_data: Complete telemetry data
         
     Returns:
-        Llista de voltes, cada volta és una llista de mostres
+        List of laps, each lap is a list of samples
     """
-    logger.info("Extraient voltes individuals...")
+    logger.info("Extracting individual laps...")
     
     laps = []
     current_lap = []
     last_lap_number = -1
     
     for sample in telemetry_data:
-        # Detectar canvi de volta
+        # Detect lap change
         lap_number = sample.get('lap', 0)
         
         if lap_number != last_lap_number and current_lap:
-            # Nova volta detectada, guardar anterior
+            # New lap detected, save previous one
             laps.append(current_lap)
             current_lap = []
         
         current_lap.append(sample)
         last_lap_number = lap_number
     
-    # Afegir última volta
+    # Add last lap
     if current_lap:
         laps.append(current_lap)
     
-    logger.info(f"✓ Trobades {len(laps)} voltes")
+    logger.info(f"✓ Found {len(laps)} laps")
     return laps
 
 
 def calculate_lap_time(lap_data: List[Dict]) -> float:
     """
-    Calcula el temps total d'una volta.
+    Calculate the total time for a lap.
     
     Args:
-        lap_data: Dades d'una volta
+        lap_data: Data from a lap
         
     Returns:
-        Temps de volta en segons
+        Lap time in seconds
     """
     if not lap_data:
         return float('inf')
     
-    # Buscar registre de volta completada
+    # Look for completed lap record
     for sample in lap_data:
         if sample.get('type') == 'lap' and 'lap_time' in sample:
             return sample['lap_time']
     
-    # Si no hi ha registre, calcular per timestamps
+    # If no record exists, calculate from timestamps
     if len(lap_data) >= 2:
         start_time = pd.to_datetime(lap_data[0]['timestamp'])
         end_time = pd.to_datetime(lap_data[-1]['timestamp'])
@@ -129,20 +129,20 @@ def calculate_lap_time(lap_data: List[Dict]) -> float:
     return float('inf')
 ```
 
-## Pas 3: Trobar la Millor Volta
+## Step 3: Find the Best Lap
 
 ```python
 def find_best_lap(laps: List[List[Dict]]) -> Tuple[int, List[Dict], float]:
     """
-    Identifica la millor volta (més ràpida).
+    Identify the best (fastest) lap.
     
     Args:
-        laps: Llista de voltes
+        laps: List of laps
         
     Returns:
-        Tupla (índex, dades, temps) de la millor volta
+        Tuple (index, data, time) of the best lap
     """
-    logger.info("Buscant la millor volta...")
+    logger.info("Finding the best lap...")
     
     best_idx = 0
     best_time = float('inf')
@@ -154,19 +154,19 @@ def find_best_lap(laps: List[List[Dict]]) -> Tuple[int, List[Dict], float]:
             best_time = lap_time
             best_idx = idx
     
-    logger.info(f"✓ Millor volta: #{best_idx + 1} - Temps: {best_time:.3f}s")
+    logger.info(f"✓ Best lap: #{best_idx + 1} - Time: {best_time:.3f}s")
     return best_idx, laps[best_idx], best_time
 
 
 def analyze_all_laps(laps: List[List[Dict]]) -> pd.DataFrame:
     """
-    Analitza totes les voltes i retorna estadístiques.
+    Analyze all laps and return statistics.
     
     Args:
-        laps: Llista de voltes
+        laps: List of laps
         
     Returns:
-        DataFrame amb estadístiques de cada volta
+        DataFrame with statistics for each lap
     """
     stats = []
     
@@ -191,76 +191,76 @@ def analyze_all_laps(laps: List[List[Dict]]) -> pd.DataFrame:
     
     df = pd.DataFrame(stats)
     
-    logger.info("\n📊 Resum de Voltes:")
+    logger.info("\n📊 Lap Summary:")
     logger.info(df.to_string(index=False))
     
     return df
 ```
 
-## Pas 4: Comparar Dues Voltes
+## Step 4: Compare Two Laps
 
 ```python
 def compare_laps(lap1_data: List[Dict], lap2_data: List[Dict], 
-                 lap1_name: str = "Volta 1", lap2_name: str = "Volta 2"):
+                 lap1_name: str = "Lap 1", lap2_name: str = "Lap 2"):
     """
-    Compara dues voltes i mostra les diferències.
+    Compare two laps and show the differences.
     
     Args:
-        lap1_data: Dades de la primera volta
-        lap2_data: Dades de la segona volta
-        lap1_name: Nom de la primera volta
-        lap2_name: Nom de la segona volta
+        lap1_data: Data from the first lap
+        lap2_data: Data from the second lap
+        lap1_name: Name of the first lap
+        lap2_name: Name of the second lap
     """
-    logger.info(f"\n=== Comparant {lap1_name} vs {lap2_name} ===")
+    logger.info(f"\n=== Comparing {lap1_name} vs {lap2_name} ===")
     
-    # Temps de volta
+    # Lap times
     time1 = calculate_lap_time(lap1_data)
     time2 = calculate_lap_time(lap2_data)
     diff = time2 - time1
     
-    logger.info(f"\n⏱️  Temps de Volta:")
+    logger.info(f"\n⏱️  Lap Time:")
     logger.info(f"   {lap1_name}: {time1:.3f}s")
     logger.info(f"   {lap2_name}: {time2:.3f}s")
-    logger.info(f"   Diferència: {abs(diff):.3f}s ({'+' if diff > 0 else ''}{diff:.3f}s)")
+    logger.info(f"   Difference: {abs(diff):.3f}s ({'+' if diff > 0 else ''}{diff:.3f}s)")
     
-    # Velocitats
+    # Speeds
     speeds1 = [s.get('speed', 0) for s in lap1_data if 'speed' in s]
     speeds2 = [s.get('speed', 0) for s in lap2_data if 'speed' in s]
     
-    logger.info(f"\n🏎️  Velocitats:")
+    logger.info(f"\n🏎️  Speeds:")
     logger.info(f"   {lap1_name}:")
-    logger.info(f"      • Màxima: {max(speeds1):.1f} km/h")
-    logger.info(f"      • Mitjana: {np.mean(speeds1):.1f} km/h")
-    logger.info(f"      • Mínima: {min(speeds1):.1f} km/h")
+    logger.info(f"      • Maximum: {max(speeds1):.1f} km/h")
+    logger.info(f"      • Average: {np.mean(speeds1):.1f} km/h")
+    logger.info(f"      • Minimum: {min(speeds1):.1f} km/h")
     logger.info(f"   {lap2_name}:")
-    logger.info(f"      • Màxima: {max(speeds2):.1f} km/h")
-    logger.info(f"      • Mitjana: {np.mean(speeds2):.1f} km/h")
-    logger.info(f"      • Mínima: {min(speeds2):.1f} km/h")
+    logger.info(f"      • Maximum: {max(speeds2):.1f} km/h")
+    logger.info(f"      • Average: {np.mean(speeds2):.1f} km/h")
+    logger.info(f"      • Minimum: {min(speeds2):.1f} km/h")
     
     # RPM
     rpms1 = [s.get('rpm', 0) for s in lap1_data if 'rpm' in s]
     rpms2 = [s.get('rpm', 0) for s in lap2_data if 'rpm' in s]
     
     logger.info(f"\n🔧 RPM:")
-    logger.info(f"   {lap1_name}: Max {max(rpms1)} | Mitjà {int(np.mean(rpms1))}")
-    logger.info(f"   {lap2_name}: Max {max(rpms2)} | Mitjà {int(np.mean(rpms2))}")
+    logger.info(f"   {lap1_name}: Max {max(rpms1)} | Avg {int(np.mean(rpms1))}")
+    logger.info(f"   {lap2_name}: Max {max(rpms2)} | Avg {int(np.mean(rpms2))}")
 ```
 
-## Pas 5: Anàlisi de Sectors
+## Step 5: Sector Analysis
 
 ```python
 def analyze_sectors(lap_data: List[Dict], num_sectors: int = 3) -> List[Dict]:
     """
-    Divideix una volta en sectors i analitza cada un.
+    Divide a lap into sectors and analyze each one.
     
     Args:
-        lap_data: Dades de la volta
-        num_sectors: Nombre de sectors (per defecte 3)
+        lap_data: Lap data
+        num_sectors: Number of sectors (default 3)
         
     Returns:
-        Llista d'estadístiques per sector
+        List of statistics per sector
     """
-    logger.info(f"\n=== Anàlisi de Sectors ({num_sectors} sectors) ===")
+    logger.info(f"\n=== Sector Analysis ({num_sectors} sectors) ===")
     
     sector_size = len(lap_data) // num_sectors
     sectors = []
@@ -272,7 +272,7 @@ def analyze_sectors(lap_data: List[Dict], num_sectors: int = 3) -> List[Dict]:
         sector_data = lap_data[start_idx:end_idx]
         speeds = [s.get('speed', 0) for s in sector_data if 'speed' in s]
         
-        # Calcular temps del sector
+        # Calculate sector time
         if len(sector_data) >= 2:
             start_time = pd.to_datetime(sector_data[0]['timestamp'])
             end_time = pd.to_datetime(sector_data[-1]['timestamp'])
@@ -291,9 +291,9 @@ def analyze_sectors(lap_data: List[Dict], num_sectors: int = 3) -> List[Dict]:
         sectors.append(sector_stats)
         
         logger.info(f"\n📍 Sector {i + 1}:")
-        logger.info(f"   • Temps: {sector_time:.3f}s")
-        logger.info(f"   • Velocitat màxima: {sector_stats['max_speed']:.1f} km/h")
-        logger.info(f"   • Velocitat mitjana: {sector_stats['avg_speed']:.1f} km/h")
+        logger.info(f"   • Time: {sector_time:.3f}s")
+        logger.info(f"   • Maximum speed: {sector_stats['max_speed']:.1f} km/h")
+        logger.info(f"   • Average speed: {sector_stats['avg_speed']:.1f} km/h")
     
     return sectors
 
@@ -301,80 +301,80 @@ def analyze_sectors(lap_data: List[Dict], num_sectors: int = 3) -> List[Dict]:
 def compare_sectors(lap1_data: List[Dict], lap2_data: List[Dict], 
                    num_sectors: int = 3):
     """
-    Compara sectors entre dues voltes.
+    Compare sectors between two laps.
     
     Args:
-        lap1_data: Dades de la primera volta
-        lap2_data: Dades de la segona volta
-        num_sectors: Nombre de sectors
+        lap1_data: Data from the first lap
+        lap2_data: Data from the second lap
+        num_sectors: Number of sectors
     """
-    logger.info("\n=== Comparació de Sectors ===")
+    logger.info("\n=== Sector Comparison ===")
     
     sectors1 = analyze_sectors(lap1_data, num_sectors)
     sectors2 = analyze_sectors(lap2_data, num_sectors)
     
-    logger.info("\n📊 Comparació Detallada:")
+    logger.info("\n📊 Detailed Comparison:")
     
     for s1, s2 in zip(sectors1, sectors2):
         diff = s2['time'] - s1['time']
         logger.info(f"\nSector {s1['sector']}:")
-        logger.info(f"   Volta 1: {s1['time']:.3f}s")
-        logger.info(f"   Volta 2: {s2['time']:.3f}s")
-        logger.info(f"   Diferència: {abs(diff):.3f}s ({'+' if diff > 0 else ''}{diff:.3f}s)")
+        logger.info(f"   Lap 1: {s1['time']:.3f}s")
+        logger.info(f"   Lap 2: {s2['time']:.3f}s")
+        logger.info(f"   Difference: {abs(diff):.3f}s ({'+' if diff > 0 else ''}{diff:.3f}s)")
         
         if diff < -0.1:
-            logger.info(f"   ✓ Volta 2 més ràpida en aquest sector")
+            logger.info(f"   ✓ Lap 2 faster in this sector")
         elif diff > 0.1:
-            logger.info(f"   ✗ Volta 2 més lenta en aquest sector")
+            logger.info(f"   ✗ Lap 2 slower in this sector")
         else:
-            logger.info(f"   ≈ Temps similar")
+            logger.info(f"   ≈ Similar time")
 ```
 
-## Pas 6: Visualització de Comparació
+## Step 6: Comparison Visualization
 
 ```python
 def visualize_lap_comparison(lap1_data: List[Dict], lap2_data: List[Dict],
                              output_file: str = "lap_comparison.html"):
     """
-    Crea visualització interactiva de comparació de voltes.
+    Create interactive visualization for lap comparison.
     
     Args:
-        lap1_data: Dades de la primera volta
-        lap2_data: Dades de la segona volta
-        output_file: Fitxer de sortida HTML
+        lap1_data: Data from the first lap
+        lap2_data: Data from the second lap
+        output_file: HTML output file
     """
-    logger.info(f"\n=== Creant Visualització ===")
+    logger.info(f"\n=== Creating Visualization ===")
     
-    # Utilitzar el comparador de voltes
+    # Use the lap comparator
     comparator = LapComparator()
-    comparator.add_lap("Millor Volta", lap1_data)
-    comparator.add_lap("Volta Actual", lap2_data)
+    comparator.add_lap("Best Lap", lap1_data)
+    comparator.add_lap("Current Lap", lap2_data)
     
-    # Crear gràfic de comparació
+    # Create comparison plot
     fig = comparator.create_comparison_plot()
     
-    # Guardar com HTML interactiu
+    # Save as interactive HTML
     fig.write_html(output_file)
-    logger.info(f"✓ Visualització guardada: {output_file}")
-    logger.info(f"   Obre amb el navegador per veure la comparació interactiva")
+    logger.info(f"✓ Visualization saved: {output_file}")
+    logger.info(f"   Open with browser to view interactive comparison")
 
 
 def create_speed_heatmap(lap_data: List[Dict], output_file: str = "speed_heatmap.html"):
     """
-    Crea un mapa de calor de velocitat per la volta.
+    Create a speed heatmap for the lap.
     
     Args:
-        lap_data: Dades de la volta
-        output_file: Fitxer de sortida
+        lap_data: Lap data
+        output_file: Output file
     """
     import plotly.graph_objects as go
     
-    # Extreure posicions i velocitats
+    # Extract positions and speeds
     positions_x = [s.get('pos_x', 0) for s in lap_data if 'pos_x' in s]
     positions_y = [s.get('pos_y', 0) for s in lap_data if 'pos_y' in s]
     speeds = [s.get('speed', 0) for s in lap_data if 'speed' in s]
     
-    # Crear gràfic
+    # Create plot
     fig = go.Figure()
     
     fig.add_trace(go.Scatter(
@@ -386,92 +386,92 @@ def create_speed_heatmap(lap_data: List[Dict], output_file: str = "speed_heatmap
             color=speeds,
             colorscale='Viridis',
             showscale=True,
-            colorbar=dict(title="Velocitat (km/h)")
+            colorbar=dict(title="Speed (km/h)")
         ),
         line=dict(width=1, color='rgba(0,0,0,0.3)'),
-        name='Traçada'
+        name='Racing Line'
     ))
     
     fig.update_layout(
-        title="Mapa de Velocitat del Circuit",
-        xaxis_title="Posició X",
-        yaxis_title="Posició Y",
+        title="Track Speed Map",
+        xaxis_title="Position X",
+        yaxis_title="Position Y",
         hovermode='closest'
     )
     
     fig.write_html(output_file)
-    logger.info(f"✓ Mapa de calor guardat: {output_file}")
+    logger.info(f"✓ Heatmap saved: {output_file}")
 ```
 
-## Pas 7: Funció Principal Completa
+## Step 7: Complete Main Function
 
 ```python
 def main():
-    """Funció principal d'anàlisi de voltes."""
-    logger.info("=== Anàlisi de Voltes ===\n")
+    """Main function for lap analysis."""
+    logger.info("=== Lap Analysis ===\n")
     
-    # 1. Carregar dades
-    data_file = "data/session_20240115_143022.json"  # Ajusta al teu fitxer
+    # 1. Load data
+    data_file = "data/session_20240115_143022.json"  # Adjust to your file
     
     if not Path(data_file).exists():
-        logger.error(f"✗ Fitxer no trobat: {data_file}")
-        logger.info("   Executa primer el Tutorial 1 per generar dades")
+        logger.error(f"✗ File not found: {data_file}")
+        logger.info("   Run Tutorial 1 first to generate data")
         return
     
     telemetry_data = load_session_data(data_file)
     
-    # 2. Extreure voltes
+    # 2. Extract laps
     laps = extract_laps(telemetry_data)
     
     if len(laps) < 2:
-        logger.warning("⚠️  Es necessiten almenys 2 voltes per comparar")
+        logger.warning("⚠️  At least 2 laps are needed for comparison")
         return
     
-    # 3. Analitzar totes les voltes
+    # 3. Analyze all laps
     lap_stats = analyze_all_laps(laps)
     
-    # 4. Trobar la millor volta
+    # 4. Find the best lap
     best_idx, best_lap, best_time = find_best_lap(laps)
     
-    # 5. Comparar millor volta amb última volta
+    # 5. Compare best lap with last lap
     last_lap = laps[-1]
     compare_laps(best_lap, last_lap, 
-                f"Millor Volta #{best_idx + 1}",
-                f"Última Volta #{len(laps)}")
+                f"Best Lap #{best_idx + 1}",
+                f"Last Lap #{len(laps)}")
     
-    # 6. Anàlisi de sectors
+    # 6. Sector analysis
     compare_sectors(best_lap, last_lap, num_sectors=3)
     
-    # 7. Visualitzacions
+    # 7. Visualizations
     visualize_lap_comparison(best_lap, last_lap, "comparison.html")
     create_speed_heatmap(best_lap, "best_lap_heatmap.html")
     
-    logger.info("\n✓ Anàlisi completada!")
-    logger.info("\n📁 Fitxers generats:")
-    logger.info("   • comparison.html - Comparació interactiva")
-    logger.info("   • best_lap_heatmap.html - Mapa de velocitat")
+    logger.info("\n✓ Analysis completed!")
+    logger.info("\n📁 Generated files:")
+    logger.info("   • comparison.html - Interactive comparison")
+    logger.info("   • best_lap_heatmap.html - Speed map")
 
 
 if __name__ == "__main__":
     main()
 ```
 
-## Executar l'Anàlisi
+## Run the Analysis
 
 ```bash
 python lap_analysis.py
 ```
 
-## Sortida Esperada
+## Expected Output
 
 ```
-INFO - === Anàlisi de Voltes ===
-INFO - Carregant dades: data/session_20240115_143022.json
-INFO - ✓ Carregades 3000 mostres
-INFO - Extraient voltes individuals...
-INFO - ✓ Trobades 5 voltes
+INFO - === Lap Analysis ===
+INFO - Loading data: data/session_20240115_143022.json
+INFO - ✓ Loaded 3000 samples
+INFO - Extracting individual laps...
+INFO - ✓ Found 5 laps
 INFO - 
-📊 Resum de Voltes:
+📊 Lap Summary:
  lap_number  lap_time  max_speed  avg_speed  min_speed  max_rpm  avg_rpm  samples
           1     95.34      198.5      142.3       45.2     7800     5234      612
           2     93.12      201.3      145.8       42.1     7900     5412      598
@@ -479,31 +479,31 @@ INFO -
           4     92.87      203.1      147.2       41.8     8000     5456      591
           5     93.45      200.8      144.6       42.9     7920     5387      594
 
-INFO - Buscant la millor volta...
-INFO - ✓ Millor volta: #4 - Temps: 92.870s
+INFO - Finding the best lap...
+INFO - ✓ Best lap: #4 - Time: 92.870s
 
-INFO - === Comparant Millor Volta #4 vs Última Volta #5 ===
+INFO - === Comparing Best Lap #4 vs Last Lap #5 ===
 INFO - 
-⏱️  Temps de Volta:
-   Millor Volta #4: 92.870s
-   Última Volta #5: 93.450s
-   Diferència: 0.580s (+0.580s)
+⏱️  Lap Time:
+   Best Lap #4: 92.870s
+   Last Lap #5: 93.450s
+   Difference: 0.580s (+0.580s)
 ...
-INFO - ✓ Anàlisi completada!
+INFO - ✓ Analysis completed!
 ```
 
-## Exercicis Pràctics
+## Practical Exercises
 
-### Exercici 1: Anàlisi de Consistència
+### Exercise 1: Consistency Analysis
 
-Crea una funció que calculi la consistència del pilot basant-se en la desviació estàndard dels temps de volta.
+Create a function that calculates driver consistency based on the standard deviation of lap times.
 
 <details>
-<summary>Veure solució</summary>
+<summary>View solution</summary>
 
 ```python
 def calculate_consistency(laps: List[List[Dict]]) -> Dict:
-    """Calcula la consistència del pilot."""
+    """Calculate driver consistency."""
     lap_times = [calculate_lap_time(lap) for lap in laps]
     lap_times = [t for t in lap_times if t != float('inf')]
     
@@ -521,40 +521,40 @@ def calculate_consistency(laps: List[List[Dict]]) -> Dict:
 ```
 </details>
 
-### Exercici 2: Identificar Zones de Pèrdua de Temps
+### Exercise 2: Identify Time Loss Zones
 
-Crea una funció que identifiqui automàticament on es perd més temps en comparació amb la millor volta.
+Create a function that automatically identifies where the most time is lost compared to the best lap.
 
-### Exercici 3: Comparació de Múltiples Voltes
+### Exercise 3: Multiple Lap Comparison
 
-Estén el codi per comparar 3 o més voltes simultàniament.
+Extend the code to compare 3 or more laps simultaneously.
 
-## Consells Professionals
+## Professional Tips
 
-### 💡 Consell 1: Focus en Sectors
-Els sectors són clau per identificar àrees de millora. Practica sector per sector.
+### 💡 Tip 1: Focus on Sectors
+Sectors are key to identifying areas for improvement. Practice sector by sector.
 
-### 💡 Consell 2: Consistència vs Velocitat
-Una volta consistent és millor que voltes ràpides però inconsistents.
+### 💡 Tip 2: Consistency vs Speed
+A consistent lap is better than fast but inconsistent laps.
 
-### 💡 Consell 3: Referència Externa
-Compara amb voltes de pilots més ràpids per identificar diferències en traçada i velocitats.
+### 💡 Tip 3: External Reference
+Compare with laps from faster drivers to identify differences in racing line and speeds.
 
-### 💡 Consell 4: Dades de Múltiples Sessions
-Compara voltes de diferents sessions per veure progressió al llarg del temps.
+### 💡 Tip 4: Multi-Session Data
+Compare laps from different sessions to see progression over time.
 
-## Pròxims Passos
+## Next Steps
 
-1. **[Tutorial 3: Dashboard en Temps Real](03-real-time-dashboard.md)** - Visualització en temps real
-2. **[Tutorial 4: Anàlisi Avançada](04-advanced-analysis.md)** - Tècniques avançades
-3. **[Cas d'Ús: Driver Coaching](../use-cases/driver-coaching.md)** - Aplicació pràctica
+1. **[Tutorial 3: Real-Time Dashboard](03-real-time-dashboard.md)** - Real-time visualization
+2. **[Tutorial 4: Advanced Analysis](04-advanced-analysis.md)** - Advanced techniques
+3. **[Use Case: Driver Coaching](../use-cases/driver-coaching.md)** - Practical application
 
-## Recursos
+## Resources
 
-- [Documentació LapComparator](../api_reference.md#lapcomparator)
-- [Visualització Avançada](../visualization.md)
-- [Anàlisi de Telemetria](../analysis_module.md)
+- [LapComparator Documentation](../api_reference.md#lapcomparator)
+- [Advanced Visualization](../visualization.md)
+- [Telemetry Analysis](../analysis_module.md)
 
 ---
 
-Ara pots analitzar voltes com un professional! 🏆
+Now you can analyze laps like a professional! 🏆
