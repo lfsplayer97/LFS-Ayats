@@ -243,23 +243,28 @@ def save_session_to_database(
     # Separate into laps
     laps = extract_laps(telemetry_data)
     
-    # First, ensure circuit and vehicle exist
+    # Map common circuit/vehicle names to short codes
+    # In practice, you'd have a proper mapping or configuration
+    circuit_short = "BL1"  # Blackwood GP
+    vehicle_short = "XFG"  # XF GTI
+    
+    # First, ensure circuit and vehicle exist in database
     repository.get_or_create_circuit(
         name=circuit_name,
-        short_name="BL1",  # Use appropriate short code
+        short_name=circuit_short,
         length=2000.0  # Circuit length in meters
     )
     repository.get_or_create_vehicle(
         name=vehicle_name,
-        short_name="XFG",  # Use appropriate short code
+        short_name=vehicle_short,
         class_type="TBO"
     )
     
-    # Create session (without laps)
+    # Create session (uses short names for foreign key lookup)
     session_id = repository.save_session(
         datetime_start=datetime.now(),
-        circuit_name="BL1",  # Use short name
-        vehicle_name="XFG",  # Use short name
+        circuit_name=circuit_short,  # Must use short name
+        vehicle_name=vehicle_short,  # Must use short name
         driver_name=driver_name,
         duration=None  # Will calculate later if needed
     )
@@ -336,11 +341,11 @@ def query_best_laps(repository: TelemetryRepository, circuit_name: str = None, l
     all_best_laps = []
     for session in sessions:
         best_lap = repository.get_best_lap(session.id)
-        if best_lap:
+        if best_lap and best_lap.lap_time:  # Only include laps with valid times
             all_best_laps.append((best_lap, session))
     
-    # Sort by lap time and limit
-    all_best_laps.sort(key=lambda x: x[0].lap_time if x[0].lap_time else float('inf'))
+    # Sort by lap time (ascending) and limit results
+    all_best_laps.sort(key=lambda x: x[0].lap_time)
     best_laps = all_best_laps[:limit]
     
     logger.info(f"\n🏆 Top {len(best_laps)} Best Laps:")
@@ -773,9 +778,12 @@ def main():
         # Compare
         compare_sessions(repository, session_id, session_id2)
     
+    # Get final session count
+    all_sessions = list_all_sessions(repository)
+    
     logger.info("\n✓ Tutorial completed successfully!")
     logger.info(f"   Database location: data/telemetry.db")
-    logger.info(f"   Total sessions: {len(list_all_sessions(repository))}")
+    logger.info(f"   Total sessions: {len(all_sessions)}")
     logger.info(f"   Use a SQLite browser to explore the data!")
 
 
