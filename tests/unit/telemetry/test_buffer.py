@@ -252,3 +252,108 @@ class TestTelemetryBuffer:
         assert buffer.get() == "string item"
         assert buffer.get() == 123
         assert buffer.get() == [1, 2, 3]
+
+    def test_flush_to_exporter_invalid_exporter(self):
+        """Test flushing with invalid exporter (not callable and no export method)"""
+        buffer = TelemetryBuffer(max_size=10)
+        buffer.add({"id": 1})
+
+        # Create invalid exporter (not callable, no export method)
+        invalid_exporter = object()
+
+        # Flush should fail and item should remain in buffer
+        count = buffer.flush_to_exporter(invalid_exporter)
+
+        assert count == 0
+        assert buffer.size() == 1  # Item should still be in buffer
+
+    def test_clear_empty_buffer(self):
+        """Test clearing an already empty buffer"""
+        buffer = TelemetryBuffer(max_size=10)
+
+        count = buffer.clear()
+
+        assert count == 0
+        assert buffer.is_empty()
+
+    def test_clear_resets_dropped_count(self):
+        """Test that clear resets the dropped count"""
+        buffer = TelemetryBuffer(max_size=2)
+
+        # Add items to exceed capacity
+        for i in range(5):
+            buffer.add({"id": i})
+
+        stats_before = buffer.get_stats()
+        assert stats_before["dropped_count"] > 0
+
+        # Clear buffer
+        buffer.clear()
+
+        stats_after = buffer.get_stats()
+        assert stats_after["dropped_count"] == 0
+
+    def test_get_stats_empty_buffer(self):
+        """Test get_stats on empty buffer"""
+        buffer = TelemetryBuffer(max_size=10)
+
+        stats = buffer.get_stats()
+
+        assert stats["size"] == 0
+        assert stats["max_size"] == 10
+        assert stats["dropped_count"] == 0
+        assert stats["utilization"] == 0.0
+
+    def test_get_stats_utilization(self):
+        """Test stats utilization calculation at different levels"""
+        buffer = TelemetryBuffer(max_size=100)
+
+        # Empty
+        assert buffer.get_stats()["utilization"] == 0.0
+
+        # 25%
+        for i in range(25):
+            buffer.add({"id": i})
+        assert buffer.get_stats()["utilization"] == 0.25
+
+        # 50%
+        for i in range(25):
+            buffer.add({"id": i})
+        assert buffer.get_stats()["utilization"] == 0.5
+
+        # 100%
+        for i in range(50):
+            buffer.add({"id": i})
+        assert buffer.get_stats()["utilization"] == 1.0
+
+    def test_flush_to_callback_empty_buffer(self):
+        """Test flushing empty buffer to callback"""
+        buffer = TelemetryBuffer(max_size=10)
+        callback = Mock()
+
+        count = buffer.flush_to_callback(callback)
+
+        assert count == 0
+        assert callback.call_count == 0
+
+    def test_flush_to_exporter_empty_buffer(self):
+        """Test flushing empty buffer to exporter"""
+        buffer = TelemetryBuffer(max_size=10)
+        exporter = Mock()
+        exporter.export = Mock()
+
+        count = buffer.flush_to_exporter(exporter)
+
+        assert count == 0
+        assert exporter.export.call_count == 0
+
+    def test_add_preserves_existing_buffered_at(self):
+        """Test that existing buffered_at timestamp is not overwritten"""
+        buffer = TelemetryBuffer(max_size=10)
+
+        existing_timestamp = "2024-01-01T00:00:00"
+        data = {"speed": 100, "buffered_at": existing_timestamp}
+        buffer.add(data)
+
+        # Existing timestamp should be preserved
+        assert data["buffered_at"] == existing_timestamp
