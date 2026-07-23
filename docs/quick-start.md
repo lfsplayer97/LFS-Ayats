@@ -13,13 +13,13 @@ Aquesta guia t'ajudarà a posar en funcionament el sistema LFS-Ayats en 5-10 min
 ### Opció A: Clonar des de GitHub (recomanat)
 
 ```bash
-git clone https://github.com/lfsplayer97/LFS-Ayats.git
+git clone --branch copilot/v17-and-up --single-branch https://github.com/lfsplayer97/LFS-Ayats.git
 cd LFS-Ayats
 ```
 
 ### Opció B: Descarregar ZIP
 
-1. Descarrega el [repositori com ZIP](https://github.com/lfsplayer97/LFS-Ayats/archive/refs/heads/main.zip)
+1. Descarrega la [versió v17-and-up del repositori com ZIP](https://github.com/lfsplayer97/LFS-Ayats/archive/refs/heads/copilot/v17-and-up.zip)
 2. Extreu el contingut a una carpeta
 3. Obre un terminal a la carpeta extreta
 
